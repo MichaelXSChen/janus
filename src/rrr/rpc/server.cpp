@@ -455,6 +455,9 @@ int Server::reg(i32 rpc_id, const std::function<void(Request*, ServerConnection*
         return EEXIST;
     }
 
+    Log::info("*RPC server registering RPC : id=%d", rpc_id);
+
+
     handlers_[rpc_id] = func;
 
     return 0;

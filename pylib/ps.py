@@ -9,6 +9,8 @@ def ps(hosts, grep_filter):
 
     def work(host, grep_filter):
         cmd = ['/bin/bash', '-c', "'ps -eLF | grep \"{}\"'".format(grep_filter)]
+        cmd = ['/bin/bash', '-c', "'ps -eF | grep \"{}\"'".format(grep_filter)] # xs, don't show thread 
+
         ssh_cmd = ['ssh', host]
         ssh_cmd.extend(cmd)
         output = ""

@@ -34,7 +34,7 @@ from deptran.rcc_rpc import ServerControlProxy
 from deptran.rcc_rpc import ClientControlProxy
 from pylib import ps
 
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
 LOG_FILE_LEVEL = logging.DEBUG
 logger = logging.getLogger('janus')
 
@@ -705,7 +705,8 @@ class ServerController(object):
             for site in sites:
                 site.connect_rpc(300)
                 logger.info("Connected to site %s @ %s", site.name, site.process.host_address)
-
+            
+            time.sleep(2)
             for site in sites:
 
                 logger.info("call sync_server_ready on site {}".format(site.id))
@@ -845,7 +846,17 @@ class ServerController(object):
         cmd.append(s)
         return ' '.join(cmd)
 
+    def copy_config(self):
+        for host_address in self.config['host'].itervalues():
+            for fn in self.config['args'].config_files:
+                dest = host_address + ':' + fn
+                subprocess.call(['scp', fn, dest])
+                logger.info('scp %s %s', fn, dest)
+    
+
     def start(self):
+        self.copy_config()
+        # time.sleep(3)
         # this current starts all the processes
         # todo: separate this into a class that starts and stops deptran
         host_process_counts = { host_address: 0 for host_address in self.config['host'].itervalues() }
