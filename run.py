@@ -855,8 +855,8 @@ class ServerController(object):
     
 
     def start(self):
-        self.copy_config()
-        # time.sleep(3)
+        # self.copy_config()
+        time.sleep(3)
         # this current starts all the processes
         # todo: separate this into a class that starts and stops deptran
         host_process_counts = { host_address: 0 for host_address in self.config['host'].itervalues() }

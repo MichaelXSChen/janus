@@ -42,6 +42,24 @@ Test run:
 ./test_run.py -m janus
 ```
 
+## Additional Guide by Xusheng Chen.
+
+1. Run code with machines of the same OS version.
+2. Set the coroutine Macro (comment or uncomment) in `src/rrr/reactor/coroutine.h`
+
+    * 18.04's default boost version use coroutine2
+    * 16.04's default boost version use coroutine1 
+
+3. Setup NFS, use the same absolute path for the `$janus` directory. 
+
+    * e.g., clone to machine1's `/home/xchen/janus`, export using NFS. Other machine mount the director to `/home/xchen/janus` too. 
+
+4. `mkdir $janus/tmp; mkdir $janus/log; mkdir $janus/archive'
+
+5. Setup config files in `$janus/config`. See the below wiki page (distributed experiment) for more info. 
+
+
+
 ## More
 Check the [wiki page](https://github.com/NYU-NEWS/janus/wiki) to find more about how to build the system on older or newer distros, how to run the system in a distributed setup, and how to generate figures in the paper, etc.
 <!-- 
