@@ -186,6 +186,9 @@ void ServerConnection::handle_read() {
         auto it = server_->handlers_.find(rpc_id);
         if (it != server_->handlers_.end()) {
             // the handler should delete req, and release server_connection refcopy.
+            
+            Log::info("Found hander for id=%d", rpc_id);
+
             Coroutine::CreateRun([&it, &req, this] () {
               it->second(req, (ServerConnection *) this->ref_copy());
             });
@@ -455,7 +458,7 @@ int Server::reg(i32 rpc_id, const std::function<void(Request*, ServerConnection*
         return EEXIST;
     }
 
-    Log::info("*RPC server registering RPC : id=%d", rpc_id);
+    Log::info("RPC server registering RPC : id=%d", rpc_id);
 
 
     handlers_[rpc_id] = func;
