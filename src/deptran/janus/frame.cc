@@ -70,6 +70,7 @@ shared_ptr<Tx> JanusFrame::CreateTx(epoch_t epoch, txnid_t tid,
 }
 
 Communicator *JanusFrame::CreateCommo(PollMgr *poll) {
+  // Log_info("[site %d] Creating janus communicator", site_info_->id);
   return new JanusCommo(poll);
 }
 

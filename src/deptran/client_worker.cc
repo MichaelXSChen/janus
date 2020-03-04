@@ -288,7 +288,7 @@ ClientWorker::ClientWorker(
   forward_requests_to_leader_ =
       (config->replica_proto_ == MODE_MULTI_PAXOS && site_info.locale_id != 0) ? true
                                                                          : false;
-  Log_debug("client %d created; forward %d",
+  Log_info("client %d created; forward %d",
             cli_id_,
             forward_requests_to_leader_);
 }

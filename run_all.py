@@ -415,14 +415,14 @@ def run_experiments(args):
             if result != 0:
                 logger.error("experiment returned {}".format(result))
             scrape_data(experiment_name)
-            archive_results(experiment_name)
+            # archive_results(experiment_name)
         except Exception:
             logger.info("Experiment %s failed.",
                         experiment_name)
             traceback.print_exc()
     
-    aggregate_results(experiment_name)
-    generate_graphs(args)
+    # aggregate_results(experiment_name)
+    # generate_graphs(args)
                    
 
 def print_args(args):

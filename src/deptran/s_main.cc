@@ -38,7 +38,7 @@ void client_setup_heartbeat(int num_clients) {
     cli_hb_server_g->reg(ccsi_g);
     auto ctrl_port = std::to_string(Config::GetConfig()->get_ctrl_port());
     std::string server_address = std::string("0.0.0.0:").append(ctrl_port);
-    Log_info("Start control server on port %s", ctrl_port.c_str());
+    Log_info("[PID %d] Start client control server on port %s", getpid(), ctrl_port.c_str());
     cli_hb_server_g->start(server_address.c_str());
   }
 }
@@ -79,20 +79,22 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       worker.RegisterWorkload();
       // populate table according to benchmarks
       worker.PopTable();
-      Log_info("table popped for site %d", (int)worker.site_info_->id);
+      Log_info("[site %d] table popped", (int)worker.site_info_->id);
       // start server service
       worker.SetupService();
-      Log_info("start communication for site %d", (int)worker.site_info_->id);
+      Log_info("[site %d] start communicationd", (int)worker.site_info_->id);
       worker.SetupCommo();
-      Log_info("site %d launched!", (int)site_info.id);
+      Log_info("[site %d] launched!", (int)site_info.id);
     }));
   }
+  //xs: seems should be server setup threads. 
+  //Log_info("waiting for server setup threads.");
 
-  Log_info("waiting for client setup threads.");
+  Log_info("waiting for server setup threads.");
   for (auto& th: setup_ths) {
     th.join();
   }
-  Log_info("done waiting for client setup threads.");
+  Log_info("done waiting for server setup threads.");
 
   for (ServerWorker& worker : svr_workers_g) {
     // start communicator after all servers are running
@@ -135,16 +137,31 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  auto client_infos = Config::GetConfig()->GetMyClients();
+  vector<Config::SiteInfo> client_infos = Config::GetConfig()->GetMyClients();
+  Log_info("client info size %d", client_infos.size());
+  for (auto &i: client_infos){
+    //xs debug
+    Log_info("client info: site id %d, name %s, proc_name %s, host %s, port %d ", i.id, i.name.c_str(), i.proc_name.c_str(), i.host.c_str(), i.port);
+  }
+  
   if (client_infos.size() > 0) {
     client_setup_heartbeat(client_infos.size());
   }
 
 
   auto server_infos = Config::GetConfig()->GetMyServers();
+
+  for (auto &i: server_infos){
+    //xs debug
+    Log_info("server info: site id %d, name %s, proc_name %s, host %s, port %d ", i.id, i.name.c_str(), i.proc_name.c_str(), i.host.c_str(), i.port);
+  }
+
   if (server_infos.size() > 0) {
     server_launch_worker(server_infos);
   }
+
+
+  
 
 #ifdef CPU_PROFILE
   char prof_file[1024];
@@ -152,6 +169,8 @@ int main(int argc, char *argv[]) {
   // start to profile
   ProfilerStart(prof_file);
 #endif // ifdef CPU_PROFILE
+
+
   if (client_infos.size() > 0) {
     //client_setup_heartbeat(client_infos.size());
     client_launch_workers(client_infos);

@@ -223,6 +223,8 @@ void ServerWorker::SetupCommo() {
     rep_sched_->commo_ = rep_commo_;
 
   }
+
+  Log_info("[site %d] Done SetupCommo", site_info_->id);
 }
 
 void ServerWorker::ShutDown() {
