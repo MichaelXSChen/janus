@@ -38,3 +38,6 @@ tags
 GTAGS
 GRTAGS
 GPATH
+/archive
+/tmp
+
