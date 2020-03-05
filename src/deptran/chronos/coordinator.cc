@@ -66,7 +66,7 @@ void CoordinatorChronos::PreAccept() {
   }
 }
 
-void CoordinatorJanus::PreAcceptAck(phase_t phase,
+void CoordinatorChronos::PreAcceptAck(phase_t phase,
                                     parid_t par_id,
                                     int res,
                                     shared_ptr<RccGraph> graph) {
@@ -115,13 +115,13 @@ void CoordinatorJanus::PreAcceptAck(phase_t phase,
 }
 
 /** caller should be thread_safe */
-void CoordinatorJanus::prepare() {
+void CoordinatorChronos::prepare() {
   // TODO
   // do not do failure recovery for now.
   verify(0);
 }
 
-void CoordinatorJanus::ChooseGraph() {
+void CoordinatorChronos::ChooseGraph() {
   for (auto& pair : n_fast_accept_graphs_) {
     auto& vec_graph = pair.second;
     if (fast_path_) {
@@ -135,7 +135,7 @@ void CoordinatorJanus::ChooseGraph() {
   }
 }
 
-void CoordinatorJanus::Accept() {
+void CoordinatorChronos::Accept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   verify(!fast_path_);
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
@@ -157,7 +157,7 @@ void CoordinatorJanus::Accept() {
   }
 }
 
-void CoordinatorJanus::AcceptAck(phase_t phase,
+void CoordinatorChronos::AcceptAck(phase_t phase,
                                  parid_t par_id,
                                  int res) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
@@ -180,7 +180,7 @@ void CoordinatorJanus::AcceptAck(phase_t phase,
   // if have reached a quorum
 }
 
-void CoordinatorJanus::Commit() {
+void CoordinatorChronos::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   TxData* txn = (TxData*) cmd_;
   auto dtxn = sp_graph_->FindV(cmd_->id_);
@@ -203,7 +203,7 @@ void CoordinatorJanus::Commit() {
   }
 }
 
-void CoordinatorJanus::CommitAck(phase_t phase,
+void CoordinatorChronos::CommitAck(phase_t phase,
                                  parid_t par_id,
                                  int32_t res,
                                  TxnOutput& output) {
@@ -231,7 +231,7 @@ void CoordinatorJanus::CommitAck(phase_t phase,
   return;
 }
 
-bool CoordinatorJanus::FastpathPossible() {
+bool CoordinatorChronos::FastpathPossible() {
   auto pars = tx_data().GetPartitionIds();
   bool all_fast_quorum_possible = true;
   for (auto& par_id : pars) {
@@ -253,17 +253,17 @@ bool CoordinatorJanus::FastpathPossible() {
   return all_fast_quorum_possible;
 };
 
-int32_t CoordinatorJanus::GetFastQuorum(parid_t par_id) {
+int32_t CoordinatorChronos::GetFastQuorum(parid_t par_id) {
   int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
   return n;
 }
 
-int32_t CoordinatorJanus::GetSlowQuorum(parid_t par_id) {
+int32_t CoordinatorChronos::GetSlowQuorum(parid_t par_id) {
   int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
   return n / 2 + 1;
 }
 
-bool CoordinatorJanus::AllFastQuorumsReached() {
+bool CoordinatorChronos::AllFastQuorumsReached() {
   auto pars = tx_data().GetPartitionIds();
   for (auto& par_id : pars) {
     int r = FastQuorumGraphCheck(par_id);
@@ -281,7 +281,7 @@ bool CoordinatorJanus::AllFastQuorumsReached() {
   return true;
 }
 
-bool CoordinatorJanus::AcceptQuorumReached() {
+bool CoordinatorChronos::AcceptQuorumReached() {
   auto pars = tx_data().GetPartitionIds();
   for (auto& par_id : pars) {
     if (n_fast_accept_oks_[par_id] < GetSlowQuorum(par_id)) {
@@ -291,7 +291,7 @@ bool CoordinatorJanus::AcceptQuorumReached() {
   return true;
 }
 
-bool CoordinatorJanus::PreAcceptAllSlowQuorumsReached() {
+bool CoordinatorChronos::PreAcceptAllSlowQuorumsReached() {
   auto pars = cmd_->GetPartitionIds();
   bool all_slow_quorum_reached =
       std::all_of(pars.begin(),
@@ -306,7 +306,7 @@ bool CoordinatorJanus::PreAcceptAllSlowQuorumsReached() {
 // 1: a fast quorum of the same
 // 2: >=(par_size - fast quorum) of different graphs. fast quorum not possible.
 // 3: less than a fast quorum graphs received.
-int CoordinatorJanus::FastQuorumGraphCheck(parid_t par_id) {
+int CoordinatorChronos::FastQuorumGraphCheck(parid_t par_id) {
   auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
   auto& vec_graph = n_fast_accept_graphs_[par_id];
   auto fast_quorum = GetFastQuorum(par_id);
@@ -335,7 +335,7 @@ int CoordinatorJanus::FastQuorumGraphCheck(parid_t par_id) {
   return res;
 }
 
-void CoordinatorJanus::GotoNextPhase() {
+void CoordinatorChronos::GotoNextPhase() {
   int n_phase = 6;
   int current_phase = phase_ % n_phase; // for debug
   switch (phase_++ % n_phase) {
@@ -379,7 +379,7 @@ void CoordinatorJanus::GotoNextPhase() {
   }
 }
 
-void CoordinatorJanus::Reset() {
+void CoordinatorChronos::Reset() {
   RccCoord::Reset();
   fast_path_ = false;
   fast_commit_ = false;

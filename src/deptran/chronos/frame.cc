@@ -33,7 +33,7 @@ Coordinator *ChronosFrame::CreateCoordinator(cooid_t coo_id,
   
 
   verify(config != nullptr);
-  CoordinatorChronos *coord = new (coo_id,
+  CoordinatorChronos *coord = new CoordinatorChronos(coo_id,
                                      benchmark,
                                      ccsi,
                                      id);

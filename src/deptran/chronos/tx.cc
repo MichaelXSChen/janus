@@ -3,7 +3,7 @@
 
 namespace janus {
 
-void TxJanus::DispatchExecute(SimpleCommand &cmd,
+void TxChronos::DispatchExecute(SimpleCommand &cmd,
                               int32_t *res,
                               map<int32_t, Value> *output) {
   phase_ = PHASE_RCC_DISPATCH;
