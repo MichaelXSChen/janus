@@ -29,21 +29,21 @@ namespace janus {
 //}
 
 
-JanusCommo* CoordinatorJanus::commo() {
+ChronosCommo* CoordinatorChronos::commo() {
   if (commo_ == nullptr) {
     commo_ = frame_->CreateCommo();
     commo_->loc_id_ = loc_id_;
   }
   verify(commo_ != nullptr);
-  return dynamic_cast<JanusCommo*>(commo_);
+  return dynamic_cast<ChronosCommo*>(commo_);
 }
 
-void CoordinatorJanus::launch_recovery(cmdid_t cmd_id) {
+void CoordinatorChronos::launch_recovery(cmdid_t cmd_id) {
   // TODO
   prepare();
 }
 
-void CoordinatorJanus::PreAccept() {
+void CoordinatorChronos::PreAccept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 //  // generate fast accept request
   // set broadcast callback

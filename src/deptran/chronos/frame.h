@@ -8,7 +8,7 @@ namespace janus {
 
 class ChronosFrame : public JanusFrame {
  public:
-  ChronosFrame(int mode = MODE_CHRONOS) : Frame(mode) {}
+  ChronosFrame(int mode = MODE_CHRONOS) : JanusFrame() {}
   
   //xs: always null ptr, whats that for?
   Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;
