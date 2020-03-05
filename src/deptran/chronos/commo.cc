@@ -1,19 +1,18 @@
 #include "../procedure.h"
-#include "deptran/rococo/tx.h"
+#include "deptran/janus/tx.h"
 #include "../rococo/graph_marshaler.h"
-#include "dep_graph.h"
 #include "commo.h"
 #include "marshallable.h"
 
 namespace janus {
 
-void JanusCommo::SendDispatch(vector<TxPieceData>& cmd,
+void ChronosCommo::SendDispatch(vector<TxPieceData>& cmd,
                               const function<void(int res,
                                                   TxnOutput& cmd,
                                                   RccGraph& graph)>& callback) {
   rrr::FutureAttr fuattr;
   auto tid = cmd[0].root_id_;
-  auto par_id = cmd[0].partition_id_;
+    auto par_id = cmd[0].partition_id_;
   std::function<void(Future*)> cb =
       [callback, tid, par_id](Future* fu) {
         int res;
@@ -42,7 +41,7 @@ void JanusCommo::SendDispatch(vector<TxPieceData>& cmd,
   Future::safe_release(proxy->async_JanusDispatch(cmd, fuattr));
 }
 
-void JanusCommo::SendHandoutRo(SimpleCommand& cmd,
+void ChronosCommo::SendHandoutRo(SimpleCommand& cmd,
                                const function<void(int res,
                                                    SimpleCommand& cmd,
                                                    map<int,
@@ -50,7 +49,7 @@ void JanusCommo::SendHandoutRo(SimpleCommand& cmd,
   verify(0);
 }
 
-void JanusCommo::SendFinish(parid_t pid,
+void ChronosCommo::SendFinish(parid_t pid,
                             txnid_t tid,
                             shared_ptr<RccGraph> graph,
                             const function<void(TxnOutput& output)>& callback) {
@@ -68,7 +67,7 @@ void JanusCommo::SendFinish(parid_t pid,
   Future::safe_release(proxy->async_JanusCommit(tid, md, fuattr));
 }
 
-void JanusCommo::SendInquire(parid_t pid,
+void ChronosCommo::SendInquire(parid_t pid,
                              epoch_t epoch,
                              txnid_t tid,
                              const function<void(RccGraph& graph)>& callback) {
@@ -85,7 +84,7 @@ void JanusCommo::SendInquire(parid_t pid,
   Future::safe_release(proxy->async_JanusInquire(epoch, tid, fuattr));
 }
 
-bool JanusCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
+bool ChronosCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
   if (graph.size() == 1) {
     auto v = graph.FindV(cmd_id);
     verify(v);
@@ -95,7 +94,7 @@ bool JanusCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
   }
 }
 
-void JanusCommo::BroadcastPreAccept(
+void ChronosCommo::BroadcastPreAccept(
     parid_t par_id,
     txnid_t txn_id,
     ballot_t ballot,
@@ -130,7 +129,7 @@ void JanusCommo::BroadcastPreAccept(
   }
 }
 
-void JanusCommo::BroadcastAccept(parid_t par_id,
+void ChronosCommo::BroadcastAccept(parid_t par_id,
                                  txnid_t cmd_id,
                                  ballot_t ballot,
                                  shared_ptr<RccGraph> graph,
@@ -154,7 +153,7 @@ void JanusCommo::BroadcastAccept(parid_t par_id,
   }
 }
 
-void JanusCommo::BroadcastCommit(
+void ChronosCommo::BroadcastCommit(
     parid_t par_id,
     txnid_t cmd_id,
     shared_ptr<RccGraph> graph,

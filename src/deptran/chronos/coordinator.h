@@ -3,45 +3,44 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "../command.h"
-#include "deptran/rococo/coordinator.h"
-#include "dep_graph.h"
+#include "deptran/janus/coordinator.h"
 
 namespace janus {
-class JanusCommo;
-class CoordinatorJanus : public RccCoord {
+class ChronosCommo;
+class CoordinatorChronos : public CoordinatorJanus {
  public:
-  enum Phase {
-    INIT_END = 0, DISPATCH = 1, PREPARE = 2,
-    PRE_ACCEPT = 3, ACCEPT = 4, COMMIT = 5
-  };
 
-  cooid_t coo_id_;
-//  phase_t  phase_; // a phase identifier
-  uint32_t thread_id_;
-  uint32_t cmdid_prefix_c_;
-  Recorder *recorder_;
-  ballot_t ballot_ = 0; // the ballot I am holding
-  // data structures for saving replies.
-  struct reply_cnt_t { int yes; int no; };
-  map<parid_t, int> n_fast_accept_oks_{};
-  map<parid_t, int> n_accept_oks_{};
-//  map<parid_t, int> n_fast_accept_rejects_ = {};
-  map<parid_t, vector<shared_ptr<RccGraph>>> n_fast_accept_graphs_{};
-  map<parid_t, int> fast_accept_graph_check_caches_{};
-  map<parid_t, int> n_commit_oks_ = {};
-  bool fast_path_ = false;
-  bool fast_commit_ = false;
+    /*
+     *
+     * Inherited from CoordinatorJanus
+    //  cooid_t coo_id_;
+    ////  phase_t  phase_; // a phase identifier
+    //  uint32_t thread_id_;
+    //  uint32_t cmdid_prefix_c_;
+    //  Recorder *recorder_;
+    //  ballot_t ballot_ = 0; // the ballot I am holding
+    //  // data structures for saving replies.
+    //  struct reply_cnt_t { int yes; int no; };
+    //  map<parid_t, int> n_fast_accept_oks_{};
+    //  map<parid_t, int> n_accept_oks_{};
+    ////  map<parid_t, int> n_fast_accept_rejects_ = {};
+    //  map<parid_t, vector<shared_ptr<RccGraph>>> n_fast_accept_graphs_{};
+    //  map<parid_t, int> fast_accept_graph_check_caches_{};
+    //  map<parid_t, int> n_commit_oks_ = {};
+    //  bool fast_path_ = false;
+    //  bool fast_commit_ = false;
+    //
+    ////  map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
+    ////  map<groupid_t, reply_cnt_t> n_accept_reply_;
+    //  map<groupid_t, reply_cnt_t> n_prepare_reply_;
+    ////  map<groupid_t, reply_cnt_t> n_commit_reply_;
+    */
 
-//  map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
-//  map<groupid_t, reply_cnt_t> n_accept_reply_;
-  map<groupid_t, reply_cnt_t> n_prepare_reply_;
-//  map<groupid_t, reply_cnt_t> n_commit_reply_;
+  using CoordinatorJanus::CoordinatorJanus;
 
-  using RccCoord::RccCoord;
+  virtual ~CoordinatorChronos() {}
 
-  virtual ~CoordinatorJanus() {}
-
-  JanusCommo *commo();
+  ChronosCommo *commo();
   // Dispatch inherits from RccCoord;
   void DispatchRo() override { DispatchAsync(); }
 

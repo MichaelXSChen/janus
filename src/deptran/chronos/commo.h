@@ -1,11 +1,11 @@
 #pragma once
-#include "../rococo/commo.h"
+#include "../janus/commo.h"
 
 namespace janus {
 
 class ChronosCommo : public JanusCommo {
  public:
-  using RccCommo::RccCommo;
+  using JanusCommo::JanusCommo;
   void SendDispatch(vector<SimpleCommand>& cmd,
                     const function<void(int res,
                                         TxnOutput& output,

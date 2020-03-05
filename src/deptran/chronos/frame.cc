@@ -8,12 +8,11 @@
 #include "frame.h"
 #include "coordinator.h"
 #include "scheduler.h"
-#include "dep_graph.h"
 #include "tx.h"
 
 namespace janus {
 
-static Frame *chronos_frame_s = Frame::RegFrame(MODE_JANUS,
+static Frame *chronos_frame_s = Frame::RegFrame(MODE_CHRONOS,
                                               {"chronos"},
                                               []() -> Frame * {
                                                 return new ChronosFrame();
@@ -34,7 +33,7 @@ Coordinator *ChronosFrame::CreateCoordinator(cooid_t coo_id,
   
 
   verify(config != nullptr);
-  CoordinatorJanus *coord = new (coo_id,
+  CoordinatorChronos *coord = new (coo_id,
                                      benchmark,
                                      ccsi,
                                      id);
@@ -43,32 +42,32 @@ Coordinator *ChronosFrame::CreateCoordinator(cooid_t coo_id,
   return coord;
 }
 
-Executor *JanusFrame::CreateExecutor(uint64_t, Scheduler *sched) {
+Executor *ChronosFrame::CreateExecutor(uint64_t, Scheduler *sched) {
   if (site_info_ != nullptr){
     Log_info("[site %d] created executor", site_info_->id); 
   }else{
     Log_info("[site null] created executor"); 
   }
-  
-  
   verify(0);
   return nullptr;
 }
 
-Scheduler *JanusFrame::CreateScheduler() {
+Scheduler *ChronosFrame::CreateScheduler() {
   if (site_info_ != nullptr){
     Log_info("[site %d] created scheduler", site_info_->id); 
   }else{
     Log_info("[site null] created scheduler"); 
   }
 
-  Scheduler *sched = new SchedulerJanus();
+  Scheduler *sched = new SchedulerChronos();
   sched->frame_ = this;
   return sched;
 }
 
+//XS: seems no need to override. Use the base funciton is ok.
+//for now, only debug print is slightly different
 vector<rrr::Service *>
-JanusFrame::CreateRpcServices(uint32_t site_id,
+ChronosFrame::CreateRpcServices(uint32_t site_id,
                               Scheduler *sched,
                               rrr::PollMgr *poll_mgr,
                               ServerControlServiceImpl *scsi) {
@@ -84,7 +83,7 @@ JanusFrame::CreateRpcServices(uint32_t site_id,
   return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
 }
 
-mdb::Row *JanusFrame::CreateRow(const mdb::Schema *schema,
+mdb::Row *ChronosFrame::CreateRow(const mdb::Schema *schema,
                                 vector<Value> &row_data) {
   if (site_info_ != nullptr){
     Log_info("[site %d] created row", site_info_->id); 
@@ -98,7 +97,7 @@ mdb::Row *JanusFrame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-shared_ptr<Tx> JanusFrame::CreateTx(epoch_t epoch, txnid_t tid,
+shared_ptr<Tx> ChronosFrame::CreateTx(epoch_t epoch, txnid_t tid,
                                     bool ro, Scheduler *mgr) {
 //  auto dtxn = new JanusDTxn(tid, mgr, ro);
 //  return dtxn;
@@ -109,18 +108,18 @@ shared_ptr<Tx> JanusFrame::CreateTx(epoch_t epoch, txnid_t tid,
   // }
   
   
-  shared_ptr<Tx> sp_tx(new TxJanus(epoch, tid, mgr, ro));
+  shared_ptr<Tx> sp_tx(new TxChronos(epoch, tid, mgr, ro));
   return sp_tx;
 }
 
-Communicator *JanusFrame::CreateCommo(PollMgr *poll) {
+Communicator *ChronosFrame::CreateCommo(PollMgr *poll) {
   if (site_info_ != NULL){
-    Log_info("[site %d] Creating janus communicator", site_info_->id);
+    Log_info("[site %d] Creating chronos communicator", site_info_->id);
   }
   else{
-    Log_info("[site null] Creating janus communicator, I think it should be the client");
+    Log_info("[site null] Creating chronos communicator, I think it should be the client");
   }
-  return new JanusCommo(poll);
+  return new ChronosCommo(poll);
 }
 
 } // namespace janus

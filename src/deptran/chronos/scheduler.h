@@ -1,6 +1,6 @@
 
 #pragma once
-#include "deptran/rococo/scheduler.h"
+#include "deptran/janus/scheduler.h"
 
 namespace janus {
 
@@ -45,7 +45,7 @@ class SchedulerChronos : public SchedulerJanus {
                 cmdid_t cmd_id,
                 shared_ptr<RccGraph> graph,
                 const function<void()> &callback) override;
-  JanusCommo* commo();
+  ChronosCommo* commo();
 
 };
 } // namespace janus

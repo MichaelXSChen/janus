@@ -64,6 +64,9 @@ namespace janus {
 #define MODE_MDCC   (0x12)
 #define MODE_EXTERNC   (0x14)
 #define MODE_RPC_NULL   (64)
+#define MODE_CHRONOS    (0x60)
+
+
 
     // deprecated.
 #define MODE_DEPTRAN (4)

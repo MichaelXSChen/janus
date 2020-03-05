@@ -6,7 +6,7 @@
 
 using namespace janus;
 
-map<txnid_t, shared_ptr<TxRococo>> SchedulerJanus::Aggregate(RccGraph &graph) {
+map<txnid_t, shared_ptr<TxRococo>> SchedulerChronos::Aggregate(RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, shared_ptr<TxRococo>> index;
   for (auto &pair: graph.vertex_index()) {
@@ -103,7 +103,7 @@ map<txnid_t, shared_ptr<TxRococo>> SchedulerJanus::Aggregate(RccGraph &graph) {
   return index;
 }
 
-void SchedulerJanus::OnPreAccept(const txid_t txn_id,
+void SchedulerChronos::OnPreAccept(const txid_t txn_id,
                                  const vector<SimpleCommand> &cmds,
                                  RccGraph *graph,
                                  int32_t *res,
@@ -152,7 +152,7 @@ void SchedulerJanus::OnPreAccept(const txid_t txn_id,
   }
 }
 
-void SchedulerJanus::OnAccept(const txnid_t txn_id,
+void SchedulerChronos::OnAccept(const txnid_t txn_id,
                               const ballot_t &ballot,
                               shared_ptr<RccGraph> graph,
                               int32_t *res) {
@@ -265,7 +265,7 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
 //}
 
 
-void SchedulerJanus::OnCommit(const txnid_t cmd_id,
+void SchedulerChronos::OnCommit(const txnid_t cmd_id,
                               RccGraph *graph,
                               int32_t *res,
                               TxnOutput *output,
@@ -333,7 +333,7 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
 
 }
 
-int SchedulerJanus::OnInquire(epoch_t epoch,
+int SchedulerChronos::OnInquire(epoch_t epoch,
                               cmdid_t cmd_id,
                               shared_ptr<RccGraph> graph,
                               const function<void()> &callback) {
@@ -374,9 +374,9 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
 
 }
 
-JanusCommo *SchedulerJanus::commo() {
+ChronosCommo *SchedulerChronos::commo() {
 
-  auto commo = dynamic_cast<JanusCommo *>(commo_);
+  auto commo = dynamic_cast<ChronosCommo *>(commo_);
   verify(commo != nullptr);
   return commo;
 }

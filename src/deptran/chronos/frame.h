@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../frame.h"
-
+#include "deptran/janus/frame.h"
 
 
 namespace janus {
 
-class ChronosFrame : public Frame {
+class ChronosFrame : public JanusFrame {
  public:
   ChronosFrame(int mode = MODE_CHRONOS) : Frame(mode) {}
   
