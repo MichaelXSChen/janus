@@ -187,7 +187,7 @@ void ServerConnection::handle_read() {
         if (it != server_->handlers_.end()) {
             // the handler should delete req, and release server_connection refcopy.
             
-            Log::info("Found hander for id=%d", rpc_id);
+            // Log::info("Found hander for id=%d", rpc_id);
 
             Coroutine::CreateRun([&it, &req, this] () {
               it->second(req, (ServerConnection *) this->ref_copy());
