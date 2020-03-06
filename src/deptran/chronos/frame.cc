@@ -44,9 +44,9 @@ Coordinator *ChronosFrame::CreateCoordinator(cooid_t coo_id,
 
 Executor *ChronosFrame::CreateExecutor(uint64_t, Scheduler *sched) {
   if (site_info_ != nullptr){
-    Log_info("[site %d] created executor", site_info_->id); 
+    Log_info("[site %d] created chronos executor", site_info_->id);
   }else{
-    Log_info("[site null] created executor"); 
+    Log_info("[site null] created chronos executor");
   }
   verify(0);
   return nullptr;
@@ -54,9 +54,9 @@ Executor *ChronosFrame::CreateExecutor(uint64_t, Scheduler *sched) {
 
 Scheduler *ChronosFrame::CreateScheduler() {
   if (site_info_ != nullptr){
-    Log_info("[site %d] created scheduler", site_info_->id); 
+    Log_info("[site %d] created chronos scheduler", site_info_->id);
   }else{
-    Log_info("[site null] created scheduler"); 
+    Log_info("[site null] created chronos scheduler");
   }
 
   Scheduler *sched = new SchedulerChronos();
@@ -64,24 +64,24 @@ Scheduler *ChronosFrame::CreateScheduler() {
   return sched;
 }
 
-//XS: seems no need to override. Use the base funciton is ok.
-//for now, only debug print is slightly different
-vector<rrr::Service *>
-ChronosFrame::CreateRpcServices(uint32_t site_id,
-                              Scheduler *sched,
-                              rrr::PollMgr *poll_mgr,
-                              ServerControlServiceImpl *scsi) {
-  
-  
-  
-  if (site_info_ != nullptr){
-    Log_info("[site %d] created rpc services", site_info_->id); 
-  }else{
-    Log_info("[site null] created rpc services"); 
-  }
-  
-  return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
-}
+////XS: seems no need to override. Use the base funciton is ok.
+////for now, only debug print is slightly different
+//vector<rrr::Service *>
+//ChronosFrame::CreateRpcServices(uint32_t site_id,
+//                              Scheduler *sched,
+//                              rrr::PollMgr *poll_mgr,
+//                              ServerControlServiceImpl *scsi) {
+//
+//
+//
+//  if (site_info_ != nullptr){
+//    Log_info("[site %d] created rpc services", site_info_->id);
+//  }else{
+//    Log_info("[site null] created rpc services");
+//  }
+//
+//  return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
+//}
 
 //mdb::Row *ChronosFrame::CreateRow(const mdb::Schema *schema,
 //                                vector<Value> &row_data) {

@@ -8,7 +8,7 @@ class RccGraph;
 class ChronosCommo;
 class SchedulerChronos : public SchedulerJanus {
  public:
-  using SchedulerRococo::SchedulerRococo;
+  using SchedulerJanus::SchedulerJanus;
 
   map<txnid_t, shared_ptr<TxRococo>> Aggregate(RccGraph& graph);
 

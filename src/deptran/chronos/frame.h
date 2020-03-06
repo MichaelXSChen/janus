@@ -28,13 +28,13 @@ class ChronosFrame : public JanusFrame {
   //created by each 
   Scheduler *CreateScheduler() override;
   
-  //xs: whats that for
-  //created by each server, but not client. 
-  vector<rrr::Service *> CreateRpcServices(uint32_t site_id,
-                                           Scheduler *dtxn_sched,
-                                           rrr::PollMgr *poll_mgr,
-                                           ServerControlServiceImpl *scsi)
-  override;
+//  //xs: whats that for
+//  //created by each server, but not client.
+//  vector<rrr::Service *> CreateRpcServices(uint32_t site_id,
+//                                           Scheduler *dtxn_sched,
+//                                           rrr::PollMgr *poll_mgr,
+//                                           ServerControlServiceImpl *scsi)
+//  override;
   
 //  //xs: called during initialization
 //  mdb::Row *CreateRow(const mdb::Schema *schema,

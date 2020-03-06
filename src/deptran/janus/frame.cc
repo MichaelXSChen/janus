@@ -76,9 +76,9 @@ JanusFrame::CreateRpcServices(uint32_t site_id,
   
   
   if (site_info_ != nullptr){
-    Log_info("[site %d] created rpc services", site_info_->id); 
+    Log_info("[site %d] [janus.cc] created rpc services", site_info_->id);
   }else{
-    Log_info("[site null] created rpc services"); 
+    Log_info("[site null] [janus.cc] created rpc services");
   }
   
   return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
