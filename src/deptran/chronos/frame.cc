@@ -83,34 +83,34 @@ ChronosFrame::CreateRpcServices(uint32_t site_id,
   return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
 }
 
-mdb::Row *ChronosFrame::CreateRow(const mdb::Schema *schema,
-                                vector<Value> &row_data) {
-  if (site_info_ != nullptr){
-    Log_info("[site %d] created row", site_info_->id); 
-  }else{
-    Log_info("[site null] created row"); 
-  }
-  
-  
-  
-  mdb::Row *r = RCCRow::create(schema, row_data);
-  return r;
-}
-
-shared_ptr<Tx> ChronosFrame::CreateTx(epoch_t epoch, txnid_t tid,
-                                    bool ro, Scheduler *mgr) {
-//  auto dtxn = new JanusDTxn(tid, mgr, ro);
-//  return dtxn;
-  // if (site_info_ != nullptr){
-  //   Log_info("[site %d] created txn", site_info_->id); 
-  // }else{
-  //   Log_info("[site null] created txn"); 
-  // }
-  
-  
-  shared_ptr<Tx> sp_tx(new TxChronos(epoch, tid, mgr, ro));
-  return sp_tx;
-}
+//mdb::Row *ChronosFrame::CreateRow(const mdb::Schema *schema,
+//                                vector<Value> &row_data) {
+//  if (site_info_ != nullptr){
+//    Log_info("[site %d] created row", site_info_->id);
+//  }else{
+//    Log_info("[site null] created row");
+//  }
+//
+//
+//
+//  mdb::Row *r = RCCRow::create(schema, row_data);
+//  return r;
+//}
+//
+//shared_ptr<Tx> ChronosFrame::CreateTx(epoch_t epoch, txnid_t tid,
+//                                    bool ro, Scheduler *mgr) {
+////  auto dtxn = new JanusDTxn(tid, mgr, ro);
+////  return dtxn;
+//  // if (site_info_ != nullptr){
+//  //   Log_info("[site %d] created txn", site_info_->id);
+//  // }else{
+//  //   Log_info("[site null] created txn");
+//  // }
+//
+//
+//  shared_ptr<Tx> sp_tx(new TxChronos(epoch, tid, mgr, ro));
+//  return sp_tx;
+//}
 
 Communicator *ChronosFrame::CreateCommo(PollMgr *poll) {
   if (site_info_ != NULL){

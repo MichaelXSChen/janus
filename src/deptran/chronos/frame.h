@@ -36,14 +36,14 @@ class ChronosFrame : public JanusFrame {
                                            ServerControlServiceImpl *scsi)
   override;
   
-  //xs: called during initialization
-  mdb::Row *CreateRow(const mdb::Schema *schema,
-                      vector<Value> &row_data) override;
-
-  
-  //xs: called in each site. 
-  shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
-                          bool ro, Scheduler *mgr) override;
+//  //xs: called during initialization
+//  mdb::Row *CreateRow(const mdb::Schema *schema,
+//                      vector<Value> &row_data) override;
+//
+//
+//  //xs: called in each site.
+//  shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
+//                          bool ro, Scheduler *mgr) override;
 
   //created by each client **and** each server 
   Communicator *CreateCommo(PollMgr *poll = nullptr) override;
