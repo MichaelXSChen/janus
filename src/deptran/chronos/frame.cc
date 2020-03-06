@@ -86,9 +86,9 @@ ChronosFrame::CreateRpcServices(uint32_t site_id,
 //mdb::Row *ChronosFrame::CreateRow(const mdb::Schema *schema,
 //                                vector<Value> &row_data) {
 //  if (site_info_ != nullptr){
-//    Log_info("[site %d] created row", site_info_->id);
+//    Log_info("[site %d] [Chronos] created row", site_info_->id);
 //  }else{
-//    Log_info("[site null] created row");
+//    Log_info("[site null] [Chrnonos] created row");
 //  }
 //
 //
@@ -101,11 +101,11 @@ ChronosFrame::CreateRpcServices(uint32_t site_id,
 //                                    bool ro, Scheduler *mgr) {
 ////  auto dtxn = new JanusDTxn(tid, mgr, ro);
 ////  return dtxn;
-//  // if (site_info_ != nullptr){
-//  //   Log_info("[site %d] created txn", site_info_->id);
-//  // }else{
-//  //   Log_info("[site null] created txn");
-//  // }
+//   if (site_info_ != nullptr){
+//     Log_info("[site %d] [chronos] created txn", site_info_->id);
+//   }else{
+//     Log_info("[site null] [chronos] created txn");
+//   }
 //
 //
 //  shared_ptr<Tx> sp_tx(new TxChronos(epoch, tid, mgr, ro));

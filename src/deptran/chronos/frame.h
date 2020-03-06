@@ -41,7 +41,7 @@ class ChronosFrame : public JanusFrame {
 //                      vector<Value> &row_data) override;
 //
 //
-//  //xs: called in each site.
+////  //xs: called in each site.
 //  shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
 //                          bool ro, Scheduler *mgr) override;
 

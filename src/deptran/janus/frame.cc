@@ -87,9 +87,9 @@ JanusFrame::CreateRpcServices(uint32_t site_id,
 mdb::Row *JanusFrame::CreateRow(const mdb::Schema *schema,
                                 vector<Value> &row_data) {
   if (site_info_ != nullptr){
-    Log_info("[site %d] [janus] created row", site_info_->id);
+    Log_debug("[site %d] [janus.cc] created row", site_info_->id);
   }else{
-    Log_info("[site null] [janus] created row");
+    Log_debug("[site null] [janus.cc] created row");
   }
   
   
@@ -103,9 +103,9 @@ shared_ptr<Tx> JanusFrame::CreateTx(epoch_t epoch, txnid_t tid,
 //  auto dtxn = new JanusDTxn(tid, mgr, ro);
 //  return dtxn;
    if (site_info_ != nullptr){
-     Log_info("[site %d] [janus] created txn", site_info_->id);
+     Log_debug("[site %d] [janus.cc] created txn", site_info_->id);
    }else{
-     Log_info("[site null] [janus] created txn");
+     Log_debug("[site null] [janus.cc] created txn");
    }
   
   
