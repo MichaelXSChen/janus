@@ -20,9 +20,12 @@ Communicator::Communicator(PollMgr* poll_mgr) {
   vector<parid_t> partitions = config->GetAllPartitionIds();
   for (auto& par_id : partitions) {
     auto site_infos = config->SitesByPartitionId(par_id);
-    vector<std::pair<siteid_t, ClassicProxy*>> proxies;
-    for (auto& si : site_infos) {
-      auto result = ConnectToSite(si, std::chrono::milliseconds
+      vector<std::pair<siteid_t, ClassicProxy*>> proxies;
+        int counter = 0;
+      for (auto& si : site_infos) {
+        Log_info("Creating communicator, the (%d)-th replica of partition %d is at site %d at %s", counter++, par_id, si.id, si.host.c_str());
+
+        auto result = ConnectToSite(si, std::chrono::milliseconds
           (CONNECT_TIMEOUT_MS));
       verify(result.first == SUCCESS);
       proxies.push_back(std::make_pair(si.id, result.second));
