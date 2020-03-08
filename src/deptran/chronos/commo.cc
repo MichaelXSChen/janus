@@ -34,8 +34,11 @@ void ChronosCommo::SendDispatch(vector<TxPieceData>& cmd,
         }
       };
   fuattr.callback = cb;
-  auto proxy = NearestProxyForPartition(cmd[0].PartitionId()).second;
-  Log_debug("dispatch to %ld", cmd[0].PartitionId());
+  auto proxy_info  = NearestProxyForPartition(cmd[0].PartitionId());
+  auto proxy = proxy_info.second;
+  //XS: what is proxy for
+  //xs: from my understanding, proxy should be nearest server holding this shard.
+  Log_info("dispatch to %ld, proxy (site) = %d", cmd[0].PartitionId(), proxy_info.first);
 //  verify(cmd.type_ > 0);
 //  verify(cmd.root_type_ > 0);
   Future::safe_release(proxy->async_JanusDispatch(cmd, fuattr));

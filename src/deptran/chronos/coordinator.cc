@@ -336,9 +336,16 @@ int CoordinatorChronos::FastQuorumGraphCheck(parid_t par_id) {
 }
 
 void CoordinatorChronos::GotoNextPhase() {
+
+
+
+
   int n_phase = 6;
   int current_phase = phase_ % n_phase; // for debug
-  switch (phase_++ % n_phase) {
+  Log_info("%s: phase = %d", __FUNCTION__, current_phase);
+
+
+    switch (phase_++ % n_phase) {
     case Phase::INIT_END:
       PreDispatch();
       verify(phase_ % n_phase == Phase::DISPATCH);

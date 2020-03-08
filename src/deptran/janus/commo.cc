@@ -7,6 +7,7 @@
 
 namespace janus {
 
+//xs: send a cmd to
 void JanusCommo::SendDispatch(vector<TxPieceData>& cmd,
                               const function<void(int res,
                                                   TxnOutput& cmd,
@@ -36,7 +37,7 @@ void JanusCommo::SendDispatch(vector<TxPieceData>& cmd,
       };
   fuattr.callback = cb;
   auto proxy = NearestProxyForPartition(cmd[0].PartitionId()).second;
-  Log_debug("dispatch to %ld", cmd[0].PartitionId());
+  Log_info("dispatch to %ld", cmd[0].PartitionId());
 //  verify(cmd.type_ > 0);
 //  verify(cmd.root_type_ > 0);
   Future::safe_release(proxy->async_JanusDispatch(cmd, fuattr));

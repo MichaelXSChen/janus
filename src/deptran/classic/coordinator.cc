@@ -56,6 +56,8 @@ void CoordinatorClassic::ForwardTxRequestAck(const TxReply& txn_reply) {
 }
 
 void CoordinatorClassic::DoTxAsync(TxRequest& req) {
+  Log_info("called do txnAsync");
+
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   TxData* cmd = frame_->CreateTxnCommand(req, txn_reg_);
   verify(txn_reg_ != nullptr);
@@ -69,7 +71,7 @@ void CoordinatorClassic::DoTxAsync(TxRequest& req) {
   n_retry_ = 0;
   Reset(); // In case of reuse.
 
-  Log_debug("do one request txn_id: %d", cmd_->id_);
+  Log_info("do one request txn_id: %d", cmd_->id_);
   auto config = Config::GetConfig();
   bool not_forwarding = forward_status_ != PROCESS_FORWARD_REQUEST;
 
@@ -82,7 +84,7 @@ void CoordinatorClassic::DoTxAsync(TxRequest& req) {
              this->coo_id_);
     ForwardTxnRequest(req);
   } else {
-    Log_info("start txn!!! : %d", forward_status_);
+    Log_info("start txn!!!, forward status = %d", forward_status_);
     Coroutine::CreateRun([this]() { GotoNextPhase(); });
   }
 }
@@ -90,6 +92,7 @@ void CoordinatorClassic::DoTxAsync(TxRequest& req) {
 void CoordinatorClassic::GotoNextPhase() {
   int n_phase = 4;
   int current_phase = phase_ % n_phase;
+
   switch (phase_++ % n_phase) {
     case Phase::INIT_END:
       DispatchAsync();

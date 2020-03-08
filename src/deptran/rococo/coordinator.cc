@@ -37,14 +37,20 @@ void RccCoord::PreDispatch() {
 
 
 void RccCoord::DispatchAsync() {
+    //xs: divide a transaction into pieces
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto txn = (TxData*) cmd_;
   verify(txn->root_id_ == txn->id_);
   int cnt = 0;
   auto cmds_by_par = txn->GetReadyPiecesData();
+  Log_info("transaction (id %d) has been divided into %d pieces", txn->id_, cmds_by_par.size());
+
+  int index = 0;
   for (auto& pair: cmds_by_par) {
-    const parid_t& par_id = pair.first;
-    auto& cmds = pair.second;
+
+      const parid_t& par_id = pair.first;
+      Log_info("piece: (id %d, pieces %d) has touch par_id = %d", txn->id_, index++, par_id);
+      auto& cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
     vector<SimpleCommand> cc;
@@ -61,8 +67,11 @@ void RccCoord::DispatchAsync() {
                                     std::placeholders::_2,
                                     std::placeholders::_3));
   }
+  Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_ );
 }
 
+//xs: callback for handling Dispatch ACK
+//xs: What is the meaning of this function.
 void RccCoord::DispatchAck(phase_t phase,
                            int res,
                            TxnOutput& output,
@@ -80,12 +89,12 @@ void RccCoord::DispatchAck(phase_t phase,
     verify(dispatch_acks_[pair.first] == false);
     dispatch_acks_[pair.first] = true;
     tx_data().Merge(pair.first, pair.second);
-    Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+    Log_info("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
               n_dispatch_ack_, n_dispatch_, tx_data().id_, pair.first);
   }
 
   // where should I store this graph?
-  Log_debug("start response graph size: %d", (int)graph.size());
+  Log_info("start response graph size: %d", (int)graph.size());
   verify(graph.size() > 0);
 
   sp_graph_->Aggregate(0, graph);
@@ -94,13 +103,13 @@ void RccCoord::DispatchAck(phase_t phase,
   if (graph.size() > 1) tx_data().disable_early_return();
 
   if (tx_data().HasMoreUnsentPiece()) {
-    Log_debug("command has more sub-cmd, cmd_id: %lx,"
+    Log_info("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
               tx_data().id_,
               tx_data().n_pieces_dispatched_, tx_data().GetNPieceAll());
     DispatchAsync();
   } else if (AllDispatchAcked()) {
-    Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
+    Log_info("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     verify(!tx_data().do_early_return());
     GotoNextPhase();
   }
