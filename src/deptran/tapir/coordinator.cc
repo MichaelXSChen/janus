@@ -25,6 +25,9 @@ void CoordinatorTapir::DispatchAsync() {
 
   int cnt = 0;
   auto cmds_by_par = tx_data->GetReadyPiecesData();
+  //
+  Log_info("TAPIR func %s called", __FUNCTION__);
+
 
   for (auto &pair: cmds_by_par) {
     const parid_t &par_id = pair.first;
@@ -37,6 +40,8 @@ void CoordinatorTapir::DispatchAsync() {
       dispatch_acks_[c->inn_id_] = false;
       sp_vec_pieces->push_back(c);
     }
+
+    Log_info("par_id %d, sp_vec_pieces size: %d", par_id, sp_vec_pieces->size());
     commo()->BroadcastDispatch(sp_vec_pieces,
                                this,
                                std::bind(&CoordinatorClassic::DispatchAck,

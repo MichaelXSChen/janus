@@ -66,7 +66,7 @@ void ClassicServiceImpl::Dispatch(const i64& cmd_id,
       piece_count_[piece_count_key]++;
   piece_count_tid_.insert(header.tid);
 #endif
-
+   Log_info("%s Called", __PRETTY_FUNCTION__);
 //  output->resize(output_size);
   // find stored procedure, and run it
   shared_ptr<Marshallable> sp = md.sp_data_;

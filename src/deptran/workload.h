@@ -72,6 +72,7 @@ class Workload {
             const defer_t& defer,
             const ProcHandler& handler
   ) {
+    Log_info("[[%s]] called, txn_type = %d, inn_id = %d", __PRETTY_FUNCTION__, txn_type, inn_id);
     auto& piece = txn_reg_->regs_[txn_type][inn_id];
     piece.input_vars_ = ivars;
     piece.output_vars_ = ovars;

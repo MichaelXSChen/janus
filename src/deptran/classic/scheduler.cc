@@ -65,6 +65,8 @@ bool SchedulerClassic::DispatchPiece(Tx& tx,
       & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
   auto& conflicts = piece_def.conflicts_;
   auto id = piece_data.inn_id();
+
+  Log_info("[[%s]], tx_id = %d, inn_id = %d, root_id", __PRETTY_FUNCTION__, tx.tid_, id, piece_data.root_id_);
   // Two phase locking won't pass these
 //  verify(!tx.inuse);
 //  tx.inuse = true;
@@ -100,6 +102,8 @@ bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
   verify(sp_vec_piece);
   auto tx = GetOrCreateTx(cmd_id);
 //  MergeCommands(tx.cmd_, cmd);
+
+  Log_info("[[%s]] Called, cmd_id = %d, tid = %d", __PRETTY_FUNCTION__, cmd_id, tx->tid_);
   Log_debug("received dispatch for tx id: %" PRIx64, tx->tid_);
 //  verify(partition_id_ == piece_data.partition_id_);
   // pre-proces
@@ -113,6 +117,7 @@ bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
 //    if (piece_data.inn_id_ == 205) b2 = true;
 //  }
 //  verify(b1 == b2);
+  //xs: concatenate the pieces of cmd to txn
   if (!tx->cmd_) {
     tx->cmd_ = cmd;
   } else {
@@ -122,7 +127,7 @@ bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
       present_cmd->push_back(sp_piece_data);
     }
   }
-
+  //xs: Up to now, trying to fill in the transaction's info.
   // TODO investigate: change it to a reference with clang will cause crash
   for (auto sp_piece_data : *sp_vec_piece) {
 //    verify(sp_piece_data->__debug_ == 10);
