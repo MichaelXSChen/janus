@@ -9,7 +9,7 @@ namespace janus {
 class ChronosCommo;
 class CoordinatorChronos : public CoordinatorJanus {
  public:
-  enum Phase {CHR_INIT=0, CHR_DISPATCH=1, CHR_FAST=2, CHR_FALLBACK=3, CHR_DECIDE=4};
+  enum Phase {CHR_INIT=0, CHR_DISPATCH=1, CHR_FAST=2, CHR_FALLBACK=3, CHR_COMMIT=4};
   enum Decision {CHR_UNK=0, CHR_COMMI=1, CHR_ABORT=2 };
   using CoordinatorJanus::CoordinatorJanus;
 
