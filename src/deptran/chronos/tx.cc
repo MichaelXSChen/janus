@@ -6,7 +6,9 @@ namespace janus {
 void TxChronos::DispatchExecute(SimpleCommand &cmd,
                               int32_t *res,
                               map<int32_t, Value> *output) {
-  phase_ = PHASE_RCC_DISPATCH;
+  Log_info("%s called" , __FUNCTION__);
+
+    phase_ = PHASE_RCC_DISPATCH;
   for (auto& c: dreqs_) {
     if (c.inn_id() == cmd.inn_id()) // already handled?
       return;

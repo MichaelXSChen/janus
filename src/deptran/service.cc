@@ -244,10 +244,15 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand>& cmd,
                                        TxnOutput* p_output,
                                        MarshallDeputy* p_md_res_graph,
                                        DeferredReply* p_defer) {
+    Log_info("%s called", __FUNCTION__);
+
     std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
     auto sp_graph = std::make_shared<RccGraph>();
     auto* sched = (SchedulerJanus*) dtxn_sched_;
     sched->OnDispatch(cmd, p_res, p_output, sp_graph);
+
+    //xs: get the dep graph.
+
     if (sp_graph->size() <= 1) {
       p_md_res_graph->SetMarshallable(std::make_shared<EmptyGraph>());
     } else {

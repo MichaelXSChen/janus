@@ -402,6 +402,7 @@ void ClientControlServiceImpl::LogClientResponse(ClientResponse *res) {
 void ClientControlServiceImpl::DispatchTxn(
     const TxDispatchRequest& req, TxReply* txn_reply, rrr::DeferredReply* defer) {
   // TODO: fix -- we dont need to do this everytime.
+  Log_info("dispatchTxn called");
   std::vector<ClientWorker*> locale0_workers;
   for (auto worker : client_workers_g) {
     Log_debug("%s worker %d; site %d; locale %d", __FUNCTION__, worker->id, worker->my_site_.id, worker->my_site_.locale_id);

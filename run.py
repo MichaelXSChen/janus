@@ -706,7 +706,7 @@ class ServerController(object):
                 site.connect_rpc(300)
                 logger.info("Connected to site %s @ %s", site.name, site.process.host_address)
             
-            time.sleep(2)
+            #time.sleep(2)
             for site in sites:
 
                 logger.info("call sync_server_ready on site {}".format(site.id))
