@@ -39,7 +39,7 @@ void CoordinatorTapir::DispatchAsync() {
       dispatch_acks_[c->inn_id_] = false;
       sp_vec_pieces->push_back(c);
     }
-    Log_info("par_id %d, sp_vec_pieces size: %d", par_id, sp_vec_pieces.size());
+    Log_info("par_id %d, sp_vec_pieces size: %d", par_id, sp_vec_pieces->size());
 
     commo()->BroadcastDispatch(sp_vec_pieces,
                                this,
