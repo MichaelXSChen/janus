@@ -73,6 +73,13 @@ class TxWorkspace {
     }
     (*values_).insert(m.begin(), m.end());
   }
+
+  void print(){
+      for (auto kv: *values_){
+         Log_info("[%s] key = %d, value = %s", __FILE__, kv.first, mdb::to_string(kv.second).c_str());
+      }
+  }
+
 };
 
 class TxRequest {

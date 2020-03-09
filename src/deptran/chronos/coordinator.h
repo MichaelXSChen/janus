@@ -9,33 +9,8 @@ namespace janus {
 class ChronosCommo;
 class CoordinatorChronos : public CoordinatorJanus {
  public:
-
-    /*
-     *
-     * Inherited from CoordinatorJanus
-    //  cooid_t coo_id_;
-    ////  phase_t  phase_; // a phase identifier
-    //  uint32_t thread_id_;
-    //  uint32_t cmdid_prefix_c_;
-    //  Recorder *recorder_;
-    //  ballot_t ballot_ = 0; // the ballot I am holding
-    //  // data structures for saving replies.
-    //  struct reply_cnt_t { int yes; int no; };
-    //  map<parid_t, int> n_fast_accept_oks_{};
-    //  map<parid_t, int> n_accept_oks_{};
-    ////  map<parid_t, int> n_fast_accept_rejects_ = {};
-    //  map<parid_t, vector<shared_ptr<RccGraph>>> n_fast_accept_graphs_{};
-    //  map<parid_t, int> fast_accept_graph_check_caches_{};
-    //  map<parid_t, int> n_commit_oks_ = {};
-    //  bool fast_path_ = false;
-    //  bool fast_commit_ = false;
-    //
-    ////  map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
-    ////  map<groupid_t, reply_cnt_t> n_accept_reply_;
-    //  map<groupid_t, reply_cnt_t> n_prepare_reply_;
-    ////  map<groupid_t, reply_cnt_t> n_commit_reply_;
-    */
-
+  enum Phase {CHR_INIT=0, CHR_DISPATCH=1, CHR_FAST=2, CHR_FALLBACK=3, CHR_DECIDE=4};
+  enum Decision {CHR_UNK=0, CHR_COMMI=1, CHR_ABORT=2 };
   using CoordinatorJanus::CoordinatorJanus;
 
   virtual ~CoordinatorChronos() {}

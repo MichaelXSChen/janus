@@ -49,9 +49,20 @@ void CoordinatorChronos::PreAccept() {
   // set broadcast callback
   // broadcast
   auto dtxn = sp_graph_->FindV(cmd_->id_);
+
+  Log_info("%s:%s called", __FILE__, __FUNCTION__);
+
   verify(tx_data().partition_ids_.size() == dtxn->partition_.size());
   for (auto par_id : cmd_->GetPartitionIds()) {
     auto cmds = tx_data().GetCmdsByPartition(par_id);
+
+    Log_info("Calling BroadCastPreAccept %d", par_id);
+
+    int counter = 0;
+    for (auto &c: cmds){
+        Log_info("%d-th cmd, partition_id = %d, id = %d, type = %d", counter++, par_id, c.id_, c.type());
+        c.input.print();
+    }
     commo()->BroadcastPreAccept(par_id,
                                 cmd_->id_,
                                 magic_ballot(),
@@ -340,22 +351,23 @@ void CoordinatorChronos::GotoNextPhase() {
 
 
 
-  int n_phase = 6;
+  int n_phase = 5;
   int current_phase = phase_ % n_phase; // for debug
+  Log_info("--------------------------------------------------");
   Log_info("%s: phase = %d", __FUNCTION__, current_phase);
 
 
     switch (phase_++ % n_phase) {
-    case Phase::INIT_END:
+    case Phase::CHR_INIT:
       PreDispatch();
-      verify(phase_ % n_phase == Phase::DISPATCH);
+      verify(phase_ % n_phase == Phase::CHR_INIT);
       break;
-    case Phase::DISPATCH:
+    case Phase::CHR_DISPATCH:
       phase_++;
       verify(phase_ % n_phase == Phase::PRE_ACCEPT);
       PreAccept();
       break;
-    case Phase::PRE_ACCEPT:
+    case Phase::CHR_FAST:
       if (fast_path_) {
         phase_++; // FIXME
         verify(phase_ % n_phase == Phase::COMMIT);
@@ -366,11 +378,11 @@ void CoordinatorChronos::GotoNextPhase() {
       }
       // TODO
       break;
-    case Phase::ACCEPT:
+    case Phase::CHR_FALLBACK:
       verify(phase_ % n_phase == Phase::COMMIT);
       Commit();
       break;
-    case Phase::COMMIT:
+    case Phase::CHR_DECIDE:
       verify(phase_ % n_phase == Phase::INIT_END);
       verify(committed_ != aborted_);
       if (committed_) {
@@ -384,6 +396,8 @@ void CoordinatorChronos::GotoNextPhase() {
     default:
       verify(0);
   }
+   Log_info("GotoNextPhase Returned %d --------------------------------------------------", current_phase);
+
 }
 
 void CoordinatorChronos::Reset() {

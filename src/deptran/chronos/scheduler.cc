@@ -108,7 +108,13 @@ void SchedulerChronos::OnPreAccept(const txid_t txn_id,
                                  RccGraph *graph,
                                  int32_t *res,
                                  shared_ptr<RccGraph> res_graph) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  /*
+   * xsTODO: Steps:
+    */
+
+    Log_info("[%s]:%s called", __FILE__, __FUNCTION__ );
+
+    std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on pre-accept graph size: %d", graph.size());
