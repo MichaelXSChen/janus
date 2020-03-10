@@ -22,3 +22,10 @@ Try search
 
 
 ```
+
+2. About Dispatch. 
+    * In 2PL, the logic is Dispatch->Prepare->Commit. 
+    * In Tapir, actually did nothing but created the transaction. 
+    
+    
+Qeustion: Do I need to call dispatch??

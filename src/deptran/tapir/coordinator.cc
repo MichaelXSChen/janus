@@ -96,7 +96,7 @@ void CoordinatorTapir::Reset() {
 void CoordinatorTapir::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
-  Log_debug("send out fast accept for cmd_id: %llx", cmd_->id_);
+  Log_info("send out fast accept for cmd_id: %llx", cmd_->id_);
   auto pars = tx_data().GetPartitionIds();
   verify(pars.size() > 0);
   int32_t sum = 0;
@@ -260,7 +260,9 @@ void CoordinatorTapir::GotoNextPhase() {
 
   Log_info("Tapir goto next phase, phase = %d", p);
   switch (p) {
-    case Phase::INIT_END:DispatchAsync();
+    case Phase::INIT_END:
+      //xs: try to remove dispatch from TAPIR
+      DispatchAsync();
       verify(phase_ % n_phase == Phase::DISPATCH);
       break;
     case Phase::DISPATCH:verify(phase_ % n_phase == Phase::FAST_ACCEPT);

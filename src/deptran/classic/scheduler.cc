@@ -94,7 +94,7 @@ bool SchedulerClassic::DispatchPiece(Tx& tx,
 //  tx.inuse = false;
   return true;
 }
-
+//Actually did nothing but create the transaction
 bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
                                 shared_ptr<Marshallable> cmd,
                                 TxnOutput& ret_output) {
