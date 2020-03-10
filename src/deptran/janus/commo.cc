@@ -12,6 +12,8 @@ void JanusCommo::SendDispatch(vector<TxPieceData>& cmd,
                               const function<void(int res,
                                                   TxnOutput& cmd,
                                                   RccGraph& graph)>& callback) {
+  Log_info("call back here %x", &callback);
+
   rrr::FutureAttr fuattr;
   auto tid = cmd[0].root_id_;
   auto par_id = cmd[0].partition_id_;

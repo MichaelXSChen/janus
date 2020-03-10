@@ -9,7 +9,8 @@ class ChronosCommo : public JanusCommo {
   void SendDispatch(vector<SimpleCommand>& cmd,
                     const function<void(int res,
                                         TxnOutput& output,
-                                        RccGraph& graph)>&) override;
+                                        ChronosDispatchRes &chr_res,
+                                        RccGraph& graph)>&);
   void SendHandoutRo(SimpleCommand& cmd,
                      const function<void(int res,
                                          SimpleCommand& cmd,

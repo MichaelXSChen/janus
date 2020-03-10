@@ -57,13 +57,15 @@ void RccCoord::DispatchAsync() {
       dispatch_acks_[c->inn_id_] = false;
       cc.push_back(*c);
     }
-    commo()->SendDispatch(cc,
-                          std::bind(&RccCoord::DispatchAck,
-                                    this,
-                                    phase_,
-                                    std::placeholders::_1,
-                                    std::placeholders::_2,
-                                    std::placeholders::_3));
+
+    auto cb =  std::bind(&RccCoord::DispatchAck,
+                         this,
+                         phase_,
+                         std::placeholders::_1,
+                         std::placeholders::_2,
+                         std::placeholders::_3);
+    Log_info("cb before call %x", &cb);
+    commo()->SendDispatch(cc, cb);
   }
   Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
 }

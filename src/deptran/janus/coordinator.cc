@@ -348,10 +348,10 @@ void CoordinatorJanus::GotoNextPhase() {
       verify(phase_ % n_phase == Phase::PRE_ACCEPT);
       PreAccept();
       break;
-    case Phase::PRE_ACCEPT:
+    case Phase::PRE_ACCEPT: //3
       if (fast_path_) {
         phase_++; // FIXME
-        verify(phase_ % n_phase == Phase::COMMIT);
+        verify(phase_ % n_phase == Phase::COMMIT); //
         Commit();
       } else {
         verify(phase_ % n_phase == Phase::ACCEPT);

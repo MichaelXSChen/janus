@@ -12,6 +12,8 @@ void RccCommo::SendDispatch(vector<SimpleCommand> &cmd,
                             const function<void(int res,
                                                 TxnOutput&,
                                                 RccGraph&)>& callback) {
+
+
   rrr::FutureAttr fuattr;
   std::function<void(Future*)> cb =
       [callback] (Future *fu) {

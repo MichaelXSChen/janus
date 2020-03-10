@@ -292,6 +292,9 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
   }
   verify(p_md_res_graph->kind_ != MarshallDeputy::UNKNOWN);
   p_defer->reply();
+
+  Log_info("%s returned", __PRETTY_FUNCTION__);
+
 }
 void ClassicServiceImpl::JanusCommit(const cmdid_t &cmd_id,
                                      const MarshallDeputy &graph,

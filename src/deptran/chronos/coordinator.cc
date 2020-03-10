@@ -346,54 +346,147 @@ int CoordinatorChronos::FastQuorumGraphCheck(parid_t par_id) {
   return res;
 }
 
+void CoordinatorChronos::Dispatch() {
+  verify(ro_state_ == BEGIN);
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  auto txn = (TxData *) cmd_;
+  verify(txn->root_id_ == txn->id_);
+  int cnt = 0;
+  auto cmds_by_par = txn->GetReadyPiecesData();
+  Log_info("transaction (id %d) has been divided into %d pieces", txn->id_, cmds_by_par.size());
+
+  int index = 0;
+  for (auto &pair: cmds_by_par) {
+
+    const parid_t &par_id = pair.first;
+    Log_info("piece: (id %d, pieces %d) has touch par_id = %d", txn->id_, index++, par_id);
+    auto &cmds = pair.second;
+    n_dispatch_ += cmds.size();
+    cnt += cmds.size();
+    vector<SimpleCommand> cc;
+    for (auto c: cmds) {
+      c->id_ = next_pie_id();
+      dispatch_acks_[c->inn_id_] = false;
+      cc.push_back(*c);
+    }
+
+    auto callback = std::bind(&CoordinatorChronos::ChrDispatchAck,
+                              this,
+                              phase_,
+                              std::placeholders::_1,
+                              std::placeholders::_2,
+                              std::placeholders::_3,
+                              std::placeholders::_4);
+    Log_info("DispatchACK callback is %x", &callback);
+    commo()->SendDispatch(cc, callback);
+  }
+  Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
+}
+
+
+//xs: callback for handling Dispatch ACK
+//xs: What is the meaning of this function.
+void CoordinatorChronos::ChrDispatchAck(phase_t phase,
+                           int res,
+                           TxnOutput &output,
+                           ChronosDispatchRes &chr_res,
+                           RccGraph &graph) {
+  Log_info("called 1");
+
+
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+  verify(phase == phase_); // cannot proceed without all acks.
+  verify(tx_data().root_id_ == tx_data().id_);
+  verify(graph.vertex_index().size() > 0);
+
+  Log_info("[[%s]] called 2, timestamp = %d", __PRETTY_FUNCTION__, chr_res.max_ts);
+
+  TxRococo &info = *(graph.vertex_index().at(tx_data().root_id_));
+//  verify(cmd[0].root_id_ == info.id());
+//  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
+
+  for (auto &pair : output) {
+    n_dispatch_ack_++;
+    verify(dispatch_acks_[pair.first] == false);
+    dispatch_acks_[pair.first] = true;
+    tx_data().Merge(pair.first, pair.second);
+    Log_info("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+             n_dispatch_ack_, n_dispatch_, tx_data().id_, pair.first);
+  }
+
+  // where should I store this graph?
+  Log_info("start response graph size: %d", (int) graph.size());
+  verify(graph.size() > 0);
+
+  sp_graph_->Aggregate(0, graph);
+
+  // TODO?
+  if (graph.size() > 1) tx_data().disable_early_return();
+
+  if (tx_data().HasMoreUnsentPiece()) {
+    Log_info("command has more sub-cmd, cmd_id: %lx,"
+             " n_started_: %d, n_pieces: %d",
+             tx_data().id_,
+             tx_data().n_pieces_dispatched_, tx_data().GetNPieceAll());
+    DispatchAsync();
+  } else if (AllDispatchAcked()) {
+    Log_info("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
+    verify(!tx_data().do_early_return());
+    GotoNextPhase();
+  }
+}
+
+
 void CoordinatorChronos::GotoNextPhase() {
 
   int n_phase = 5;
-  int current_phase = phase_ % n_phase; // for debug
+  int current_phase = phase_++ % n_phase; // for debug
   Log_info("--------------------------------------------------");
   Log_info("%s: phase = %d", __FUNCTION__, current_phase);
 
-  switch (phase_++ % n_phase) {
+  switch (current_phase) {
     case Phase::CHR_INIT:
       /*
        * Collect the local-DC timestamp.
        * Try to make my clock as up-to-date as possible.
        */
-      PreDispatch();
+      Dispatch();
       verify(phase_ % n_phase == Phase::CHR_DISPATCH);
       break;
-    case Phase::CHR_DISPATCH:
+    case Phase::CHR_DISPATCH: //1
       /*
        * Contact all participant replicas
        * Can enter fast if majority replica replies OK.
        */
-      phase_++;
+//      phase_++;
       verify(phase_ % n_phase == Phase::CHR_FAST);
       PreAccept();
       break;
 
-    case Phase::CHR_FAST:
+    case Phase::CHR_FAST: //2
 
       if (fast_path_) {
-        verify(phase_ % n_phase == Phase::CHR_COMMIT);
+        phase_++;
+        Log_info("here, phase_ = %d", phase_ % n_phase);
+        verify(phase_ % n_phase == Phase::CHR_COMMIT); //4
         Commit();
       } else {
         /*
          * Fallback to ocean vista.
          */
-        verify(phase_ % n_phase == Phase::CHR_FALLBACK);
+        verify(phase_ % n_phase == Phase::CHR_FALLBACK); //3
         Accept();
       }
       // TODO
       break;
 
-    case Phase::CHR_FALLBACK:
+    case Phase::CHR_FALLBACK: //3
 
       verify(phase_ % n_phase == Phase::CHR_COMMIT);
       Commit();
       break;
 
-    case Phase::CHR_COMMIT:
+    case Phase::CHR_COMMIT: //4
 
       verify(phase_ % n_phase == Phase::CHR_INIT); //overflow
       verify(committed_ != aborted_);

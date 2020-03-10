@@ -24,6 +24,16 @@ class CoordinatorChronos : public CoordinatorJanus {
                     parid_t par_id,
                     int res,
                     shared_ptr<RccGraph> graph);
+  void Dispatch();
+  void ChrDispatchAck(phase_t phase,
+                           int res,
+                           TxnOutput& cmd,
+                           ChronosDispatchRes &chr_res,
+                           RccGraph& graph);
+
+
+
+
 
   // do_one inherits from RccCoord;
 

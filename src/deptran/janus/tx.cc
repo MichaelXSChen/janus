@@ -37,6 +37,7 @@ void TxJanus::DispatchExecute(SimpleCommand &cmd,
                           &ret_code,
                           *output);
   ws_.insert(*output);
+  Log_info("%s file's %s returned", __FILE__, __FUNCTION__);
 }
 
 } // namespace janus
