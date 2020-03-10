@@ -2,6 +2,7 @@
 
 #include "__dep__.h"
 #include "rcc_rpc.h"
+#include "msg.h"
 
 #define DepTranServiceImpl ClassicServiceImpl
 
@@ -138,6 +139,15 @@ class ClassicServiceImpl : public ClassicService {
                      TxnOutput* p_output,
                      MarshallDeputy* p_md_res_graph,
                      DeferredReply* p_defer) override;
+
+
+  void ChronosDispatch(const vector<SimpleCommand>& cmd,
+                     int32_t* p_res,
+                     TxnOutput* p_output,
+                     ChronosDispatchRes *chr_res,
+                     MarshallDeputy* p_md_res_graph,
+                     DeferredReply* p_defer) override;
+
 
   void JanusCommit(const txid_t& cmd_id,
                    const MarshallDeputy& graph,

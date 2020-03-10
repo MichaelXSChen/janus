@@ -86,6 +86,12 @@ abstract service Classic {
                       TxnOutput output,
                       MarshallDeputy ret_graph);
 
+  defer ChronosDispatch(vector<SimpleCommand> cmd |
+                        i32 res,
+                        TxnOutput output,
+                        ChronosDispatchRes chr_res,
+                        MarshallDeputy ret_graph);
+
   defer JanusCommit(cmdid_t id,
                     MarshallDeputy graph |
                     int32_t res,
@@ -183,6 +189,11 @@ struct TxDispatchRequest {
 
 struct TxnDispatchResponse {
 }
+
+struct ChronosDispatchRes{
+    i64 max_ts;
+}
+
 
 abstract service ClientControl {
     client_get_txn_names( | map<i32, string> txn_names);

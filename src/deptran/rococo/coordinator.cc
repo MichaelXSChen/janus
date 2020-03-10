@@ -7,19 +7,18 @@
 
 namespace janus {
 
-
-RccCommo* RccCoord::commo() {
+RccCommo *RccCoord::commo() {
   if (commo_ == nullptr) {
     commo_ = frame_->CreateCommo();
     commo_->loc_id_ = loc_id_;
   }
   verify(commo_ != nullptr);
-  return dynamic_cast<RccCommo*>(commo_);
+  return dynamic_cast<RccCommo *>(commo_);
 }
 
 void RccCoord::PreDispatch() {
   verify(ro_state_ == BEGIN);
-  TxData* txn = dynamic_cast<TxData*>(cmd_);
+  TxData *txn = dynamic_cast<TxData *>(cmd_);
 //  auto dispatch = txn->is_read_only() ?
 //                  std::bind(&RccCoord::DispatchRo, this) :
 //                  std::bind(&RccCoord::Dispatch, this);
@@ -35,22 +34,21 @@ void RccCoord::PreDispatch() {
   }
 }
 
-
 void RccCoord::DispatchAsync() {
-    //xs: divide a transaction into pieces
+  //xs: divide a transaction into pieces
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto txn = (TxData*) cmd_;
+  auto txn = (TxData *) cmd_;
   verify(txn->root_id_ == txn->id_);
   int cnt = 0;
   auto cmds_by_par = txn->GetReadyPiecesData();
   Log_info("transaction (id %d) has been divided into %d pieces", txn->id_, cmds_by_par.size());
 
   int index = 0;
-  for (auto& pair: cmds_by_par) {
+  for (auto &pair: cmds_by_par) {
 
-      const parid_t& par_id = pair.first;
-      Log_info("piece: (id %d, pieces %d) has touch par_id = %d", txn->id_, index++, par_id);
-      auto& cmds = pair.second;
+    const parid_t &par_id = pair.first;
+    Log_info("piece: (id %d, pieces %d) has touch par_id = %d", txn->id_, index++, par_id);
+    auto &cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
     vector<SimpleCommand> cc;
@@ -67,34 +65,34 @@ void RccCoord::DispatchAsync() {
                                     std::placeholders::_2,
                                     std::placeholders::_3));
   }
-  Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_ );
+  Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
 }
 
 //xs: callback for handling Dispatch ACK
 //xs: What is the meaning of this function.
 void RccCoord::DispatchAck(phase_t phase,
                            int res,
-                           TxnOutput& output,
+                           TxnOutput &output,
                            RccGraph &graph) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
   verify(tx_data().root_id_ == tx_data().id_);
   verify(graph.vertex_index().size() > 0);
-  TxRococo& info = *(graph.vertex_index().at(tx_data().root_id_));
+  TxRococo &info = *(graph.vertex_index().at(tx_data().root_id_));
 //  verify(cmd[0].root_id_ == info.id());
 //  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
 
-  for (auto& pair : output) {
+  for (auto &pair : output) {
     n_dispatch_ack_++;
     verify(dispatch_acks_[pair.first] == false);
     dispatch_acks_[pair.first] = true;
     tx_data().Merge(pair.first, pair.second);
     Log_info("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-              n_dispatch_ack_, n_dispatch_, tx_data().id_, pair.first);
+             n_dispatch_ack_, n_dispatch_, tx_data().id_, pair.first);
   }
 
   // where should I store this graph?
-  Log_info("start response graph size: %d", (int)graph.size());
+  Log_info("start response graph size: %d", (int) graph.size());
   verify(graph.size() > 0);
 
   sp_graph_->Aggregate(0, graph);
@@ -104,9 +102,9 @@ void RccCoord::DispatchAck(phase_t phase,
 
   if (tx_data().HasMoreUnsentPiece()) {
     Log_info("command has more sub-cmd, cmd_id: %lx,"
-                  " n_started_: %d, n_pieces: %d",
-              tx_data().id_,
-              tx_data().n_pieces_dispatched_, tx_data().GetNPieceAll());
+             " n_started_: %d, n_pieces: %d",
+             tx_data().id_,
+             tx_data().n_pieces_dispatched_, tx_data().GetNPieceAll());
     DispatchAsync();
   } else if (AllDispatchAcked()) {
     Log_info("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
@@ -118,18 +116,18 @@ void RccCoord::DispatchAck(phase_t phase,
 /** caller should be thread safe */
 void RccCoord::Finish() {
   verify(0);
-  TxData *ch = (TxData*) cmd_;
+  TxData *ch = (TxData *) cmd_;
   // commit or abort piece
   Log_debug(
-    "send rococo finish requests to %d servers, tid: %llx, graph size: %d",
-    (int)ch->partition_ids_.size(), cmd_->id_, sp_graph_->size());
+      "send rococo finish requests to %d servers, tid: %llx, graph size: %d",
+      (int) ch->partition_ids_.size(), cmd_->id_, sp_graph_->size());
   auto v = sp_graph_->FindV(cmd_->id_);
-  TxRococo& info = *v;
+  TxRococo &info = *v;
   verify(ch->partition_ids_.size() == info.partition_.size());
   sp_graph_->UpgradeStatus(*v, TXN_CMT);
   verify(sp_graph_->size() > 0);
 
-  for (auto& rp : ch->partition_ids_) {
+  for (auto &rp : ch->partition_ids_) {
     commo()->SendFinish(rp,
                         cmd_->id_,
                         sp_graph_,
@@ -143,7 +141,7 @@ void RccCoord::Finish() {
 
 void RccCoord::FinishAck(phase_t phase,
                          int res,
-                         map<innid_t, map<int32_t, Value>>& output) {
+                         map<innid_t, map<int32_t, Value>> &output) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase_ == phase);
   n_finish_ack_++;
@@ -192,13 +190,13 @@ void RccCoord::DispatchRoAck(phase_t phase,
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
 
-  auto ch = (TxData*) cmd_;
+  auto ch = (TxData *) cmd_;
   cmd_->Merge(cmd);
   curr_vers_.insert(vers.begin(), vers.end());
 
   Log_debug("receive deptran RO start response, tid: %llx, pid: %llx, ",
-             cmd_->id_,
-             cmd.inn_id_);
+            cmd_->id_,
+            cmd.inn_id_);
 
   ch->n_pieces_dispatched_++;
   verify(0); // TODO
@@ -226,25 +224,20 @@ void RccCoord::Reset() {
   curr_vers_.clear();
 }
 
-
 void RccCoord::GotoNextPhase() {
   int n_phase = 3;
   int current_phase = phase_ % n_phase;
   switch (phase_++ % n_phase) {
-    case Phase::INIT_END:
-      PreDispatch();
+    case Phase::INIT_END:PreDispatch();
       verify(phase_ % n_phase == Phase::DISPATCH);
       break;
-    case Phase::DISPATCH:
-      verify(phase_ % n_phase == Phase::COMMIT);
+    case Phase::DISPATCH:verify(phase_ % n_phase == Phase::COMMIT);
       Finish();
       break;
-    case Phase::COMMIT:
-      verify(phase_ % n_phase == Phase::INIT_END);
+    case Phase::COMMIT:verify(phase_ % n_phase == Phase::INIT_END);
       End();
       break;
-    default:
-      verify(0);
+    default:verify(0);
   }
 }
 

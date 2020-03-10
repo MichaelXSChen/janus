@@ -76,5 +76,7 @@ class CoordinatorChronos : public CoordinatorJanus {
   int FastQuorumGraphCheck(parid_t par_id);
   void GotoNextPhase() override;
   void Reset() override;
+
+  std::atomic<uint64_t> logical_clock {0};
 };
 } // namespace janus

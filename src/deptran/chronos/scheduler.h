@@ -47,5 +47,7 @@ class SchedulerChronos : public SchedulerJanus {
                 const function<void()> &callback) override;
   ChronosCommo* commo();
 
+  std::atomic<uint64_t> logical_clock {0};
+
 };
 } // namespace janus
