@@ -52,7 +52,8 @@ void CoordinatorTapir::DispatchAsync() {
   }
   Log_debug("sent %d SubCmds\n", cnt);
 }
-
+//xs: seems it only waits for ``one'' ack for each piece.
+//That may work fine?
 void CoordinatorTapir::DispatchAck(phase_t phase,
                                    int32_t res,
                                    TxnOutput &outputs) {
@@ -64,19 +65,22 @@ void CoordinatorTapir::DispatchAck(phase_t phase,
     const innid_t &inn_id = pair.first;
     verify(dispatch_acks_[inn_id] == false);
     dispatch_acks_[inn_id] = true;
-    Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+    Log_info("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
               n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
 
     txn->Merge(pair.first, pair.second);
   }
   if (txn->HasMoreUnsentPiece()) {
-    Log_debug("command has more sub-cmd, cmd_id: %llx,"
+    Log_info("command has more sub-cmd, cmd_id: %llx,"
                   " n_started_: %d, n_pieces: %d",
               txn->id_, txn->n_pieces_dispatched_, txn->GetNPieceAll());
     DispatchAsync();
   } else if (AllDispatchAcked()) {
-    Log_debug("receive all start acks, txn_id: %llx; START PREPARE",
+    Log_info("receive all start acks, txn_id: %llx; START PREPARE",
               txn->id_);
+    //xs: what if the dispatch is slow
+    //usleep(1 * 1000 * 1000);
+    //xs: this is a sync wait.
     GotoNextPhase();
   }
 }
@@ -248,9 +252,14 @@ void CoordinatorTapir::Decide() {
   GotoNextPhase();
 }
 
+//xs: Note that phase is reused.
 void CoordinatorTapir::GotoNextPhase() {
+
   int n_phase = 4;
-  switch (phase_++ % n_phase) {
+  auto p = phase_++ % n_phase;
+
+  Log_info("Tapir goto next phase, phase = %d", p);
+  switch (p) {
     case Phase::INIT_END:DispatchAsync();
       verify(phase_ % n_phase == Phase::DISPATCH);
       break;

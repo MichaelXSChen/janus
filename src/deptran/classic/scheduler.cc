@@ -1,3 +1,4 @@
+#include <deptran/frame.h>
 #include "../constants.h"
 #include "../tx.h"
 #include "../procedure.h"
@@ -97,6 +98,13 @@ bool SchedulerClassic::DispatchPiece(Tx& tx,
 bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
                                 shared_ptr<Marshallable> cmd,
                                 TxnOutput& ret_output) {
+
+//  if (frame_->site_info_->id != 0){
+//    Log_info("[[%s]], site_id = %d, trying to see what will happen if dispatch is delayed", __PRETTY_FUNCTION__, frame_->site_info_->id);
+//    usleep(1 * 1000* 1000);
+//  }
+
+
   auto sp_vec_piece =
       dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
   verify(sp_vec_piece);

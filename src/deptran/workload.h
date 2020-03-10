@@ -73,6 +73,33 @@ class Workload {
             const ProcHandler& handler
   ) {
     Log_info("[[%s]] called, txn_type = %d, inn_id = %d", __PRETTY_FUNCTION__, txn_type, inn_id);
+    for (auto &i: ivars){
+      Log_info("ivars: %d", i);
+    }
+
+    for (auto &o: ovars){
+      Log_info("ovars: %d", o);
+    }
+
+    for (auto &c: conflicts){
+      Log_info("+++Conflict: table =%s, row_context_id = %d", c.table.c_str(), c.row_context_id);
+      for (auto &p: c.primary_keys){
+        Log_info("primary_key: %d", p);
+      }
+      for (auto &p: c.columns){
+        Log_info("Column: %d");
+      }
+      Log_info("-----");
+    }
+
+      for (auto &v: sharder.second) {
+        Log_info("sharder.first = %s, second = %d", sharder.first.c_str(), v);
+      }
+
+    Log_info("Defer_t = %d", defer);
+
+
+
     auto& piece = txn_reg_->regs_[txn_type][inn_id];
     piece.input_vars_ = ivars;
     piece.output_vars_ = ovars;
