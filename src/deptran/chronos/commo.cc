@@ -12,30 +12,25 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
                                                     ChronosDispatchRes &chr_res,
                                                     RccGraph &graph)> &callback) {
 
-  Log_info("sendDispatch called, callback addr = %x", &callback);
   rrr::FutureAttr fuattr;
   auto tid = cmd[0].root_id_;
   auto par_id = cmd[0].partition_id_;
   std::function<void(Future *)> cb =
       [callback, tid, par_id](Future *fu) {
-        Log_info("Cb called, callback addr = %x", &callback);
         int res;
         TxnOutput output;
         MarshallDeputy md;
         ChronosDispatchRes chr_res;
         fu->get_reply() >> res >> output >> chr_res >> md;
-        Log_info("here, ts = %d", chr_res.max_ts);
         if (md.kind_ == MarshallDeputy::EMPTY_GRAPH) {
           RccGraph rgraph;
           auto v = rgraph.CreateV(tid);
           TxRococo &info = *v;
           info.partition_.insert(par_id);
           verify(rgraph.vertex_index().size() > 0);
-          Log_info("here1, callbakck = %x", &callback);
           callback(res, output, chr_res, rgraph);
         } else if (md.kind_ == MarshallDeputy::RCC_GRAPH) {
           RccGraph &graph = dynamic_cast<RccGraph &>(*md.sp_data_);
-          Log_info("here2");
           callback(res, output, chr_res, graph);
         } else {
           verify(0);

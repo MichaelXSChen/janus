@@ -370,7 +370,7 @@ void CoordinatorChronos::Dispatch() {
       cc.push_back(*c);
     }
 
-    auto callback = std::bind(&CoordinatorChronos::ChrDispatchAck,
+    auto callback = std::bind(&CoordinatorChronos::DispatchAck,
                               this,
                               phase_,
                               std::placeholders::_1,
@@ -386,13 +386,11 @@ void CoordinatorChronos::Dispatch() {
 
 //xs: callback for handling Dispatch ACK
 //xs: What is the meaning of this function.
-void CoordinatorChronos::ChrDispatchAck(phase_t phase,
+void CoordinatorChronos::DispatchAck(phase_t phase,
                            int res,
                            TxnOutput &output,
                            ChronosDispatchRes &chr_res,
                            RccGraph &graph) {
-  Log_info("called 1");
-
 
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.

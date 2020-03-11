@@ -24,12 +24,6 @@ class CoordinatorChronos : public CoordinatorJanus {
                     parid_t par_id,
                     int res,
                     shared_ptr<RccGraph> graph);
-  void Dispatch();
-  void ChrDispatchAck(phase_t phase,
-                           int res,
-                           TxnOutput& cmd,
-                           ChronosDispatchRes &chr_res,
-                           RccGraph& graph);
 
 
 
@@ -86,7 +80,14 @@ class CoordinatorChronos : public CoordinatorJanus {
   int FastQuorumGraphCheck(parid_t par_id);
   void GotoNextPhase() override;
   void Reset() override;
-
+  //xs's code start here
   std::atomic<uint64_t> logical_clock {0};
+  void Dispatch();
+  void DispatchAck(phase_t phase,
+                      int res,
+                      TxnOutput& cmd,
+                      ChronosDispatchRes &chr_res,
+                      RccGraph& graph);
+  
 };
 } // namespace janus
