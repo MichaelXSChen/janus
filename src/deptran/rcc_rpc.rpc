@@ -86,11 +86,35 @@ abstract service Classic {
                       TxnOutput output,
                       MarshallDeputy ret_graph);
 
-  defer ChronosDispatch(vector<SimpleCommand> cmd |
+  defer ChronosDispatch(vector<SimpleCommand> cmd,
+                        ChronosDispatchReq req |
                         i32 res,
                         TxnOutput output,
                         ChronosDispatchRes chr_res,
                         MarshallDeputy ret_graph);
+
+  defer ChronosPreAccept(cmdid_t txn_id,
+                         vector<SimpleCommand> cmd,
+                         ChronosPreAcceptReq req,
+                         MarshallDeputy graph |
+                         i32 res,
+                         ChronosPreAcceptRes chr_res,
+                         MarshallDeputy ret_graph);
+
+  defer ChronosAccept(cmdid_t txn_id,
+                      ballot_t ballot,
+                      MarshallDeputy graph,
+                      ChronosAcceptReq req |
+                      i32 res,
+                      ChronosAcceptRes chr_res);
+
+  defer ChronosCommit(cmdid_t id,
+                    MarshallDeputy graph,
+                    ChronosCommitReq req |
+                    int32_t res,
+                    ChronosCommitRes chr_res,
+                    TxnOutput output);
+
 
   defer JanusCommit(cmdid_t id,
                     MarshallDeputy graph |
@@ -190,8 +214,39 @@ struct TxDispatchRequest {
 struct TxnDispatchResponse {
 }
 
+struct ChronosDispatchReq{
+
+}
+
 struct ChronosDispatchRes{
     i64 max_ts;
+}
+
+struct ChronosPreAcceptReq {
+    i64 ts_min;
+    i64 ts_max;
+}
+
+struct ChronosPreAcceptRes {
+    i64 ts_left;
+    i64 ts_right;
+    i64 dep_reqs;
+}
+
+struct ChronosAcceptReq{
+    i64 ts;
+}
+
+struct ChronosAcceptRes{
+
+}
+
+struct ChronosCommitReq{
+
+}
+
+struct ChronosCommitRes{
+
 }
 
 

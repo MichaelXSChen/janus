@@ -6,11 +6,7 @@ namespace janus {
 class ChronosCommo : public JanusCommo {
  public:
   using JanusCommo::JanusCommo;
-  void SendDispatch(vector<SimpleCommand>& cmd,
-                    const function<void(int res,
-                                        TxnOutput& output,
-                                        ChronosDispatchRes &chr_res,
-                                        RccGraph& graph)>&);
+
   void SendHandoutRo(SimpleCommand& cmd,
                      const function<void(int res,
                                          SimpleCommand& cmd,
@@ -48,6 +44,14 @@ class ChronosCommo : public JanusCommo {
 
   bool IsGraphOrphan(RccGraph& graph, txnid_t cmd_id);
 
+
+  //xs's code
+  void SendDispatch(vector<SimpleCommand>& cmd,
+                    const ChronosDispatchReq& req,
+                    const function<void(int res,
+                                        TxnOutput& output,
+                                        ChronosDispatchRes &chr_res,
+                                        RccGraph& graph)>&);
 };
 
 } // namespace

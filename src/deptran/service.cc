@@ -266,6 +266,7 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand> &cmd,
 }
 
 void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
+                                         const ChronosDispatchReq &req,
                                          int32_t *p_res,
                                          TxnOutput *p_output,
                                          ChronosDispatchRes *chr_res,
@@ -296,6 +297,39 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
   Log_info("%s returned", __PRETTY_FUNCTION__);
 
 }
+
+void ClassicServiceImpl::ChronosPreAccept(const uint64_t &txn_id,
+                                          const std::vector<SimpleCommand> &cmd,
+                                          const ChronosPreAcceptReq &req,
+                                          const MarshallDeputy &graph,
+                                          rrr::i32 *res,
+                                          ChronosPreAcceptRes *chr_res,
+                                          MarshallDeputy *ret_graph,
+                                          rrr::DeferredReply *defer) {
+  JanusPreAccept(txn_id, cmd, graph, res, ret_graph, defer);
+
+}
+
+void ClassicServiceImpl::ChronosAccept(const uint64_t &txn_id,
+                                       const int64_t &ballot,
+                                       const MarshallDeputy &graph,
+                                       const ChronosAcceptReq &req,
+                                       rrr::i32 *res,
+                                       ChronosAcceptRes *chr_res,
+                                       rrr::DeferredReply *defer) {
+  JanusAccept(txn_id, ballot, graph, res, defer);
+}
+
+void ClassicServiceImpl::ChronosCommit(const uint64_t &id,
+                                       const MarshallDeputy &graph,
+                                       const ChronosCommitReq &req,
+                                       int32_t *res,
+                                       ChronosCommitRes *chr_res,
+                                       TxnOutput *output,
+                                       rrr::DeferredReply *defer) {
+  JanusCommit(id, graph, res, output, defer);
+}
+
 void ClassicServiceImpl::JanusCommit(const cmdid_t &cmd_id,
                                      const MarshallDeputy &graph,
                                      int32_t *res,

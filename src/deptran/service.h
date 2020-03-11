@@ -140,8 +140,33 @@ class ClassicServiceImpl : public ClassicService {
                      MarshallDeputy* p_md_res_graph,
                      DeferredReply* p_defer) override;
 
+  void ChronosPreAccept(const cmdid_t &txn_id,
+                        const std::vector<SimpleCommand> &cmd,
+                        const ChronosPreAcceptReq &req,
+                        const MarshallDeputy &graph,
+                        rrr::i32 *res,
+                        ChronosPreAcceptRes *chr_res,
+                        MarshallDeputy *ret_graph,
+                        rrr::DeferredReply *defer) override;
+
+  void ChronosAccept(const cmdid_t &txn_id,
+                     const ballot_t &ballot,
+                     const MarshallDeputy &graph,
+                     const ChronosAcceptReq &req,
+                     rrr::i32 *res,
+                     ChronosAcceptRes *chr_res,
+                     rrr::DeferredReply *defer) override ;
+
+  void ChronosCommit(const cmdid_t &id,
+                     const MarshallDeputy &graph,
+                     const ChronosCommitReq &req,
+                     int32_t *res,
+                     ChronosCommitRes *chr_res,
+                     TxnOutput *output,
+                     rrr::DeferredReply *defer) override;
 
   void ChronosDispatch(const vector<SimpleCommand>& cmd,
+                     const ChronosDispatchReq& req,
                      int32_t* p_res,
                      TxnOutput* p_output,
                      ChronosDispatchRes *chr_res,

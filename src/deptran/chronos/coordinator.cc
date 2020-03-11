@@ -378,7 +378,11 @@ void CoordinatorChronos::Dispatch() {
                               std::placeholders::_3,
                               std::placeholders::_4);
     Log_info("DispatchACK callback is %x", &callback);
-    commo()->SendDispatch(cc, callback);
+
+    ChronosDispatchReq req;
+
+
+    commo()->SendDispatch(cc, req,callback);
   }
   Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
 }

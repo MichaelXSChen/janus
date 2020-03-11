@@ -7,6 +7,7 @@
 namespace janus {
 
 void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
+                                const ChronosDispatchReq& chr_req,
                                 const function<void(int res,
                                                     TxnOutput &cmd,
                                                     ChronosDispatchRes &chr_res,
@@ -43,7 +44,11 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
   Log_info("dispatch to %ld, proxy (site) = %d", cmd[0].PartitionId(), proxy_info.first);
 //  verify(cmd.type_ > 0);
 //  verify(cmd.root_type_ > 0);
-  Future::safe_release(proxy->async_ChronosDispatch(cmd, fuattr));
+
+
+
+
+  Future::safe_release(proxy->async_ChronosDispatch(cmd, chr_req, fuattr));
 }
 
 void ChronosCommo::SendHandoutRo(SimpleCommand &cmd,
