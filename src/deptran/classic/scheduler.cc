@@ -27,14 +27,15 @@ void SchedulerClassic::MergeCommands(vector<shared_ptr<TxPieceData>>& ops,
 bool SchedulerClassic::ExecutePiece(Tx& tx,
                                     TxPieceData& piece_data,
                                     TxnOutput& ret_output) {
+  Log_info("[[%s]] Called", __PRETTY_FUNCTION__);
   auto roottype = piece_data.root_type_;
   auto subtype = piece_data.type_;
   TxnPieceDef& piece_def = txn_reg_->get(roottype, subtype);
   int ret_code;
   auto& conflicts = piece_def.conflicts_;
   piece_data.input.Aggregate(tx.ws_);
-// TODO enable this verify
-//  piece_data.input.VerifyReady();
+  // TODO enable this verify
+  //  piece_data.input.VerifyReady();
   piece_def.proc_handler_(nullptr,
                           tx,
                           piece_data,
