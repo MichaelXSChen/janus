@@ -20,10 +20,6 @@ class CoordinatorChronos : public CoordinatorJanus {
   void DispatchRo() override { DispatchAsync(); }
 
   void PreAccept();
-  void PreAcceptAck(phase_t phase,
-                    parid_t par_id,
-                    int res,
-                    shared_ptr<RccGraph> graph);
 
 
 
@@ -88,6 +84,13 @@ class CoordinatorChronos : public CoordinatorJanus {
                       TxnOutput& cmd,
                       ChronosDispatchRes &chr_res,
                       RccGraph& graph);
-  
+
+  void PreAcceptAck(phase_t phase,
+                    parid_t par_id,
+                    int res,
+                    ChronosPreAcceptRes &chr_res,
+                    shared_ptr<RccGraph> graph);
+
+
 };
 } // namespace janus

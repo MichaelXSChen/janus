@@ -63,23 +63,28 @@ void CoordinatorChronos::PreAccept() {
       Log_info("%d-th cmd, partition_id = %d, id = %d, type = %d", counter++, par_id, c.id_, c.type());
       c.input.print();
     }
+
+    ChronosPreAcceptReq chr_req;
     commo()->BroadcastPreAccept(par_id,
                                 cmd_->id_,
                                 magic_ballot(),
                                 cmds,
+                                chr_req,
                                 sp_graph_,
-                                std::bind(&CoordinatorJanus::PreAcceptAck,
+                                std::bind(&CoordinatorChronos::PreAcceptAck,
                                           this,
                                           phase_,
                                           par_id,
                                           std::placeholders::_1,
-                                          std::placeholders::_2));
+                                          std::placeholders::_2,
+                                          std::placeholders::_3));
   }
 }
 
 void CoordinatorChronos::PreAcceptAck(phase_t phase,
                                       parid_t par_id,
                                       int res,
+                                      ChronosPreAcceptRes &chr_res,
                                       shared_ptr<RccGraph> graph) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   // if recevie more messages after already gone to next phase, ignore
