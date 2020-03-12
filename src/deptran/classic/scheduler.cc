@@ -63,15 +63,14 @@ bool SchedulerClassic::ExecuteAll(Tx &tx, TxnOutput &ret_output) {
 bool SchedulerClassic::DispatchPiece(Tx& tx,
                                      TxPieceData& piece_data,
                                      TxnOutput& ret_output) {
-  TxnPieceDef
-      & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
+  TxnPieceDef& piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
   auto& conflicts = piece_def.conflicts_;
   auto id = piece_data.inn_id();
 
   Log_info("[[%s]], tx_id = %d, inn_id = %d, root_id", __PRETTY_FUNCTION__, tx.tid_, id, piece_data.root_id_);
   // Two phase locking won't pass these
-//  verify(!tx.inuse);
-//  tx.inuse = true;
+  //  verify(!tx.inuse);
+  //  tx.inuse = true;
 
   for (auto& c: conflicts) {
     vector<Value> pkeys;

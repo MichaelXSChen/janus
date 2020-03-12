@@ -89,27 +89,22 @@ abstract service Classic {
   defer ChronosDispatch(vector<SimpleCommand> cmd,
                         ChronosDispatchReq req |
                         i32 res,
-                        TxnOutput output,
                         ChronosDispatchRes chr_res,
-                        MarshallDeputy ret_graph);
+                        TxnOutput output);
 
   defer ChronosPreAccept(cmdid_t txn_id,
                          vector<SimpleCommand> cmd,
-                         ChronosPreAcceptReq req,
-                         MarshallDeputy graph |
+                         ChronosPreAcceptReq req |
                          i32 res,
-                         ChronosPreAcceptRes chr_res,
-                         MarshallDeputy ret_graph);
+                         ChronosPreAcceptRes chr_res);
 
   defer ChronosAccept(cmdid_t txn_id,
                       ballot_t ballot,
-                      MarshallDeputy graph,
                       ChronosAcceptReq req |
                       i32 res,
                       ChronosAcceptRes chr_res);
 
   defer ChronosCommit(cmdid_t id,
-                    MarshallDeputy graph,
                     ChronosCommitReq req |
                     int32_t res,
                     ChronosCommitRes chr_res,

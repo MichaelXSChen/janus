@@ -42,10 +42,6 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
   auto proxy = proxy_info.second;
   //XS: proxy is the rpc client side handler.
   Log_info("dispatch to %ld, proxy (site) = %d", cmd[0].PartitionId(), proxy_info.first);
-//  verify(cmd.type_ > 0);
-//  verify(cmd.root_type_ > 0);
-
-
 
 
   Future::safe_release(proxy->async_ChronosDispatch(cmd, chr_req, fuattr));
@@ -149,7 +145,7 @@ void ChronosCommo::BroadcastPreAccept(
     } else {
       MarshallDeputy md(sp_graph);
       Log_info("ChronosPreAccept");
-      f = proxy->async_ChronosPreAccept(txn_id, cmds, chr_req, md, fuattrChro);
+      f = proxy->async_ChronosPreAccept(txn_id, cmds, chr_req, fuattrChro);
     }
     Future::safe_release(f);
   }
@@ -176,7 +172,6 @@ void ChronosCommo::BroadcastAccept(parid_t par_id,
     MarshallDeputy md(graph);
     Future::safe_release(proxy->async_ChronosAccept(cmd_id,
                                                   ballot,
-                                                  md,
                                                   chr_req,
                                                   fuattr));
   }
@@ -216,7 +211,7 @@ void ChronosCommo::BroadcastCommit(
       Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, fuattrJanus));
     } else {
       MarshallDeputy md(graph);
-      Future::safe_release(proxy->async_ChronosCommit(cmd_id, md, chr_req, fuattrChronos));
+      Future::safe_release(proxy->async_ChronosCommit(cmd_id, chr_req, fuattrChronos));
     }
   }
 }

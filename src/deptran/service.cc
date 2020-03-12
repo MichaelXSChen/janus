@@ -268,9 +268,8 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand> &cmd,
 void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
                                          const ChronosDispatchReq &req,
                                          int32_t *p_res,
-                                         TxnOutput *p_output,
                                          ChronosDispatchRes *chr_res,
-                                         MarshallDeputy *p_md_res_graph,
+                                         TxnOutput *p_output,
                                          DeferredReply *p_defer) {
 
   Log_info("%s called", __PRETTY_FUNCTION__);
@@ -278,7 +277,8 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
   std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
   auto sp_graph = std::make_shared<RccGraph>();
   auto *sched = (SchedulerChronos *) dtxn_sched_;
-  sched->OnDispatch(cmd, p_res, p_output, sp_graph);
+
+  sched->OnDispatch(cmd, req, p_res, chr_res, p_output);
 
   //xs step 1: get the dep of cmd.
   //xs step 2: get the max timestamp.
@@ -286,12 +286,6 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
 
   chr_res->max_ts = ++(sched->logical_clock);
 
-  if (sp_graph->size() <= 1) {
-    p_md_res_graph->SetMarshallable(std::make_shared<EmptyGraph>());
-  } else {
-    p_md_res_graph->SetMarshallable(sp_graph);
-  }
-  verify(p_md_res_graph->kind_ != MarshallDeputy::UNKNOWN);
   p_defer->reply();
 
   Log_info("%s returned", __PRETTY_FUNCTION__);
@@ -299,35 +293,45 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
 }
 
 void ClassicServiceImpl::ChronosPreAccept(const uint64_t &txn_id,
-                                          const std::vector<SimpleCommand> &cmd,
-                                          const ChronosPreAcceptReq &req,
-                                          const MarshallDeputy &graph,
+                                          const std::vector<SimpleCommand> &cmds,
+                                          const ChronosPreAcceptReq &chr_req,
                                           rrr::i32 *res,
                                           ChronosPreAcceptRes *chr_res,
-                                          MarshallDeputy *ret_graph,
                                           rrr::DeferredReply *defer) {
-  JanusPreAccept(txn_id, cmd, graph, res, ret_graph, defer);
 
+  std::lock_guard<std::mutex> guard(mtx_);
+  SchedulerChronos *sched = (SchedulerChronos *) dtxn_sched_;
+  sched->OnPreAccept(txn_id,
+                     cmds,
+                     chr_req,
+                     res,
+                     chr_res);
+  defer->reply();
 }
 
 void ClassicServiceImpl::ChronosAccept(const uint64_t &txn_id,
                                        const int64_t &ballot,
-                                       const MarshallDeputy &graph,
-                                       const ChronosAcceptReq &req,
+                                       const ChronosAcceptReq &chr_req,
                                        rrr::i32 *res,
                                        ChronosAcceptRes *chr_res,
                                        rrr::DeferredReply *defer) {
-  JanusAccept(txn_id, ballot, graph, res, defer);
+
+  std::lock_guard<std::mutex> guard(mtx_);
+  SchedulerChronos *sched = (SchedulerChronos *) dtxn_sched_;
+  sched->OnAccept(txn_id, ballot, chr_req, res, chr_res);
+
+  defer->reply();
 }
 
 void ClassicServiceImpl::ChronosCommit(const uint64_t &id,
-                                       const MarshallDeputy &graph,
-                                       const ChronosCommitReq &req,
+                                       const ChronosCommitReq &chr_req,
                                        int32_t *res,
                                        ChronosCommitRes *chr_res,
                                        TxnOutput *output,
                                        rrr::DeferredReply *defer) {
-  JanusCommit(id, graph, res, output, defer);
+  std::lock_guard<std::mutex> guard(mtx_);
+  SchedulerChronos *sched = (SchedulerChronos *) dtxn_sched_;
+  sched->OnCommit(id, chr_req, res,  output, chr_res, [defer](){defer->reply();});
 }
 
 void ClassicServiceImpl::JanusCommit(const cmdid_t &cmd_id,
