@@ -401,20 +401,18 @@ void CoordinatorChronos::Dispatch() {
 
     ChronosDispatchReq req;
 
-
-    commo()->SendDispatch(cc, req,callback);
+    commo()->SendDispatch(cc, req, callback);
   }
   Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
 }
 
-
 //xs: callback for handling Dispatch ACK
 //xs: What is the meaning of this function.
 void CoordinatorChronos::DispatchAck(phase_t phase,
-                           int res,
-                           TxnOutput &output,
-                           ChronosDispatchRes &chr_res,
-                           RccGraph &graph) {
+                                     int res,
+                                     TxnOutput &output,
+                                     ChronosDispatchRes &chr_res,
+                                     RccGraph &graph) {
 
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
@@ -457,7 +455,6 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
     GotoNextPhase();
   }
 }
-
 
 void CoordinatorChronos::GotoNextPhase() {
 
