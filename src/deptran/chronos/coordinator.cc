@@ -87,6 +87,8 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
                                       ChronosPreAcceptRes &chr_res,
                                       shared_ptr<RccGraph> graph) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
+  Log_info("[[%s]] callled", __PRETTY_FUNCTION__);
+
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) return;
   verify(graph != nullptr);
@@ -160,22 +162,28 @@ void CoordinatorChronos::Accept() {
   auto dtxn = sp_graph_->FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
   sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
+  ChronosAcceptReq chr_req;
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastAccept(par_id,
                              cmd_->id_,
                              ballot_,
                              sp_graph_,
-                             std::bind(&CoordinatorJanus::AcceptAck,
+                             chr_req,
+                             std::bind(&CoordinatorChronos::AcceptAck,
                                        this,
                                        phase_,
                                        par_id,
-                                       std::placeholders::_1));
+                                       std::placeholders::_1,
+                                       std::placeholders::_2));
   }
 }
 
 void CoordinatorChronos::AcceptAck(phase_t phase,
                                    parid_t par_id,
-                                   int res) {
+                                   int res,
+                                   ChronosAcceptRes &chr_res) {
+  Log_info("[[%s]] Called", __PRETTY_FUNCTION__);
+
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   if (phase_ != phase) {
     return;

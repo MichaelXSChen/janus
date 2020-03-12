@@ -159,7 +159,8 @@ void ChronosCommo::BroadcastAccept(parid_t par_id,
                                    txnid_t cmd_id,
                                    ballot_t ballot,
                                    shared_ptr<RccGraph> graph,
-                                   const function<void(int)> &callback) {
+                                   ChronosAcceptReq &chr_req,
+                                   const function<void(int, ChronosAcceptRes&)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto &p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
@@ -167,14 +168,16 @@ void ChronosCommo::BroadcastAccept(parid_t par_id,
     FutureAttr fuattr;
     fuattr.callback = [callback](Future *fu) {
       int32_t res;
-      fu->get_reply() >> res;
-      callback(res);
+      ChronosAcceptRes chr_res;
+      fu->get_reply() >> res >> chr_res;
+      callback(res, chr_res);
     };
     verify(cmd_id > 0);
     MarshallDeputy md(graph);
-    Future::safe_release(proxy->async_JanusAccept(cmd_id,
+    Future::safe_release(proxy->async_ChronosAccept(cmd_id,
                                                   ballot,
                                                   md,
+                                                  chr_req,
                                                   fuattr));
   }
 }

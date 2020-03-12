@@ -24,11 +24,6 @@ class ChronosCommo : public JanusCommo {
                    const function<void(RccGraph& graph)>&) override;
 
 
-  void BroadcastAccept(parid_t par_id,
-                       txnid_t cmd_id,
-                       ballot_t ballot,
-                       shared_ptr<RccGraph> graph,
-                       const function<void(int)>& callback);
 
   void BroadcastCommit(
       parid_t,
@@ -54,6 +49,13 @@ class ChronosCommo : public JanusCommo {
                           ChronosPreAcceptReq &chr_req,
                           shared_ptr<RccGraph> graph,
                           const function<void(int32_t, ChronosPreAcceptRes &chr_res, shared_ptr<RccGraph>)>& callback);
+  void BroadcastAccept(parid_t par_id,
+                       txnid_t cmd_id,
+                       ballot_t ballot,
+                       shared_ptr<RccGraph> graph,
+                       ChronosAcceptReq &res,
+                       const function<void(int, ChronosAcceptRes&)>& callback);
+
 
 };
 

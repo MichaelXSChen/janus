@@ -43,7 +43,6 @@ class CoordinatorChronos : public CoordinatorJanus {
   // functions needed in the accept phase.
   void ChooseGraph();
   void Accept();
-  void AcceptAck(phase_t phase, parid_t par_id, int res);
   bool AcceptQuorumPossible() {
     return true;
   };
@@ -91,6 +90,7 @@ class CoordinatorChronos : public CoordinatorJanus {
                     ChronosPreAcceptRes &chr_res,
                     shared_ptr<RccGraph> graph);
 
+  void AcceptAck(phase_t phase, parid_t par_id, int res, ChronosAcceptRes &chr_res);
 
 };
 } // namespace janus
