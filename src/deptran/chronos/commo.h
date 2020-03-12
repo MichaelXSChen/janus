@@ -25,11 +25,6 @@ class ChronosCommo : public JanusCommo {
 
 
 
-  void BroadcastCommit(
-      parid_t,
-      txnid_t cmd_id_,
-      shared_ptr<RccGraph> graph,
-      const function<void(int32_t, TxnOutput&)>& callback);
 
   bool IsGraphOrphan(RccGraph& graph, txnid_t cmd_id);
 
@@ -55,6 +50,12 @@ class ChronosCommo : public JanusCommo {
                        shared_ptr<RccGraph> graph,
                        ChronosAcceptReq &res,
                        const function<void(int, ChronosAcceptRes&)>& callback);
+  void BroadcastCommit(
+      parid_t,
+      txnid_t cmd_id_,
+      shared_ptr<RccGraph> graph,
+      ChronosCommitReq &chr_req,
+      const function<void(int32_t, ChronosCommitRes&, TxnOutput&)>& callback);
 
 
 };

@@ -49,10 +49,7 @@ class CoordinatorChronos : public CoordinatorJanus {
   bool AcceptQuorumReached();
 
   void Commit() override;
-  void CommitAck(phase_t phase,
-                 parid_t par_id,
-                 int32_t res,
-                 TxnOutput &output);
+
   bool check_commit() {
     verify(0);
     return false;
@@ -91,6 +88,10 @@ class CoordinatorChronos : public CoordinatorJanus {
                     shared_ptr<RccGraph> graph);
 
   void AcceptAck(phase_t phase, parid_t par_id, int res, ChronosAcceptRes &chr_res);
-
+  void CommitAck(phase_t phase,
+                 parid_t par_id,
+                 int32_t res,
+                 ChronosCommitRes &chr_res,
+                 TxnOutput &output);
 };
 } // namespace janus

@@ -186,26 +186,37 @@ void ChronosCommo::BroadcastCommit(
     parid_t par_id,
     txnid_t cmd_id,
     shared_ptr<RccGraph> graph,
-    const function<void(int32_t, TxnOutput &)> &callback) {
+    ChronosCommitReq &chr_req,
+    const function<void(int32_t, ChronosCommitRes &,TxnOutput &)> &callback) {
   bool skip_graph = IsGraphOrphan(*graph, cmd_id);
 
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto &p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
     verify(proxy != nullptr);
-    FutureAttr fuattr;
-    fuattr.callback = [callback](Future *fu) {
+    FutureAttr fuattrChronos;
+    fuattrChronos.callback = [callback](Future *fu) {
       int32_t res;
       TxnOutput output;
-      fu->get_reply() >> res >> output;
-      callback(res, output);
+      ChronosCommitRes chr_res;
+      fu->get_reply() >> res >> chr_res >> output;
+      callback(res, chr_res, output);
     };
+    FutureAttr fuattrJanus;
+    fuattrJanus.callback = [callback](Future *fu) {
+      int32_t res;
+      TxnOutput output;
+      ChronosCommitRes chr_res;
+      fu->get_reply() >> res >> output;
+      callback(res, chr_res, output);
+    };
+
     verify(cmd_id > 0);
     if (skip_graph) {
-      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, fuattr));
+      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, fuattrJanus));
     } else {
       MarshallDeputy md(graph);
-      Future::safe_release(proxy->async_JanusCommit(cmd_id, md, fuattr));
+      Future::safe_release(proxy->async_ChronosCommit(cmd_id, md, chr_req, fuattrChronos));
     }
   }
 }

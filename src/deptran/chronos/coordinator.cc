@@ -210,16 +210,19 @@ void CoordinatorChronos::Commit() {
   auto dtxn = sp_graph_->FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
   sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
+  ChronosCommitReq chr_req;
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
                              sp_graph_,
-                             std::bind(&CoordinatorJanus::CommitAck,
+                             chr_req,
+                             std::bind(&CoordinatorChronos::CommitAck,
                                        this,
                                        phase_,
                                        par_id,
                                        std::placeholders::_1,
-                                       std::placeholders::_2));
+                                       std::placeholders::_2,
+                                       std::placeholders::_3));
   }
   if (fast_commit_) {
     committed_ = true;
@@ -230,8 +233,12 @@ void CoordinatorChronos::Commit() {
 void CoordinatorChronos::CommitAck(phase_t phase,
                                    parid_t par_id,
                                    int32_t res,
+                                   ChronosCommitRes &chr_res,
                                    TxnOutput &output) {
+  Log_info("[[%s]] called", __PRETTY_FUNCTION__);
+
   std::lock_guard<std::recursive_mutex> guard(mtx_);
+
   if (phase != phase_) return;
   if (fast_commit_) return;
   if (res == SUCCESS) {
