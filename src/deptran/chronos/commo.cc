@@ -106,11 +106,9 @@ void ChronosCommo::BroadcastPreAccept(
     ballot_t ballot,
     vector<TxPieceData> &cmds,
     ChronosPreAcceptReq &chr_req,
-    shared_ptr<RccGraph> sp_graph,
-    const function<void(int, ChronosPreAcceptRes &res, shared_ptr<RccGraph>)> &callback) {
+    const function<void(int, ChronosPreAcceptRes &res)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
 
-  bool skip_graph = IsGraphOrphan(*sp_graph, txn_id);
 
   for (auto &p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
@@ -118,35 +116,16 @@ void ChronosCommo::BroadcastPreAccept(
     FutureAttr fuattrChro;
     fuattrChro.callback = [callback](Future *fu) {
       int32_t res;
-      MarshallDeputy md;
       ChronosPreAcceptRes chr_res;
-      fu->get_reply() >> res >> chr_res >> md;
-      auto sp = dynamic_pointer_cast<RccGraph>(md.sp_data_);
-      verify(sp);
-      callback(res, chr_res, sp);
-    };
-    FutureAttr fuattrJanus;
-    fuattrJanus.callback = [callback](Future *fu) {
-      int32_t res;
-      MarshallDeputy md;
-      ChronosPreAcceptRes chr_res;
-      fu->get_reply() >> res >> md;
-      auto sp = dynamic_pointer_cast<RccGraph>(md.sp_data_);
-      verify(sp);
-      callback(res, chr_res, sp);
+      fu->get_reply() >> res >> chr_res;
+      callback(res, chr_res);
     };
 
 
     verify(txn_id > 0);
     Future *f = nullptr;
-    if (skip_graph) {
-      Log_info("JanusPreAcceptWoGraph");
-      f = proxy->async_JanusPreAcceptWoGraph(txn_id, cmds, fuattrJanus);
-    } else {
-      MarshallDeputy md(sp_graph);
-      Log_info("ChronosPreAccept");
-      f = proxy->async_ChronosPreAccept(txn_id, cmds, chr_req, fuattrChro);
-    }
+    Log_info("ChronosPreAccept");
+    f = proxy->async_ChronosPreAccept(txn_id, cmds, chr_req, fuattrChro);
     Future::safe_release(f);
   }
 }
@@ -154,7 +133,6 @@ void ChronosCommo::BroadcastPreAccept(
 void ChronosCommo::BroadcastAccept(parid_t par_id,
                                    txnid_t cmd_id,
                                    ballot_t ballot,
-                                   shared_ptr<RccGraph> graph,
                                    ChronosAcceptReq &chr_req,
                                    const function<void(int, ChronosAcceptRes&)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
@@ -169,7 +147,6 @@ void ChronosCommo::BroadcastAccept(parid_t par_id,
       callback(res, chr_res);
     };
     verify(cmd_id > 0);
-    MarshallDeputy md(graph);
     Future::safe_release(proxy->async_ChronosAccept(cmd_id,
                                                   ballot,
                                                   chr_req,
@@ -180,10 +157,8 @@ void ChronosCommo::BroadcastAccept(parid_t par_id,
 void ChronosCommo::BroadcastCommit(
     parid_t par_id,
     txnid_t cmd_id,
-    shared_ptr<RccGraph> graph,
     ChronosCommitReq &chr_req,
     const function<void(int32_t, ChronosCommitRes &,TxnOutput &)> &callback) {
-  bool skip_graph = IsGraphOrphan(*graph, cmd_id);
 
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto &p : rpc_par_proxies_[par_id]) {
@@ -197,23 +172,8 @@ void ChronosCommo::BroadcastCommit(
       fu->get_reply() >> res >> chr_res >> output;
       callback(res, chr_res, output);
     };
-    FutureAttr fuattrJanus;
-    fuattrJanus.callback = [callback](Future *fu) {
-      int32_t res;
-      TxnOutput output;
-      ChronosCommitRes chr_res;
-      fu->get_reply() >> res >> output;
-      callback(res, chr_res, output);
-    };
-
-    verify(cmd_id > 0);
-    if (skip_graph) {
-      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, fuattrJanus));
-    } else {
-      MarshallDeputy md(graph);
-      Future::safe_release(proxy->async_ChronosCommit(cmd_id, chr_req, fuattrChronos));
+     Future::safe_release(proxy->async_ChronosCommit(cmd_id, chr_req, fuattrChronos));
     }
   }
-}
 
 } // namespace janus

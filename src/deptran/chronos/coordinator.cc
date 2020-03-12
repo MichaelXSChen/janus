@@ -6,27 +6,6 @@
 #include "coordinator.h"
 
 namespace janus {
-//CoordinatorJanus::CoordinatorJanus(
-//  uint32_t                  coo_id,
-//  uint32_t                  thread_id,
-//  bool                      batch_optimal) : coo_id_(coo_id),
-//                                             thread_id_(thread_id),
-//                                             batch_optimal_(batch_optimal) {
-//  rpc_poll_ = new PollMgr(1);
-//  recorder_ = nullptr;
-//  if (Config::GetConfig()->do_logging()) {
-//    std::string log_path(Config::GetConfig()->log_path());
-//    log_path.append(std::to_string(coo_id_));
-//    recorder_ = new Recorder(log_path.c_str());
-//    rpc_poll_->add(recorder_);
-//  }
-//}
-//
-//void CoordinatorJanus::launch(Command &cmd) {
-//  cmd_ = cmd;
-//  cmd_id_ = next_cmd_id();
-//  this->FastAccept();
-//}
 
 
 ChronosCommo *CoordinatorChronos::commo() {
@@ -45,9 +24,6 @@ void CoordinatorChronos::launch_recovery(cmdid_t cmd_id) {
 
 void CoordinatorChronos::PreAccept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-//  // generate fast accept request
-  // set broadcast callback
-  // broadcast
   auto dtxn = sp_graph_->FindV(cmd_->id_);
 
   Log_info("%s:%s called", __FILE__, __FUNCTION__);
@@ -70,31 +46,24 @@ void CoordinatorChronos::PreAccept() {
                                 magic_ballot(),
                                 cmds,
                                 chr_req,
-                                sp_graph_,
                                 std::bind(&CoordinatorChronos::PreAcceptAck,
                                           this,
                                           phase_,
                                           par_id,
                                           std::placeholders::_1,
-                                          std::placeholders::_2,
-                                          std::placeholders::_3));
+                                          std::placeholders::_2));
   }
 }
 
 void CoordinatorChronos::PreAcceptAck(phase_t phase,
                                       parid_t par_id,
                                       int res,
-                                      ChronosPreAcceptRes &chr_res,
-                                      shared_ptr<RccGraph> graph) {
+                                      ChronosPreAcceptRes &chr_res) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   Log_info("[[%s]] callled", __PRETTY_FUNCTION__);
 
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) return;
-  verify(graph != nullptr);
-//  verify(graph->FindV(txn().root_id_) != nullptr);
-//  verify(n_fast_accept_graphs_.size() == 0);
-  n_fast_accept_graphs_[par_id].push_back(graph);
   if (res == SUCCESS) {
     n_fast_accept_oks_[par_id]++;
   } else if (res == REJECT) {
@@ -111,7 +80,6 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
       fast_path_ = true;
 //      Log_info("pre acked success on txn_id: %llx", cmd_->id_);
       ChooseGraph();
-      GotoNextPhase();
     } else {
       // skip, wait
     }
@@ -167,7 +135,6 @@ void CoordinatorChronos::Accept() {
     commo()->BroadcastAccept(par_id,
                              cmd_->id_,
                              ballot_,
-                             sp_graph_,
                              chr_req,
                              std::bind(&CoordinatorChronos::AcceptAck,
                                        this,
@@ -214,7 +181,6 @@ void CoordinatorChronos::Commit() {
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
-                             sp_graph_,
                              chr_req,
                              std::bind(&CoordinatorChronos::CommitAck,
                                        this,
@@ -395,8 +361,7 @@ void CoordinatorChronos::Dispatch() {
                               phase_,
                               std::placeholders::_1,
                               std::placeholders::_2,
-                              std::placeholders::_3,
-                              std::placeholders::_4);
+                              std::placeholders::_3);
     Log_info("DispatchACK callback is %x", &callback);
 
     ChronosDispatchReq req;
@@ -411,19 +376,14 @@ void CoordinatorChronos::Dispatch() {
 void CoordinatorChronos::DispatchAck(phase_t phase,
                                      int res,
                                      TxnOutput &output,
-                                     ChronosDispatchRes &chr_res,
-                                     RccGraph &graph) {
+                                     ChronosDispatchRes &chr_res) {
 
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
   verify(tx_data().root_id_ == tx_data().id_);
-  verify(graph.vertex_index().size() > 0);
 
   Log_info("[[%s]] called 2, timestamp = %d", __PRETTY_FUNCTION__, chr_res.max_ts);
 
-  TxRococo &info = *(graph.vertex_index().at(tx_data().root_id_));
-//  verify(cmd[0].root_id_ == info.id());
-//  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
 
   for (auto &pair : output) {
     n_dispatch_ack_++;
@@ -434,14 +394,6 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
              n_dispatch_ack_, n_dispatch_, tx_data().id_, pair.first);
   }
 
-  // where should I store this graph?
-  Log_info("start response graph size: %d", (int) graph.size());
-  verify(graph.size() > 0);
-
-  sp_graph_->Aggregate(0, graph);
-
-  // TODO?
-  if (graph.size() > 1) tx_data().disable_early_return();
 
   if (tx_data().HasMoreUnsentPiece()) {
     Log_info("command has more sub-cmd, cmd_id: %lx,"

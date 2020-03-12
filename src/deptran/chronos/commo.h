@@ -42,18 +42,17 @@ class ChronosCommo : public JanusCommo {
                           ballot_t ballot,
                           vector<SimpleCommand>& cmds,
                           ChronosPreAcceptReq &chr_req,
-                          shared_ptr<RccGraph> graph,
-                          const function<void(int32_t, ChronosPreAcceptRes &chr_res, shared_ptr<RccGraph>)>& callback);
+                          const function<void(int32_t, ChronosPreAcceptRes &chr_res)>& callback);
+
   void BroadcastAccept(parid_t par_id,
                        txnid_t cmd_id,
                        ballot_t ballot,
-                       shared_ptr<RccGraph> graph,
                        ChronosAcceptReq &res,
                        const function<void(int, ChronosAcceptRes&)>& callback);
+
   void BroadcastCommit(
       parid_t,
       txnid_t cmd_id_,
-      shared_ptr<RccGraph> graph,
       ChronosCommitReq &chr_req,
       const function<void(int32_t, ChronosCommitRes&, TxnOutput&)>& callback);
 

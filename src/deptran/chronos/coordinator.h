@@ -78,14 +78,12 @@ class CoordinatorChronos : public CoordinatorJanus {
   void DispatchAck(phase_t phase,
                       int res,
                       TxnOutput& cmd,
-                      ChronosDispatchRes &chr_res,
-                      RccGraph& graph);
+                      ChronosDispatchRes &chr_res);
 
   void PreAcceptAck(phase_t phase,
                     parid_t par_id,
                     int res,
-                    ChronosPreAcceptRes &chr_res,
-                    shared_ptr<RccGraph> graph);
+                    ChronosPreAcceptRes &chr_res);
 
   void AcceptAck(phase_t phase, parid_t par_id, int res, ChronosAcceptRes &chr_res);
   void CommitAck(phase_t phase,
