@@ -56,7 +56,7 @@ void CoordinatorChronos::PreAccept() {
 void CoordinatorChronos::PreAcceptAck(phase_t phase,
                                       parid_t par_id,
                                       int res,
-                                      ChronosPreAcceptRes &chr_res) {
+                                      std::shared_ptr<ChronosPreAcceptRes> chr_res) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   Log_info("[[%s]] callled", __PRETTY_FUNCTION__);
 
@@ -67,6 +67,7 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
   }
   if (res == SUCCESS) {
     n_fast_accept_oks_[par_id]++;
+    pre_accept_acks_[par_id] = chr_res;
     Log_info("Received pre-accpet ok for par_id: %d", par_id);
   } else if (res == REJECT) {
     verify(0);
@@ -145,7 +146,6 @@ void CoordinatorChronos::AcceptAck(phase_t phase,
 
 void CoordinatorChronos::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  TxData *txn = (TxData *) cmd_;
   ChronosCommitReq chr_req;
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
@@ -199,13 +199,17 @@ void CoordinatorChronos::CommitAck(phase_t phase,
 
 bool CoordinatorChronos::FastpathPossible() {
   auto pars = tx_data().GetPartitionIds();
+  bool all_fast_quorum_possible = true;
   for (auto &par_id : pars) {
+    auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
     int r = FastQuorumCheck(par_id);
-    if (r != 1){
-      return false;
+    if (r == 1 || r == 3) {
+
+    } else if (r == 2) {
+      all_fast_quorum_possible = false;
     }
   }
-  return true;
+  return all_fast_quorum_possible;
 };
 
 int32_t CoordinatorChronos::GetQuorumSize(parid_t par_id) {

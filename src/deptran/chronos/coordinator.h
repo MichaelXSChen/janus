@@ -5,6 +5,9 @@
 #include "../command.h"
 #include "deptran/janus/coordinator.h"
 
+
+
+
 namespace janus {
 class ChronosCommo;
 class CoordinatorChronos : public CoordinatorJanus {
@@ -12,6 +15,10 @@ class CoordinatorChronos : public CoordinatorJanus {
   enum Phase {CHR_INIT=0, CHR_DISPATCH=1, CHR_FAST=2, CHR_FALLBACK=3, CHR_COMMIT=4};
   enum Decision {CHR_UNK=0, CHR_COMMI=1, CHR_ABORT=2 };
   using CoordinatorJanus::CoordinatorJanus;
+
+
+  map<parid_t, std::shared_ptr<ChronosPreAcceptRes>> pre_accept_acks_;
+
 
   virtual ~CoordinatorChronos() {}
 
@@ -84,7 +91,7 @@ class CoordinatorChronos : public CoordinatorJanus {
   void PreAcceptAck(phase_t phase,
                     parid_t par_id,
                     int res,
-                    ChronosPreAcceptRes &chr_res);
+                    std::shared_ptr<ChronosPreAcceptRes> chr_res);
 
   void Accept();
   void AcceptAck(phase_t phase, parid_t par_id, int res, ChronosAcceptRes &chr_res);

@@ -91,7 +91,7 @@ void ChronosCommo::BroadcastPreAccept(
     ballot_t ballot,
     vector<TxPieceData> &cmds,
     ChronosPreAcceptReq &chr_req,
-    const function<void(int, ChronosPreAcceptRes &res)> &callback) {
+    const function<void(int, std::shared_ptr<ChronosPreAcceptRes>)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
 
 
@@ -101,8 +101,8 @@ void ChronosCommo::BroadcastPreAccept(
     FutureAttr fuattrChro;
     fuattrChro.callback = [callback](Future *fu) {
       int32_t res;
-      ChronosPreAcceptRes chr_res;
-      fu->get_reply() >> res >> chr_res;
+      auto chr_res = std::make_shared<ChronosPreAcceptRes>();
+      fu->get_reply() >> res >> *chr_res;
       callback(res, chr_res);
     };
 

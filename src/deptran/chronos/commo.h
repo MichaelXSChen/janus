@@ -41,7 +41,7 @@ class ChronosCommo : public JanusCommo {
                           ballot_t ballot,
                           vector<SimpleCommand>& cmds,
                           ChronosPreAcceptReq &chr_req,
-                          const function<void(int32_t, ChronosPreAcceptRes &chr_res)>& callback);
+                          const function<void(int32_t, std::shared_ptr<ChronosPreAcceptRes>)>& callback);
 
   void BroadcastAccept(parid_t par_id,
                        txnid_t cmd_id,
