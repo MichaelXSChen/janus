@@ -76,34 +76,21 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
   }
 
 
-
   if (FastpathPossible()) {
-    // there is still chance for fastpath
     if (AllFastQuorumsReached()) {
-      // receive enough identical replies to continue fast path.
-      // go to the commit.
       fast_path_ = true;
-//      Log_info("pre acked success on txn_id: %llx", cmd_->id_);
-      ChooseGraph();
+      GotoNextPhase();
     } else {
       // skip, wait
     }
   } else {
-    // fastpath is no longer a choice
-    if (SlowpathPossible()) {
+      //Fall back to
+      Log_info("Falling back to slow case");
       if (PreAcceptAllSlowQuorumsReached()) {
-        verify(!fast_path_);
         GotoNextPhase();
-      } else {
-        // skip, wait
       }
-    } else {
-      // slowpath is not a choice either.
-      // not handle for now.
-      verify(0);
     }
   }
-}
 
 
 void CoordinatorChronos::Accept() {
@@ -159,9 +146,6 @@ void CoordinatorChronos::AcceptAck(phase_t phase,
 void CoordinatorChronos::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   TxData *txn = (TxData *) cmd_;
-  auto dtxn = sp_graph_->FindV(cmd_->id_);
-  verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
   ChronosCommitReq chr_req;
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
@@ -215,24 +199,13 @@ void CoordinatorChronos::CommitAck(phase_t phase,
 
 bool CoordinatorChronos::FastpathPossible() {
   auto pars = tx_data().GetPartitionIds();
-  bool all_fast_quorum_possible = true;
   for (auto &par_id : pars) {
-    auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
-//    if (n_fast_accept_rejects_[par_id] > par_size - GetFastQuorum(par_id)) {
-//      all_fast_quorum_possible = false;
-//      verify(0);
-//      break;
-//    }
-    // TODO check graph.
-    // if more than (par_size - fast quorum) graph is different, then nack.
     int r = FastQuorumCheck(par_id);
-    if (r == 1 || r == 3) {
-
-    } else if (r == 2) {
-      all_fast_quorum_possible = false;
+    if (r != 1){
+      return false;
     }
   }
-  return all_fast_quorum_possible;
+  return true;
 };
 
 int32_t CoordinatorChronos::GetQuorumSize(parid_t par_id) {
@@ -279,11 +252,33 @@ bool CoordinatorChronos::PreAcceptAllSlowQuorumsReached() {
   return all_slow_quorum_reached;
 };
 
+
+// return value
+// 1: a fast quorum reached
+// -1: fast quorum not possible.
+// 0: more wait
 int CoordinatorChronos::FastQuorumCheck(uint32_t par_id) {
   auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
   Log_info("fast quorum check, par %d, size %d", par_id, par_size);
+
+  int32_t t_left, t_right;
+
+  int ret = GetTsIntersection(par_id, t_left, t_right);
+
+  return ret;
+}
+
+//Return value
+//1 has intersection
+//-1 has no intersection
+//0 more wait
+int CoordinatorChronos::GetTsIntersection(uint32_t par_id, int32_t& t_left, int32_t& t_right) {
+
+  t_left = 0;
+  t_right = 100;
   return 1;
 }
+
 
 void CoordinatorChronos::Dispatch() {
   verify(ro_state_ == BEGIN);

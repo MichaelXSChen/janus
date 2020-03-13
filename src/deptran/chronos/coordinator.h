@@ -28,12 +28,12 @@ class CoordinatorChronos : public CoordinatorJanus {
 
   void restart() { verify(0); };
   // functions needed in the fast accept phase.
-  bool FastpathPossible();
   bool AllFastQuorumsReached();
   bool SlowpathPossible() {
     // TODO without failures, slow path should always be possible.
     return true;
   };
+  int32_t GetSlowQuorum(parid_t par_id);
   bool PreAcceptAllSlowQuorumsReached();
 
   // functions needed in the accept phase.
@@ -68,10 +68,11 @@ class CoordinatorChronos : public CoordinatorJanus {
 
 
   //xs's code start here
-
+  bool FastpathPossible();
   std::atomic<uint64_t> logical_clock {0};
   int32_t GetQuorumSize(parid_t par_id);
   int FastQuorumCheck(parid_t par_id);
+  int GetTsIntersection(parid_t par_id, int32_t &t_left, int32_t &t_right);
 
   void Dispatch();
   void DispatchAck(phase_t phase,
