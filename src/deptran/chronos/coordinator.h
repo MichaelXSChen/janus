@@ -19,7 +19,6 @@ class CoordinatorChronos : public CoordinatorJanus {
   // Dispatch inherits from RccCoord;
   void DispatchRo() override { DispatchAsync(); }
 
-  void PreAccept();
 
 
 
@@ -35,20 +34,14 @@ class CoordinatorChronos : public CoordinatorJanus {
     // TODO without failures, slow path should always be possible.
     return true;
   };
-  int32_t GetFastQuorum(parid_t par_id);
-  int32_t GetSlowQuorum(parid_t par_id);
   bool PreAcceptAllSlowQuorumsReached();
 
-  void prepare();
   // functions needed in the accept phase.
-  void ChooseGraph();
-  void Accept();
   bool AcceptQuorumPossible() {
     return true;
   };
   bool AcceptQuorumReached();
 
-  void Commit() override;
 
   bool check_commit() {
     verify(0);
@@ -69,27 +62,42 @@ class CoordinatorChronos : public CoordinatorJanus {
     ret = (ret << 32 | coo_id_);
     return ret;
   }
-  int FastQuorumGraphCheck(parid_t par_id);
-  void GotoNextPhase() override;
+  int FastQuorumGraphCheck(parid_t par_id) = delete;
   void Reset() override;
+
+
+
   //xs's code start here
+
   std::atomic<uint64_t> logical_clock {0};
+  int32_t GetQuorumSize(parid_t par_id);
+  int FastQuorumCheck(parid_t par_id);
+
   void Dispatch();
   void DispatchAck(phase_t phase,
-                      int res,
-                      TxnOutput& cmd,
-                      ChronosDispatchRes &chr_res);
+                   int res,
+                   TxnOutput& cmd,
+                   ChronosDispatchRes &chr_res);
 
+  void PreAccept();
   void PreAcceptAck(phase_t phase,
                     parid_t par_id,
                     int res,
                     ChronosPreAcceptRes &chr_res);
 
+  void Accept();
   void AcceptAck(phase_t phase, parid_t par_id, int res, ChronosAcceptRes &chr_res);
+
+  void Commit() override;
   void CommitAck(phase_t phase,
                  parid_t par_id,
                  int32_t res,
                  ChronosCommitRes &chr_res,
                  TxnOutput &output);
+
+  void GotoNextPhase() override;
+
+
+
 };
 } // namespace janus

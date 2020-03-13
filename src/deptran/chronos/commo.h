@@ -34,8 +34,7 @@ class ChronosCommo : public JanusCommo {
                     const ChronosDispatchReq& req,
                     const function<void(int res,
                                         TxnOutput& output,
-                                        ChronosDispatchRes &chr_res,
-                                        RccGraph& graph)>&);
+                                        ChronosDispatchRes &chr_res)>&);
 
   void BroadcastPreAccept(parid_t par_id,
                           txnid_t txn_id,

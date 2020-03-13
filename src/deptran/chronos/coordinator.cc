@@ -24,11 +24,9 @@ void CoordinatorChronos::launch_recovery(cmdid_t cmd_id) {
 
 void CoordinatorChronos::PreAccept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  auto dtxn = sp_graph_->FindV(cmd_->id_);
 
   Log_info("%s:%s called", __FILE__, __FUNCTION__);
 
-  verify(tx_data().partition_ids_.size() == dtxn->partition_.size());
   for (auto par_id : cmd_->GetPartitionIds()) {
     auto cmds = tx_data().GetCmdsByPartition(par_id);
 
@@ -63,15 +61,22 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
   Log_info("[[%s]] callled", __PRETTY_FUNCTION__);
 
   // if recevie more messages after already gone to next phase, ignore
-  if (phase != phase_) return;
+  if (phase != phase_) {
+    Log_info("already in next phase, return. Current phase = %d, suppose to be %d", phase_, phase);
+    return;
+  }
   if (res == SUCCESS) {
     n_fast_accept_oks_[par_id]++;
+    Log_info("Received pre-accpet ok for par_id: %d", par_id);
   } else if (res == REJECT) {
     verify(0);
-//    n_fast_accept_rejects_[par_id]++;
+    //n_fast_accept_rejects_[par_id]++;
   } else {
     verify(0);
   }
+
+
+
   if (FastpathPossible()) {
     // there is still chance for fastpath
     if (AllFastQuorumsReached()) {
@@ -100,26 +105,6 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
   }
 }
 
-/** caller should be thread_safe */
-void CoordinatorChronos::prepare() {
-  // TODO
-  // do not do failure recovery for now.
-  verify(0);
-}
-
-void CoordinatorChronos::ChooseGraph() {
-  for (auto &pair : n_fast_accept_graphs_) {
-    auto &vec_graph = pair.second;
-    if (fast_path_) {
-      auto &g = vec_graph[0];
-      sp_graph_->Aggregate(0, *g);
-    } else {
-      for (auto g : vec_graph) {
-        sp_graph_->Aggregate(0, *g);
-      }
-    }
-  }
-}
 
 void CoordinatorChronos::Accept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
@@ -240,7 +225,7 @@ bool CoordinatorChronos::FastpathPossible() {
 //    }
     // TODO check graph.
     // if more than (par_size - fast quorum) graph is different, then nack.
-    int r = FastQuorumGraphCheck(par_id);
+    int r = FastQuorumCheck(par_id);
     if (r == 1 || r == 3) {
 
     } else if (r == 2) {
@@ -250,20 +235,15 @@ bool CoordinatorChronos::FastpathPossible() {
   return all_fast_quorum_possible;
 };
 
-int32_t CoordinatorChronos::GetFastQuorum(parid_t par_id) {
+int32_t CoordinatorChronos::GetQuorumSize(parid_t par_id) {
   int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
-  return n;
-}
-
-int32_t CoordinatorChronos::GetSlowQuorum(parid_t par_id) {
-  int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
-  return n / 2 + 1;
+  return n/2 + 1;
 }
 
 bool CoordinatorChronos::AllFastQuorumsReached() {
   auto pars = tx_data().GetPartitionIds();
   for (auto &par_id : pars) {
-    int r = FastQuorumGraphCheck(par_id);
+    int r = FastQuorumCheck(par_id);
     if (r == 2) {
       return false;
     } else if (r == 1) {
@@ -281,7 +261,7 @@ bool CoordinatorChronos::AllFastQuorumsReached() {
 bool CoordinatorChronos::AcceptQuorumReached() {
   auto pars = tx_data().GetPartitionIds();
   for (auto &par_id : pars) {
-    if (n_fast_accept_oks_[par_id] < GetSlowQuorum(par_id)) {
+    if (n_fast_accept_oks_[par_id] < GetQuorumSize(par_id)) {
       return false;
     }
   }
@@ -294,42 +274,15 @@ bool CoordinatorChronos::PreAcceptAllSlowQuorumsReached() {
       std::all_of(pars.begin(),
                   pars.end(),
                   [this](parid_t par_id) {
-                    return n_fast_accept_oks_[par_id] >= GetSlowQuorum(par_id);
+                    return n_fast_accept_oks_[par_id] >= GetQuorumSize(par_id);
                   });
   return all_slow_quorum_reached;
 };
 
-// return value
-// 1: a fast quorum of the same
-// 2: >=(par_size - fast quorum) of different graphs. fast quorum not possible.
-// 3: less than a fast quorum graphs received.
-int CoordinatorChronos::FastQuorumGraphCheck(parid_t par_id) {
+int CoordinatorChronos::FastQuorumCheck(uint32_t par_id) {
   auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
-  auto &vec_graph = n_fast_accept_graphs_[par_id];
-  auto fast_quorum = GetFastQuorum(par_id);
-  if (vec_graph.size() < fast_quorum)
-    return 3;
-  int res = fast_accept_graph_check_caches_[par_id];
-  if (res > 0) return res;
-
-  res = 1;
-//  verify(vec_graph.size() == 1);
-//  verify(vec_graph.size() >= 1);
-  verify(vec_graph.size() == fast_quorum);
-  auto v = vec_graph[0]->FindV(cmd_->id_);
-  verify(v != nullptr);
-  auto &parent_set = v->GetParentSet();
-  for (int i = 1; i < vec_graph.size(); i++) {
-    RccGraph &graph = *vec_graph[i];
-    auto vv = graph.FindV(cmd_->id_);
-    auto &pp_set = vv->GetParentSet();
-    if (parent_set != pp_set) {
-      res = 2;
-      break;
-    }
-  }
-  fast_accept_graph_check_caches_[par_id] = res;
-  return res;
+  Log_info("fast quorum check, par %d, size %d", par_id, par_size);
+  return 1;
 }
 
 void CoordinatorChronos::Dispatch() {
@@ -362,8 +315,6 @@ void CoordinatorChronos::Dispatch() {
                               std::placeholders::_1,
                               std::placeholders::_2,
                               std::placeholders::_3);
-    Log_info("DispatchACK callback is %x", &callback);
-
     ChronosDispatchReq req;
 
     commo()->SendDispatch(cc, req, callback);
@@ -394,6 +345,7 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
              n_dispatch_ack_, n_dispatch_, tx_data().id_, pair.first);
   }
 
+  Log_info("here");
 
   if (tx_data().HasMoreUnsentPiece()) {
     Log_info("command has more sub-cmd, cmd_id: %lx,"

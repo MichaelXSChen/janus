@@ -10,8 +10,7 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
                                 const ChronosDispatchReq& chr_req,
                                 const function<void(int res,
                                                     TxnOutput &cmd,
-                                                    ChronosDispatchRes &chr_res,
-                                                    RccGraph &graph)> &callback) {
+                                                    ChronosDispatchRes &chr_res)> &callback) {
 
   rrr::FutureAttr fuattr;
   auto tid = cmd[0].root_id_;
@@ -20,29 +19,15 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
       [callback, tid, par_id](Future *fu) {
         int res;
         TxnOutput output;
-        MarshallDeputy md;
         ChronosDispatchRes chr_res;
-        fu->get_reply() >> res >> output >> chr_res >> md;
-        if (md.kind_ == MarshallDeputy::EMPTY_GRAPH) {
-          RccGraph rgraph;
-          auto v = rgraph.CreateV(tid);
-          TxRococo &info = *v;
-          info.partition_.insert(par_id);
-          verify(rgraph.vertex_index().size() > 0);
-          callback(res, output, chr_res, rgraph);
-        } else if (md.kind_ == MarshallDeputy::RCC_GRAPH) {
-          RccGraph &graph = dynamic_cast<RccGraph &>(*md.sp_data_);
-          callback(res, output, chr_res, graph);
-        } else {
-          verify(0);
-        }
+        fu->get_reply() >> res >> chr_res >> output;
+        callback(res, output, chr_res);
       };
   fuattr.callback = cb;
   auto proxy_info = NearestProxyForPartition(cmd[0].PartitionId());
   auto proxy = proxy_info.second;
   //XS: proxy is the rpc client side handler.
   Log_info("dispatch to %ld, proxy (site) = %d", cmd[0].PartitionId(), proxy_info.first);
-
 
   Future::safe_release(proxy->async_ChronosDispatch(cmd, chr_req, fuattr));
 }
