@@ -222,6 +222,8 @@ void TpccWorkload::RegNewOrder() {
   );
 
   //RI, read item
+  //xs: why having 1000 txns for these???
+  //seems pieces are used to
   for (int i = (0); i < (1000); i++) {
     // 1000 is a magical number?
     RegP(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(i),
