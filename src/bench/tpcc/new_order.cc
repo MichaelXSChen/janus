@@ -221,6 +221,7 @@ void TpccWorkload::RegNewOrder() {
        }
   );
 
+  //RI, read item
   for (int i = (0); i < (1000); i++) {
     // 1000 is a magical number?
     RegP(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(i),

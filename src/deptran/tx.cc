@@ -37,7 +37,7 @@ mdb::ResultSet Tx::QueryIn(Table *tbl,
     verify(0);
   }
 }
-
+//xs: onlyencap the primary keys with a multiblob
 mdb::Row* Tx::Query(mdb::Table *tbl,
                       vector<Value>& primary_keys,
                       int64_t row_context_id) {
@@ -49,6 +49,12 @@ mdb::Row* Tx::Query(mdb::Table *tbl,
   return r;
 }
 
+//xs: blob is a piece of data
+//multi-blob is a array of blob
+
+//Search for row
+//First try to find using context_id;
+//If not found, search using the primary keys
 mdb::Row* Tx::Query(mdb::Table *tbl,
                       const mdb::MultiBlob &mb,
                       int64_t row_context_id) {

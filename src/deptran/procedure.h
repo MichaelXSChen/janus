@@ -119,7 +119,6 @@ class SimpleCommand: public CmdData {
   map<int32_t, Value> output{};
   int32_t output_size = 0;
   parid_t partition_id_ = 0xFFFFFFFF;
-//  int32_t __debug_{10};
   virtual parid_t PartitionId() const {
     verify(partition_id_ != 0xFFFFFFFF);
     return partition_id_;
@@ -131,10 +130,6 @@ class SimpleCommand: public CmdData {
     return cmd;
   }
   virtual ~SimpleCommand() {
-//    if (__debug_ != 10) {
-//      verify(0);
-//    }
-//    __debug_ = 30;
   };
 };
 

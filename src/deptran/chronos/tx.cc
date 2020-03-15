@@ -3,17 +3,26 @@
 
 namespace janus {
 
+
+
+//SimpleCommand is a typedef of TxnPieceData
+//add a simpleCommand to the local Tx's dreq
 void TxChronos::DispatchExecute(SimpleCommand &cmd,
                               int32_t *res,
                               map<int32_t, Value> *output) {
   Log_info("%s called" , __FUNCTION__);
 
-    phase_ = PHASE_RCC_DISPATCH;
+  phase_ = PHASE_RCC_DISPATCH;
+
+  //xs: Step 1: skip this simpleCommand if it is already in the dreqs.
   for (auto& c: dreqs_) {
     if (c.inn_id() == cmd.inn_id()) // already handled?
       return;
   }
   verify(txn_reg_);
+
+  //xs: step 2: get the definition (stored procedure) of the txn.
+  //So next question, what is conflicts.
   TxnPieceDef& piece = txn_reg_->get(cmd.root_type_, cmd.type_);
   auto& conflicts = piece.conflicts_;
   for (auto& c: conflicts) {
