@@ -201,15 +201,9 @@ bool CoordinatorChronos::FastpathPossible() {
   auto pars = tx_data().GetPartitionIds();
   bool all_fast_quorum_possible = true;
   for (auto &par_id : pars) {
-    auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
     int r = FastQuorumCheck(par_id);
-    if (r == 1 || r == 3) {
-
-    } else if (r == 2) {
-      all_fast_quorum_possible = false;
-    }
+    return (r == 1);
   }
-  return all_fast_quorum_possible;
 };
 
 int32_t CoordinatorChronos::GetQuorumSize(parid_t par_id) {
