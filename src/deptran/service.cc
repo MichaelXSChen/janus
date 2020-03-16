@@ -275,7 +275,6 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
   Log_info("%s called", __PRETTY_FUNCTION__);
 
   std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
-  auto sp_graph = std::make_shared<RccGraph>();
   auto *sched = (SchedulerChronos *) dtxn_sched_;
 
   sched->OnDispatch(cmd, req, p_res, chr_res, p_output);
@@ -284,7 +283,6 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
   //xs step 2: get the max timestamp.
   //xs step 3: return
 
-  chr_res->max_ts = ++(sched->logical_clock);
 
   p_defer->reply();
 
