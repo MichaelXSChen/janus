@@ -32,9 +32,11 @@ void TxChronos::DispatchExecute(SimpleCommand &cmd,
     }
     auto row = Query(GetTable(c.table), pkeys, c.row_context_id);
     verify(row != nullptr);
-    for (auto col_id : c.columns) {
-      TraceDep(row, col_id, TXN_DEFERRED);
-    }
+
+    //No need for chronos
+    //for (auto col_id : c.columns) {
+    //    TraceDep(row, col_id, TXN_DEFERRED);
+    //}
   }
   dreqs_.push_back(cmd);
 

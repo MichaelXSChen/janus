@@ -65,8 +65,8 @@ void TpccWorkload::RegNewOrder() {
           mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
           mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
           Log_debug("new order d_id: %x w_id: %x",
-                    cmd.input[TPCC_VAR_D_ID].get_i32(),
-                    cmd.input[TPCC_VAR_W_ID].get_i32());
+                    cmd.input[TPCC_VAR_D_ID].get_i32(), cmd.input[TPCC_VAR_W_ID].get_i32());
+          Log_info("txn_id = %d", tx.tid_);
           mdb::Row *row_district = tx.Query(
               tx.GetTable(TPCC_TB_DISTRICT),
               mb,

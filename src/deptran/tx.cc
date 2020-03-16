@@ -65,8 +65,10 @@ mdb::Row* Tx::Query(mdb::Table *tbl,
   if (row_context_id > 0) {
     auto it = row_map.find(row_context_id);
     if (it != row_map.end()) {
+      Log_info("querying data base %s, finding row_context_id = %d, found", tbl->Name().c_str(), row_context_id);
       ret_row = it->second;
     } else {
+      Log_info("querying data base %s, finding row_context_id = %d, not found", tbl->Name().c_str(), row_context_id);
       auto rs = mdb_txn()->query(tbl, mb);
       verify(rs.has_next());
       ret_row = rs.next();

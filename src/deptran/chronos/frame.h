@@ -42,8 +42,8 @@ class ChronosFrame : public JanusFrame {
 //
 //
 ////  //xs: called in each site.
-//  shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
-//                          bool ro, Scheduler *mgr) override;
+  shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
+                          bool ro, Scheduler *mgr) override;
 
   //created by each client **and** each server 
   Communicator *CreateCommo(PollMgr *poll = nullptr) override;

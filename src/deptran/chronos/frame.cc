@@ -97,20 +97,18 @@ Scheduler *ChronosFrame::CreateScheduler() {
 //  return r;
 //}
 //
-//shared_ptr<Tx> ChronosFrame::CreateTx(epoch_t epoch, txnid_t tid,
-//                                    bool ro, Scheduler *mgr) {
-////  auto dtxn = new JanusDTxn(tid, mgr, ro);
-////  return dtxn;
-//   if (site_info_ != nullptr){
-//     Log_info("[site %d] [chronos] created txn", site_info_->id);
-//   }else{
-//     Log_info("[site null] [chronos] created txn");
-//   }
-//
-//
-//  shared_ptr<Tx> sp_tx(new TxChronos(epoch, tid, mgr, ro));
-//  return sp_tx;
-//}
+shared_ptr<Tx> ChronosFrame::CreateTx(epoch_t epoch, txnid_t tid,
+                                    bool ro, Scheduler *mgr) {
+   if (site_info_ != nullptr){
+     Log_info("[site %d] [chronos] created txn", site_info_->id);
+   }else{
+     Log_info("[site null] [chronos] created txn");
+   }
+
+
+  shared_ptr<Tx> sp_tx(new TxChronos(epoch, tid, mgr, ro));
+  return sp_tx;
+}
 
 Communicator *ChronosFrame::CreateCommo(PollMgr *poll) {
   if (site_info_ != NULL){

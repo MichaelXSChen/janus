@@ -2,9 +2,30 @@
 
 #include "scheduler.h"
 #include "commo.h"
-#include "deptran/rococo/tx.h"
+#include "deptran/chronos/tx.h"
 
 using namespace janus;
+
+int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
+                                 const ChronosDispatchReq &chr_req,
+                                 int32_t* res,
+                                 ChronosDispatchRes *chr_res,
+                                 TxnOutput* output) {
+  Log_info("[[%s]] called", __PRETTY_FUNCTION__);
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  txnid_t txn_id = cmd[0].root_id_; //should have the same root_id
+  auto dtxn = dynamic_pointer_cast<TxChronos>(GetOrCreateTx(txn_id));
+  verify(dtxn->id() == txn_id);
+  verify(cmd[0].partition_id_ == Scheduler::partition_id_);
+  for (auto& c : cmd) {
+    dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
+                          res, &(*output)[c.inn_id()]);
+  }
+  dtxn->UpdateStatus(TXN_STD); //started
+  verify(cmd[0].root_id_ == txn_id);
+  return 0;
+}
+
 
 void SchedulerChronos::OnPreAccept(const txid_t txn_id,
                                  const vector<SimpleCommand> &cmds,
@@ -143,26 +164,7 @@ int SchedulerChronos::OnInquire(epoch_t epoch,
 }
 
 
-int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
-                                const ChronosDispatchReq &chr_req,
-                                int32_t* res,
-                                ChronosDispatchRes *chr_res,
-                                TxnOutput* output) {
-  std::lock_guard<std::recursive_mutex> guard(mtx_);
-  txnid_t txn_id = cmd[0].root_id_;
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(txn_id));
-  verify(dtxn->id() == txn_id);
-  verify(RccGraph::partition_id_ == Scheduler::partition_id_);
-  //auto job = [&cmd, res, dtxn, callback, graph, output, this, txn_id] () {
-  verify(cmd[0].partition_id_ == Scheduler::partition_id_);
-  for (auto& c : cmd) {
-    dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
-                          res, &(*output)[c.inn_id()]);
-  }
-  dtxn->UpdateStatus(TXN_STD);
-  verify(cmd[0].root_id_ == txn_id);
-  return 0;
-}
+
 
 ChronosCommo *SchedulerChronos::commo() {
 
