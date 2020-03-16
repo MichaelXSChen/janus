@@ -58,6 +58,7 @@ mdb::Row* Tx::Query(mdb::Table *tbl,
 mdb::Row* Tx::Query(mdb::Table *tbl,
                       const mdb::MultiBlob &mb,
                       int64_t row_context_id) {
+  Log_info("[[%s]] called, row_context_id = %d", __PRETTY_FUNCTION__, row_context_id);
   verify(mdb_txn() != nullptr);
   mdb::Row* ret_row;
   auto &row_map = context_row_;

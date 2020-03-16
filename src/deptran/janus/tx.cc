@@ -10,6 +10,7 @@ void TxJanus::DispatchExecute(SimpleCommand &cmd,
     phase_ = PHASE_RCC_DISPATCH;
   for (auto& c: dreqs_) {
     if (c.inn_id() == cmd.inn_id()) // already handled?
+      //xs: read diferent items will have different inn_id (TPCC_RI(i)))
       return;
   }
   verify(txn_reg_);
@@ -17,6 +18,7 @@ void TxJanus::DispatchExecute(SimpleCommand &cmd,
   auto& conflicts = piece.conflicts_;
   for (auto& c: conflicts) {
     vector<Value> pkeys;
+    //Pkeys is a ``combination'' of IDs
     for (int i = 0; i < c.primary_keys.size(); i++) {
       pkeys.push_back(cmd.input.at(c.primary_keys[i]));
     }
