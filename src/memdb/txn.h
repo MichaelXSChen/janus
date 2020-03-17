@@ -87,7 +87,9 @@ class Txn: public NoCopy {
  public:
   const TxnMgr *mgr_;
   txn_id_t txnid_;
-  Txn(const TxnMgr *mgr, txn_id_t txnid) : mgr_(mgr), txnid_(txnid) { }
+  Txn(const TxnMgr *mgr, txn_id_t txnid) : mgr_(mgr), txnid_(txnid) {
+    Log_info("Created Txn, id = %d", txnid);
+  }
 
  public:
   virtual ~Txn() { }

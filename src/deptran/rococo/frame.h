@@ -22,7 +22,7 @@ class FrameRococo : public Frame {
                                            rrr::PollMgr *poll_mgr,
                                            ServerControlServiceImpl *scsi)
   override;
-  mdb::Row *CreateRow(const mdb::Schema *schema,
+  virtual mdb::Row *CreateRow(const mdb::Schema *schema,
                       vector<Value> &row_data) override;
 
   shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,

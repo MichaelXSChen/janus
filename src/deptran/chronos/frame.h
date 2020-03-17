@@ -37,8 +37,8 @@ class ChronosFrame : public JanusFrame {
 //  override;
   
 //  //xs: called during initialization
-//  mdb::Row *CreateRow(const mdb::Schema *schema,
-//                      vector<Value> &row_data) override;
+  mdb::Row *CreateRow(const mdb::Schema *schema,
+                      vector<Value> &row_data) override;
 //
 //
 ////  //xs: called in each site.

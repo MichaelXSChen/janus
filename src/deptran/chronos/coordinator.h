@@ -105,7 +105,10 @@ class CoordinatorChronos : public CoordinatorJanus {
 
   void GotoNextPhase() override;
 
+  int64_t ts_left_;
+  int64_t ts_right_;
 
+  int64_t ts_delta_ = 10;
 
 };
 } // namespace janus

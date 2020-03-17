@@ -6,7 +6,7 @@ namespace janus {
 class JanusCommo : public RccCommo {
  public:
   using RccCommo::RccCommo;
-  void SendDispatch(vector<SimpleCommand>& cmd,
+  virtual void SendDispatch(vector<SimpleCommand>& cmd,
                     const function<void(int res,
                                         TxnOutput& output,
                                         RccGraph& graph)>&) override;

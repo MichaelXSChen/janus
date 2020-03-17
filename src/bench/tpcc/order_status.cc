@@ -305,7 +305,7 @@ void TpccWorkload::RegOrderStatus() {
          column_locks.reserve(5 * row_list.size());
 
          int i = 0;
-         Log_debug("row_list size: %u", row_list.size());
+         Log_info("row_list size: %u", row_list.size());
 
          i = 0;
          i32 oi = 0;

@@ -120,4 +120,15 @@ Communicator *ChronosFrame::CreateCommo(PollMgr *poll) {
   return new ChronosCommo(poll);
 }
 
+
+mdb::Row *ChronosFrame::CreateRow(const mdb::Schema *schema,
+                                vector<Value> &row_data) {
+
+  Log_info("[%s] CreateRow Called ", __FILE__);
+  Log_info("created chronos row");
+  mdb::Row *r = mdb::VersionedRow::create(schema, row_data);
+
+  return r;
+}
+
 } // namespace janus

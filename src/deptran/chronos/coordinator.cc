@@ -32,13 +32,15 @@ void CoordinatorChronos::PreAccept() {
 
     Log_info("Calling BroadCastPreAccept %d", par_id);
 
-    int counter = 0;
-    for (auto &c: cmds) {
-      Log_info("%d-th cmd, partition_id = %d, id = %d, type = %d", counter++, par_id, c.id_, c.type());
-      c.input.print();
-    }
+//    int counter = 0;
+//    for (auto &c: cmds) {
+//      Log_info("%d-th cmd, partition_id = %d, id = %d, type = %d", counter++, par_id, c.id_, c.type());
+//      c.input.print();
+//    }
 
     ChronosPreAcceptReq chr_req;
+    chr_req.ts_min = ts_left_;
+    chr_req.ts_max = ts_right_;
     commo()->BroadcastPreAccept(par_id,
                                 cmd_->id_,
                                 magic_ballot(),
@@ -328,6 +330,10 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
 
   Log_info("[[%s]] called 2, timestamp = %d", __PRETTY_FUNCTION__, chr_res.max_ts);
 
+  if (chr_res.max_ts > ts_left_){
+    ts_left_ = chr_res.max_ts;
+    ts_right_ = ts_left_ + ts_delta_;
+  }
 
   for (auto &pair : output) {
     n_dispatch_ack_++;
@@ -338,14 +344,13 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
              n_dispatch_ack_, n_dispatch_, tx_data().id_, pair.first);
   }
 
-  Log_info("here");
 
   if (tx_data().HasMoreUnsentPiece()) {
     Log_info("command has more sub-cmd, cmd_id: %lx,"
              " n_started_: %d, n_pieces: %d",
              tx_data().id_,
              tx_data().n_pieces_dispatched_, tx_data().GetNPieceAll());
-    DispatchAsync();
+    Dispatch();
   } else if (AllDispatchAcked()) {
     Log_info("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     verify(!tx_data().do_early_return());

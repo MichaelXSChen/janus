@@ -257,7 +257,9 @@ class CoarseLockedRow: public Row {
 
  protected:
 
-  CoarseLockedRow() : Row(), lock_() {}
+  CoarseLockedRow() : Row(), lock_() {
+    Log_info("const: created CorseLocked Row");
+  }
   // protected dtor as required by RefCounted
   ~CoarseLockedRow() { }
 
@@ -514,6 +516,9 @@ class FineLockedRow: public Row {
 class VersionedRow: public CoarseLockedRow {
  public:
 //  version_t *ver_ = nullptr;
+  VersionedRow(): CoarseLockedRow(){
+    Log_info("const: created versioned Row");
+  }
   std::vector<version_t> ver_{};
   // only for tapir. TODO: extract
   std::vector<list<version_t>> prepared_rver_{};

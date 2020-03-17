@@ -60,6 +60,8 @@ FrameRococo::CreateRpcServices(uint32_t site_id,
 
 mdb::Row *FrameRococo::CreateRow(const mdb::Schema *schema,
                               vector<Value> &row_data) {
+
+  Log_info("[%s] CreateRow Called ", __FILE__);
   mdb::Row *r = RCCRow::create(schema, row_data);
   return r;
 }

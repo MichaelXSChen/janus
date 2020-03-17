@@ -55,7 +55,7 @@ class JanusFrame : public Frame {
   override;
   
   //xs: called during initialization
-  mdb::Row *CreateRow(const mdb::Schema *schema,
+  virtual mdb::Row *CreateRow(const mdb::Schema *schema,
                       vector<Value> &row_data) override;
 
   

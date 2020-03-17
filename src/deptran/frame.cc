@@ -142,6 +142,7 @@ Sharding* Frame::CreateSharding(Sharding *sd) {
 mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
                            vector<Value> &row_data) {
 //  auto mode = Config::GetConfig()->cc_mode_;
+  Log_info("[%s] CreateRow Called ", __FILE__);
   auto mode = mode_;
   mdb::Row* r = nullptr;
   switch (mode) {

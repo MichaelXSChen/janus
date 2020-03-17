@@ -292,6 +292,8 @@ bool TxRococo::ReadColumn(mdb::Row *row,
                          mdb::colid_t col_id,
                          Value *value,
                          int hint_flag) {
+
+  Log_info("[[%s]] called, table = %s, col_id = %d", __PRETTY_FUNCTION__ , row->get_table()->Name().c_str(), col_id);
   verify(!read_only_);
   if (phase_ == PHASE_RCC_DISPATCH) {
     int8_t edge_type;

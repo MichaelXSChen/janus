@@ -3,6 +3,8 @@
 
 #include "../__dep__.h"
 
+
+
 namespace janus {
 
 struct entry_t;
@@ -17,6 +19,9 @@ protected:
 
 
 public:
+    RCCRow() : CoarseLockedRow(){
+      Log_info("const: created RCC Row");
+    }
 
     entry_t *dep_entry_;
 

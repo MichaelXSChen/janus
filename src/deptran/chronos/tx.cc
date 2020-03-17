@@ -51,4 +51,71 @@ void TxChronos::DispatchExecute(SimpleCommand &cmd,
   ws_.insert(*output);
 }
 
+
+
+bool TxChronos::ReadColumn(mdb::Row *row,
+                          mdb::colid_t col_id,
+                          Value *value,
+                          int hint_flag) {
+
+  Log_info("[[%s]] called, table = %s, col_id = %d, phase_ = %d, hint_flag = %d", __PRETTY_FUNCTION__ , row->get_table()->Name().c_str(), col_id, phase_, hint_flag);
+  Log_info("Rtti = %d", row->rtti());
+  auto r = dynamic_cast<mdb::VersionedRow*>(row);
+
+
+
+
+  auto ver = r->get_column_ver(col_id);
+  Log_info("Version = %d", ver);
+
+
+  verify(!read_only_);
+  if (phase_ == PHASE_RCC_DISPATCH) {
+    int8_t edge_type;
+    if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
+      mdb_txn()->read_column(row, col_id, value);
+    }
+
+    if (hint_flag == TXN_INSTANT || hint_flag == TXN_DEFERRED) {
+//      entry_t *entry = ((RCCRow *) row)->get_dep_entry(col_id);
+      //TraceDep(row, col_id, hint_flag);
+    }
+  } else if (phase_ == PHASE_RCC_COMMIT) {
+    if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
+      mdb_txn()->read_column(row, col_id, value);
+    } else {
+      verify(0);
+    }
+  } else {
+    verify(0);
+  }
+  return true;
+}
+
+
+bool TxChronos::WriteColumn(Row *row,
+                           colid_t col_id,
+                           const Value &value,
+                           int hint_flag) {
+  verify(!read_only_);
+  if (phase_ == PHASE_RCC_DISPATCH) {
+    if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
+      mdb_txn()->write_column(row, col_id, value);
+    }
+    if (hint_flag == TXN_INSTANT || hint_flag == TXN_DEFERRED) {
+//      entry_t *entry = ((RCCRow *) row)->get_dep_entry(col_id);
+     // TraceDep(row, col_id, hint_flag);
+    }
+  } else if (phase_ == PHASE_RCC_COMMIT) {
+    if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
+      mdb_txn()->write_column(row, col_id, value);
+    } else {
+      verify(0);
+    }
+  } else {
+    verify(0);
+  }
+  return true;
+}
+
 } // namespace janus

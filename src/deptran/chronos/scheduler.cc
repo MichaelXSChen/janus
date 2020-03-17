@@ -12,8 +12,6 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
                                  ChronosDispatchRes *chr_res,
                                  TxnOutput* output) {
 
-  //TODO:get version
-
 
   Log_info("[[%s]] called", __PRETTY_FUNCTION__);
   std::lock_guard<std::recursive_mutex> guard(mtx_);
@@ -27,6 +25,8 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
   }
   dtxn->UpdateStatus(TXN_STD); //started
   verify(cmd[0].root_id_ == txn_id);
+  //TODO:get version by touched pieces
+  chr_res->max_ts = logical_clock++;
   return 0;
 }
 
@@ -36,20 +36,25 @@ void SchedulerChronos::OnPreAccept(const txid_t txn_id,
                                  const ChronosPreAcceptReq &chr_req,
                                  int32_t *res,
                                  ChronosPreAcceptRes *chr_res) {
+
+
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   /*
    * xsTODO: Steps:
     */
 
+  auto ts_left = chr_req.ts_min;
+  auto ts_right = chr_req.ts_max;
 
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-  //Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
+  Log_info("[Chronos] on preaccept: %d, ts_range [%d, %d]", txn_id, ts_left, ts_right);
   //if (RandomGenerator::rand(1, 2000) <= 1)
   //Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(txn_id));
+  auto dtxn = dynamic_pointer_cast<TxChronos>(GetOrCreateTx(txn_id));
   dtxn->UpdateStatus(TXN_PAC);
   Log_info("[[%s]] called, dtxn.phase = %d", __PRETTY_FUNCTION__,  dtxn->phase_);
+
 
 
 

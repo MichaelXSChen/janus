@@ -25,10 +25,12 @@ mdb::ResultSet Tx::QueryIn(Table *tbl,
   if (rs_context_id > 0) {
     auto it = rs_map.find(rs_context_id);
     if (it != rs_map.end()) {
+      Log_info("Here");
       mdb::ResultSet ret_rs = it->second;
       ret_rs.reset();
       return ret_rs;
     } else {
+      Log_info("Herehere");
       mdb::ResultSet ret_rs = mdb_txn()->query_in(tbl, low, high, order);
       rs_map.insert(std::make_pair(rs_context_id, ret_rs));
       return ret_rs;
@@ -86,6 +88,8 @@ bool Tx::ReadColumn(mdb::Row *row,
                       int hint_flag) {
   verify(mdb_txn() != nullptr);
   auto ret = mdb_txn()->read_column(row, col_id, value);
+
+
   verify(ret == true);
   return true;
 }
