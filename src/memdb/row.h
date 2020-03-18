@@ -258,7 +258,7 @@ class CoarseLockedRow: public Row {
  protected:
 
   CoarseLockedRow() : Row(), lock_() {
-    Log_info("const: created CorseLocked Row");
+    //Log_info("const: created CorseLocked Row");
   }
   // protected dtor as required by RefCounted
   ~CoarseLockedRow() { }
@@ -520,14 +520,26 @@ class VersionedRow: public CoarseLockedRow {
     Log_info("const: created versioned Row");
   }
   std::vector<version_t> ver_{};
+
+
+
+
   // only for tapir. TODO: extract
   std::vector<list<version_t>> prepared_rver_{};
   // only for tapir. TODO: extract
   std::vector<list<version_t>> prepared_wver_{};
+
+  std::vector<version_t> wver_{};
+  std::vector<version_t> rver_{};
+
+
   void init_ver(int n_columns) {
 //    ver_ = new version_t[n_columns];
 //    memset(ver_, 0, sizeof(version_t) * n_columns);
+
     ver_.resize(n_columns, 0);
+    wver_.resize(n_columns, 0);
+    rver_.resize(n_columns, 0);
     prepared_rver_.resize(n_columns, {});
     prepared_wver_.resize(n_columns, {});
   }
@@ -540,6 +552,14 @@ class VersionedRow: public CoarseLockedRow {
     }
   }
 
+  version_t min_prepared_rver(colid_t column_id) {
+    if (prepared_wver_[column_id].size() > 0) {
+      return prepared_wver_[column_id].front();
+    } else {
+      return 0;
+    }
+  }
+
   version_t min_prepared_wver(colid_t column_id) {
     if (prepared_rver_[column_id].size() > 0) {
       return prepared_rver_[column_id].front();
@@ -547,6 +567,15 @@ class VersionedRow: public CoarseLockedRow {
       return 0;
     }
   }
+
+  version_t max_prepared_wver(colid_t column_id) {
+    if (prepared_rver_[column_id].size() > 0) {
+      return prepared_rver_[column_id].back();
+    } else {
+      return 0;
+    }
+  }
+
 
   void insert_prepared_wver(colid_t column_id, version_t ver) {
     prepared_wver_[column_id].push_back(ver);
@@ -579,6 +608,8 @@ class VersionedRow: public CoarseLockedRow {
     row->init_ver(n_columns);
 //    memcpy(row->ver_, this->ver_, n_columns * sizeof(version_t));
     row->ver_ = this->ver_;
+    row->rver_ = this->rver_;
+    row->wver_ = this->wver_;
     verify(row->ver_.size() > 0);
   }
 
@@ -594,8 +625,28 @@ class VersionedRow: public CoarseLockedRow {
     return ver_[column_id];
   }
 
+  version_t get_column_rver(colid_t column_id) const {
+    verify(rver_.size() > 0);
+    verify(column_id < rver_.size());
+    return rver_[column_id];
+  }
+
+  version_t get_column_wver(colid_t column_id) const {
+    verify(wver_.size() > 0);
+    verify(column_id < wver_.size());
+    return wver_[column_id];
+  }
+
   void set_column_ver(colid_t column_id, version_t ver) {
     ver_[column_id] = ver;
+  }
+
+  void set_column_rver(colid_t column_id, version_t ver) {
+    rver_[column_id] = ver;
+  }
+
+  void set_column_wver(colid_t column_id, version_t ver) {
+    wver_[column_id] = ver;
   }
 
   void incr_column_ver(colid_t column_id) {

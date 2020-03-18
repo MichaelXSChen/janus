@@ -36,6 +36,16 @@ public:
   int64_t local_ts_left_ = 0;
   int64_t local_ts_right_ = 0;
 
+  int64_t received_prepared_ts_left_ = 0;
+  int64_t received_prepared_ts_right_ = 0;
+
+  map<Row *, map<colid_t, pair<mdb::version_t, mdb::version_t>>> prepared_read_ranges_ = {};
+  map<Row *, map<colid_t, pair<mdb::version_t, mdb::version_t>>> prepared_write_ranges_ = {};
+
+
+  int64_t commit_ts_;
+
+
 };
 
 } // namespace janus

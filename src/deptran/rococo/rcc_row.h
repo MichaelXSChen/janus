@@ -20,7 +20,7 @@ protected:
 
 public:
     RCCRow() : CoarseLockedRow(){
-      Log_info("const: created RCC Row");
+      //Log_info("const: created RCC Row");
     }
 
     entry_t *dep_entry_;

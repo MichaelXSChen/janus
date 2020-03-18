@@ -52,10 +52,12 @@ void SchedulerChronos::OnPreAccept(const txid_t txn_id,
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
   auto dtxn = dynamic_pointer_cast<TxChronos>(GetOrCreateTx(txn_id));
+
+  dtxn->received_prepared_ts_left_ = chr_req.ts_min;
+  dtxn->received_prepared_ts_right_ = chr_req.ts_max;
+
   dtxn->UpdateStatus(TXN_PAC);
   Log_info("[[%s]] called, dtxn.phase = %d", __PRETTY_FUNCTION__,  dtxn->phase_);
-
-
 
 
 
