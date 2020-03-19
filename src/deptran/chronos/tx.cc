@@ -4,7 +4,6 @@
 namespace janus {
 
 
-
 //SimpleCommand is a typedef of TxnPieceData
 //add a simpleCommand to the local Tx's dreq
 void TxChronos::DispatchExecute(SimpleCommand &cmd,
@@ -12,7 +11,7 @@ void TxChronos::DispatchExecute(SimpleCommand &cmd,
                               map<int32_t, Value> *output) {
   Log_info("%s called" , __FUNCTION__);
 
-  phase_ = PHASE_RCC_DISPATCH;
+  phase_ = PHASE_CHRONOS_DISPATCH;
 
   //xs: Step 1: skip this simpleCommand if it is already in the dreqs.
   for (auto& c: dreqs_) {
@@ -64,7 +63,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
 
 
   verify(!read_only_);
-  if (phase_ == PHASE_RCC_DISPATCH) {
+  if (phase_ == PHASE_CHRONOS_DISPATCH|| phase_ == PHASE_CHRONOS_PREPARE) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
       //Currently the same for different Hint-flag
       auto c = r->get_column(col_id);
@@ -116,7 +115,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       prepared_read_ranges_[row][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
       return true;
     }
-  } else if (phase_ == PHASE_RCC_COMMIT) {
+  } else if (phase_ == PHASE_CHRONOS_COMMIT) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
       //For commit
 
@@ -149,7 +148,7 @@ bool TxChronos::WriteColumn(Row *row,
   verify(r->rtti() == symbol_t::ROW_VERSIONED);
 
   verify(!read_only_);
-  if (phase_ == PHASE_RCC_DISPATCH) {
+  if (phase_ == PHASE_CHRONOS_DISPATCH || phase_ == PHASE_CHRONOS_PREPARE) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
 
       int64_t t_pr = r->max_prepared_rver(col_id);
@@ -189,7 +188,7 @@ bool TxChronos::WriteColumn(Row *row,
                t_left);
       prepared_read_ranges_[row][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
     }
-  } else if (phase_ == PHASE_RCC_COMMIT) {
+  } else if (phase_ == PHASE_CHRONOS_COMMIT) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
       Log_info("Write Column, commit phase: table = %s, col_id = %d,  hint_flag = %d, commit_ts = %d,",
                row->get_table()->Name().c_str(),
@@ -206,6 +205,23 @@ bool TxChronos::WriteColumn(Row *row,
     verify(0);
   }
   return true;
+}
+
+
+
+void TxChronos::CommitExecute() {
+//  verify(phase_ == PHASE_RCC_START);
+  phase_ = PHASE_CHRONOS_COMMIT;
+  TxWorkspace ws;
+  for (auto &cmd: dreqs_) {
+    TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
+    int tmp;
+    cmd.input.Aggregate(ws);
+    auto& m = output_[cmd.inn_id_];
+    p.proc_handler_(nullptr, *this, cmd, &tmp, m);
+    ws.insert(m);
+  }
+  committed_ = true;
 }
 
 } // namespace janus

@@ -67,7 +67,7 @@ void SchedulerChronos::OnPreAccept(const txid_t txn_id,
     *res = REJECT;
   } else {
     if (dtxn->status() < TXN_CMT) {
-      if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
+      if (dtxn->phase_ < PHASE_CHRONOS_DISPATCH && tinfo.status() < TXN_CMT) {
         for (auto &c: cmds) {
           map<int32_t, Value> output;
           dtxn->DispatchExecute(const_cast<SimpleCommand &>(c), res, &output);

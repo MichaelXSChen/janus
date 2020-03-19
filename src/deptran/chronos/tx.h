@@ -5,6 +5,11 @@
 
 namespace janus {
 
+#define PHASE_CHRONOS_DISPATCH (1)
+#define PHASE_CHRONOS_PREPARE (2)
+#define PHASE_CHRONOS_COMMIT (3)
+
+
 class TxChronos : public TxJanus {
 public:
   using TxJanus::TxJanus;
@@ -21,7 +26,7 @@ public:
                        int *res,
                        map<int32_t, Value> *output) override;
 
-
+  virtual void CommitExecute() override;
 
   bool ReadColumn(mdb::Row *row,
                           mdb::colid_t col_id,
