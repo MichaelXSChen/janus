@@ -5,6 +5,7 @@
 #include "../command.h"
 #include "deptran/rococo/coordinator.h"
 #include "dep_graph.h"
+#include <chrono>
 
 namespace janus {
 class JanusCommo;
@@ -102,5 +103,7 @@ class CoordinatorJanus : public RccCoord {
   int FastQuorumGraphCheck(parid_t par_id);
   void GotoNextPhase() override;
   void Reset() override;
+
+  std::chrono::high_resolution_clock::time_point time_dbg;
 };
 } // namespace janus

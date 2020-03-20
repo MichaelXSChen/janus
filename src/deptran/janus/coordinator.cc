@@ -338,17 +338,24 @@ int CoordinatorJanus::FastQuorumGraphCheck(parid_t par_id) {
 void CoordinatorJanus::GotoNextPhase() {
   int n_phase = 6;
   int current_phase = phase_ % n_phase; // for debug
+
+  auto last = time_dbg; 
+  time_dbg = std::chrono::high_resolution_clock::now();
+  auto elapsed = time_dbg - last;
   switch (phase_++ % n_phase) {
     case Phase::INIT_END:
+      Log_info("time to INIT_END: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
       PreDispatch();
       verify(phase_ % n_phase == Phase::DISPATCH);
       break;
     case Phase::DISPATCH:
+      Log_info("time to DISPATCH: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
       phase_++;
       verify(phase_ % n_phase == Phase::PRE_ACCEPT);
       PreAccept();
       break;
     case Phase::PRE_ACCEPT:
+      Log_info("time to PRE_ACCEPT: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
       if (fast_path_) {
         phase_++; // FIXME
         verify(phase_ % n_phase == Phase::COMMIT);
@@ -360,10 +367,12 @@ void CoordinatorJanus::GotoNextPhase() {
       // TODO
       break;
     case Phase::ACCEPT:
+      Log_info("time to ACCEPT: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
       verify(phase_ % n_phase == Phase::COMMIT);
       Commit();
       break;
     case Phase::COMMIT:
+      Log_info("time to COMMIT: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
       verify(phase_ % n_phase == Phase::INIT_END);
       verify(committed_ != aborted_);
       if (committed_) {
