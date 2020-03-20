@@ -1,10 +1,12 @@
-
-
+#include <stdlib.h>
 #include "scheduler.h"
 #include "commo.h"
 #include "deptran/rococo/tx.h"
+#include <sys/time.h>
+#include <unistd.h>
 
 using namespace janus;
+struct timeval my_time;
 
 map<txnid_t, shared_ptr<TxRococo>> SchedulerJanus::Aggregate(RccGraph &graph) {
   // aggregate vertexes
@@ -108,11 +110,11 @@ void SchedulerJanus::OnPreAccept(const txid_t txn_id,
                                  RccGraph *graph,
                                  int32_t *res,
                                  shared_ptr<RccGraph> res_graph) {
-    Log_info("[%s]:%s called", __FILE__, __FUNCTION__ );
+  gettimeofday(&my_time, NULL);
+  Log_info("on pre-accept-begin: %llx %ld", txn_id,my_time.tv_sec*1000000+ my_time.tv_usec);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
-//    Log_info("on pre-accept graph size: %d", graph.size());
+ //Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
   if (graph != nullptr) {
@@ -150,6 +152,8 @@ void SchedulerJanus::OnPreAccept(const txid_t txn_id,
       verify(dtxn->epoch_ > 0);
     }
     *res = SUCCESS;
+    gettimeofday(&my_time, NULL);
+    Log_info("on pre-accept-end: %llx %ld", txn_id,my_time.tv_sec*1000000+my_time.tv_usec);
   }
 }
 
@@ -157,6 +161,8 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
                               const ballot_t &ballot,
                               shared_ptr<RccGraph> graph,
                               int32_t *res) {
+  gettimeofday(&my_time, NULL);
+  Log_info("on accept-begin: %llx %ld", txn_id,my_time.tv_sec*1000000+ my_time.tv_usec);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(txn_id));
   if (dtxn->max_seen_ballot_ > ballot) {
@@ -167,6 +173,8 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
     dtxn->max_seen_ballot_ = ballot;
     Aggregate(*graph);
     *res = SUCCESS;
+    gettimeofday(&my_time, NULL);
+    Log_info("on accept-end: %llx %ld", txn_id,my_time.tv_sec*1000000+ my_time.tv_usec);
   }
 }
 //
@@ -272,6 +280,8 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
                               TxnOutput *output,
                               const function<void()> &callback) {
   // TODO to support cascade abort
+  gettimeofday(&my_time, NULL);
+  Log_info("on commit-begin: %llx %ld", cmd_id,my_time.tv_sec*1000000+ my_time.tv_usec);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
@@ -331,13 +341,16 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
 ////    verify(0);
 //    }
   }
-
+   gettimeofday(&my_time, NULL);
+   Log_info("on commit-end: %llx %ld", cmd_id,my_time.tv_sec*1000000+ my_time.tv_usec);
 }
 
 int SchedulerJanus::OnInquire(epoch_t epoch,
                               cmdid_t cmd_id,
                               shared_ptr<RccGraph> graph,
                               const function<void()> &callback) {
+  gettimeofday(&my_time, NULL);
+  Log_info("on inquire-begin: %llx %ld", cmd_id,my_time.tv_sec*1000000+ my_time.tv_usec);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO check epoch, cannot be a too old one.
   auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
@@ -371,6 +384,8 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
     waitlist_.insert(dtxn.get());
     verify(dtxn->epoch_ > 0);
   }
+  gettimeofday(&my_time, NULL);
+  Log_info("on inquire-end: %llx %ld", cmd_id, my_time.tv_sec*1000000+my_time.tv_usec);
   return 0;
 
 }
