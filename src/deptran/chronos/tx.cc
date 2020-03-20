@@ -34,7 +34,7 @@ void TxChronos::DispatchExecute(SimpleCommand &cmd,
 
     //No need for chronos
     //for (auto col_id : c.columns) {
-    //    TraceDep(row, col_id, TXN_DEFERRED);
+//        TraceDep(row, col_id, TXN_DEFERRED);
     //}
   }
   dreqs_.push_back(cmd);
@@ -79,14 +79,15 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       int64_t  t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("ReadColumn, Prepare phase1: table = %s, col_id = %d,  hint_flag = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d",
+      Log_info("ReadColumn, Prepare phase1: table = %s, col_id = %d,  hint_flag = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
           row->get_table()->Name().c_str(),
           col_id,
           hint_flag,
           t_pw,
           t_cw,
           t_low,
-          t_left);
+          t_left,
+          received_prepared_ts_right_);
       prepared_read_ranges_[row][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
 
 
@@ -104,14 +105,15 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       int64_t  t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("ReadColumn, Prepare phase2: table = %s, col_id = %d,  hint_flag = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d",
+      Log_info("ReadColumn, Prepare phase2: table = %s, col_id = %d,  hint_flag = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
                row->get_table()->Name().c_str(),
                col_id,
                hint_flag,
                t_pw,
                t_cw,
                t_low,
-               t_left);
+               t_left,
+               received_prepared_ts_right_);
       prepared_read_ranges_[row][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
       return true;
     }
@@ -158,14 +160,15 @@ bool TxChronos::WriteColumn(Row *row,
       int64_t t_left = t_pr > t_cr ? t_pr : t_cr;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("Write Column, Prepare phase1: table = %s, col_id = %d,  hint_flag = %d, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d",
+      Log_info("Write Column, Prepare phase1: table = %s, col_id = %d,  hint_flag = %d, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
                row->get_table()->Name().c_str(),
                col_id,
                hint_flag,
                t_pr,
                t_cr,
                t_low,
-               t_left);
+               t_left,
+               received_prepared_ts_right_);
       prepared_read_ranges_[row][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
       mdb_txn()->write_column(row, col_id, value);
 
@@ -178,14 +181,15 @@ bool TxChronos::WriteColumn(Row *row,
       int64_t t_left = t_pr > t_cr ? t_pr : t_cr;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("Write Column, Prepare phase2: table = %s, col_id = %d,  hint_flag = %d, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d",
+      Log_info("Write Column, Prepare phase2: table = %s, col_id = %d,  hint_flag = %d, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
                row->get_table()->Name().c_str(),
                col_id,
                hint_flag,
                t_pr,
                t_cr,
                t_low,
-               t_left);
+               t_left,
+               received_prepared_ts_right_);
       prepared_read_ranges_[row][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
     }
   } else if (phase_ == PHASE_CHRONOS_COMMIT) {
@@ -223,5 +227,34 @@ void TxChronos::CommitExecute() {
   }
   committed_ = true;
 }
+
+bool TxChronos::GetTsBound(int64_t &left, int64_t &right) {
+
+  left = received_prepared_ts_left_;
+  right = received_prepared_ts_right_;
+
+  for (auto &pair: prepared_read_ranges_){
+    for (auto &col_range: pair.second){
+      if (col_range.second.first > left){
+        left = col_range.second.first;
+      }
+      if (col_range.second.second < right){
+        right = col_range.second.second;
+      }
+    }
+  }
+
+  for (auto &pair: prepared_write_ranges_){
+    for (auto &col_range: pair.second){
+      if (col_range.second.first > left){
+        left = col_range.second.first;
+      }
+      if (col_range.second.second < right){
+        right = col_range.second.second;
+      }
+    }
+  }
+}
+
 
 } // namespace janus

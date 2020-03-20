@@ -38,6 +38,10 @@ public:
                            const Value &value,
                            int hint_flag = TXN_INSTANT) override;
 
+
+  bool GetTsBound(int64_t &left, int64_t &right);
+
+
   int64_t local_ts_left_ = 0;
   int64_t local_ts_right_ = 0;
 

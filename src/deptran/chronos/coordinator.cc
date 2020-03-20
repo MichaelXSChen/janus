@@ -149,6 +149,7 @@ void CoordinatorChronos::AcceptAck(phase_t phase,
 void CoordinatorChronos::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   ChronosCommitReq chr_req;
+  chr_req.commit_ts = ts_left_;
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
@@ -311,6 +312,10 @@ void CoordinatorChronos::Dispatch() {
                               std::placeholders::_2,
                               std::placeholders::_3);
     ChronosDispatchReq req;
+    ts_left_ = logical_clock++;
+    ts_right_ = ts_left_ + ts_delta_;
+    req.ts_min = ts_left_;
+    req.ts_max = ts_right_;
 
     commo()->SendDispatch(cc, req, callback);
   }
@@ -328,11 +333,12 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
   verify(phase == phase_); // cannot proceed without all acks.
   verify(tx_data().root_id_ == tx_data().id_);
 
-  Log_info("[[%s]] called 2, timestamp = %d", __PRETTY_FUNCTION__, chr_res.max_ts);
 
-  if (chr_res.max_ts > ts_left_){
-    ts_left_ = chr_res.max_ts;
+  if (chr_res.ts_left > ts_left_){
+    ts_left_ = chr_res.ts_left;
     ts_right_ = ts_left_ + ts_delta_;
+
+    Log_info("DispatchAck, ts_left change to %d", ts_left_);
   }
 
   for (auto &pair : output) {
@@ -436,5 +442,9 @@ void CoordinatorChronos::Reset() {
 //  n_fast_accept_rejects_.clear();
   fast_accept_graph_check_caches_.clear();
   n_commit_oks_.clear();
+  //xstodo: think about how to forward the clock
+  logical_clock = ++ts_right_;
+
+
 }
 } // namespace janus

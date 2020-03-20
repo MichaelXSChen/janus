@@ -28,3 +28,5 @@
     * Synchronosly within DC, async without DC
     
 1. How to check the timestamp of each row. 
+
+1. After, DispatchExecute, does a node need to execute on PreAccept 

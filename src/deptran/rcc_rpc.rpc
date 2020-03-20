@@ -210,11 +210,13 @@ struct TxnDispatchResponse {
 }
 
 struct ChronosDispatchReq{
-
+    i64 ts_min;
+    i64 ts_max;
 }
 
 struct ChronosDispatchRes{
-    i64 max_ts;
+    i64 ts_left;
+    i64 ts_right;
 }
 
 struct ChronosPreAcceptReq {
@@ -237,7 +239,7 @@ struct ChronosAcceptRes{
 }
 
 struct ChronosCommitReq{
-
+    i64 commit_ts;
 }
 
 struct ChronosCommitRes{

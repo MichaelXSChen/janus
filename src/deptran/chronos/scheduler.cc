@@ -3,8 +3,11 @@
 #include "scheduler.h"
 #include "commo.h"
 #include "deptran/chronos/tx.h"
+#include <climits>
+#include "deptran/frame.h"
 
 using namespace janus;
+class Frame;
 
 int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
                                  const ChronosDispatchReq &chr_req,
@@ -13,22 +16,38 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
                                  TxnOutput* output) {
 
 
-  Log_info("[[%s]] called", __PRETTY_FUNCTION__);
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   txnid_t txn_id = cmd[0].root_id_; //should have the same root_id
   auto dtxn = dynamic_pointer_cast<TxChronos>(GetOrCreateTx(txn_id)); //type is shared_pointer
   verify(dtxn->id() == txn_id);
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
+  dtxn->received_prepared_ts_left_ = chr_req.ts_min;
+  dtxn->received_prepared_ts_right_ = chr_req.ts_max;
+
+
+
+  Log_info("[Scheduler %d] On Dispatch, txn_id = %d, ts_range = [%d, %d]", this->frame_->site_info_->id, txn_id, chr_req.ts_min, chr_req.ts_max);
+
   for (auto& c : cmd) {
     dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
                           res, &(*output)[c.inn_id()]);
   }
+
+
   dtxn->UpdateStatus(TXN_STD); //started
   verify(cmd[0].root_id_ == txn_id);
-  //TODO:get version by touched pieces
-  chr_res->max_ts = logical_clock++;
+
+
+  int64_t reply_ts_left, reply_ts_right;
+  dtxn->GetTsBound(reply_ts_left, reply_ts_right);
+
+  chr_res->ts_left = reply_ts_left;
+  chr_res->ts_right = reply_ts_right;
+
+  Log_info("[Scheduler %d] DispatchReturn, txn_id = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, chr_res->ts_left, chr_res->ts_right);
   return 0;
 }
+
 
 
 void SchedulerChronos::OnPreAccept(const txid_t txn_id,
@@ -43,10 +62,7 @@ void SchedulerChronos::OnPreAccept(const txid_t txn_id,
    * xsTODO: Steps:
     */
 
-  auto ts_left = chr_req.ts_min;
-  auto ts_right = chr_req.ts_max;
 
-  Log_info("[Chronos] on preaccept: %d, ts_range [%d, %d]", txn_id, ts_left, ts_right);
   //if (RandomGenerator::rand(1, 2000) <= 1)
   //Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
@@ -57,15 +73,16 @@ void SchedulerChronos::OnPreAccept(const txid_t txn_id,
   dtxn->received_prepared_ts_right_ = chr_req.ts_max;
 
   dtxn->UpdateStatus(TXN_PAC);
-  Log_info("[[%s]] called, dtxn.phase = %d", __PRETTY_FUNCTION__,  dtxn->phase_);
 
+  Log_info("[Scheduler %d] pre-accept on txn_id = %d, phase = %d, ts_range [%d, %d]", this->frame_->site_info_->id, txn_id, dtxn->phase_, chr_req.ts_min, chr_req.ts_max);
 
 
   dtxn->involve_flag_ = TxRococo::INVOLVED;
-  TxRococo &tinfo = *dtxn;
+  TxChronos &tinfo = *dtxn;
   if (dtxn->max_seen_ballot_ > 0) {
     *res = REJECT;
   } else {
+    //Normal case
     if (dtxn->status() < TXN_CMT) {
       if (dtxn->phase_ < PHASE_CHRONOS_DISPATCH && tinfo.status() < TXN_CMT) {
         for (auto &c: cmds) {
@@ -81,12 +98,29 @@ void SchedulerChronos::OnPreAccept(const txid_t txn_id,
       }
     }
     verify(!tinfo.fully_dispatched);
+
+
+    int64_t reply_ts_left, reply_ts_right;
+    dtxn->GetTsBound(reply_ts_left, reply_ts_right);
+
     tinfo.fully_dispatched = true;
     if (tinfo.status() >= TXN_CMT) {
       waitlist_.insert(dtxn.get());  //xs: for failure recovery
       verify(dtxn->epoch_ > 0);
     }
-    *res = SUCCESS;
+
+    chr_res->ts_left = reply_ts_left;
+    chr_res->ts_right = reply_ts_right;
+
+
+
+    if (reply_ts_left <= reply_ts_right){
+      *res = SUCCESS;
+    }else{
+      *res =  REJECT;
+    }
+
+    Log_info("[Scheduler %d] Preaccept returns, txn_id = %d, res = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, *res, reply_ts_left, reply_ts_right);
   }
 }
 
@@ -117,9 +151,11 @@ void SchedulerChronos::OnCommit(const txnid_t cmd_id,
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   *res = SUCCESS;
   //union the graph into dep graph
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
+  auto dtxn = dynamic_pointer_cast<TxChronos>(GetOrCreateTx(cmd_id));
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
+  dtxn->commit_ts_ = chr_req.commit_ts;
+
 
   if (dtxn->IsExecuted()) {
     *res = SUCCESS;
@@ -187,3 +223,4 @@ ChronosCommo *SchedulerChronos::commo() {
   verify(commo != nullptr);
   return commo;
 }
+
