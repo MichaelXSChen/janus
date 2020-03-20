@@ -6,23 +6,34 @@ site:
     - ["s103:8200", "s203:8201", "s303:8202"]
   client: # each line is a partition
     - ["c01", "c02", "c03"]
+    - ["c04", "c05", "c06"]
 #    - ["c01"]
 #    - ["c02"]
 #    - ["c03"]
 # site_name - process_name map
 process:
-  s101: localhost
-  s102: localhost
-  s103: localhost
-  s201: localhost
-  s202: localhost
-  s203: localhost
-  s301: localhost
-  s302: localhost
-  s303: localhost
-  c01: localhost
-  c02: localhost
-  c03: localhost
+  s101: host1
+  s102: host2
+  s103: host3
+  s201: host1
+  s202: host2
+  s203: host9
+  s301: host1
+  s302: host2
+  s303: host9
+  c01: host4
+  c02: host5
+  c03: host6
+  c04: host7
+  c05: host8
+  c06: host8
 
 host:
-  localhost: 127.0.0.1
+  host1: 10.22.1.13
+  host2: 10.22.1.15
+  host4: 10.22.1.17
+  host5: 10.22.1.07
+  host6: 10.22.1.18
+  host7: 10.22.1.12
+  host8: 10.22.1.14
+  host9: 10.22.1.16
