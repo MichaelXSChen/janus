@@ -48,6 +48,9 @@ void CoordinatorJanus::PreAccept() {
 //  // generate fast accept request
   // set broadcast callback
   // broadcast
+  //
+  pre_accept_first_ack_ = false;  
+  pre_accept_start_time_ = std::chrono::high_resolution_clock::now();
   auto dtxn = sp_graph_->FindV(cmd_->id_);
   verify(tx_data().partition_ids_.size() == dtxn->partition_.size());
   for (auto par_id : cmd_->GetPartitionIds()) {
@@ -70,6 +73,11 @@ void CoordinatorJanus::PreAcceptAck(phase_t phase,
                                     parid_t par_id,
                                     int res,
                                     shared_ptr<RccGraph> graph) {
+  if (pre_accept_first_ack_ == false){
+  pre_accept_first_ack_ = true; 
+  pre_accept_first_ack_time_ = std::chrono::high_resolution_clock::now();
+  }
+
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) return;
@@ -93,6 +101,13 @@ void CoordinatorJanus::PreAcceptAck(phase_t phase,
       fast_path_ = true;
 //      Log_info("pre acked success on txn_id: %llx", cmd_->id_);
       ChooseGraph();
+      pre_accept_finish_time_ = std::chrono::high_resolution_clock::now();
+      auto elapsed_first = pre_accept_first_ack_time_ - pre_accept_start_time_; 
+      auto elapsed_total = pre_accept_finish_time_ - pre_accept_first_ack_time_;
+
+      Log_info("time to FIRST_PR: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed_first).count());
+
+      Log_info("time to TOTAL_PR: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed_total).count());
       GotoNextPhase();
     } else {
       // skip, wait
@@ -344,18 +359,18 @@ void CoordinatorJanus::GotoNextPhase() {
   auto elapsed = time_dbg - last;
   switch (phase_++ % n_phase) {
     case Phase::INIT_END:
-      Log_info("time to INIT_END: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
+      Log_info("[%d] time to INIT_END: %lld", coo_id_, std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
       PreDispatch();
       verify(phase_ % n_phase == Phase::DISPATCH);
       break;
     case Phase::DISPATCH:
-      Log_info("time to DISPATCH: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
+      Log_info("[%d] time to DISPATCH: %lld", coo_id_, std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
       phase_++;
       verify(phase_ % n_phase == Phase::PRE_ACCEPT);
       PreAccept();
       break;
     case Phase::PRE_ACCEPT:
-      Log_info("time to PRE_ACCEPT: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
+      Log_info("[%d] time to PRE_ACCEPT: %lld", coo_id_, std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
       if (fast_path_) {
         phase_++; // FIXME
         verify(phase_ % n_phase == Phase::COMMIT);
@@ -372,7 +387,7 @@ void CoordinatorJanus::GotoNextPhase() {
       Commit();
       break;
     case Phase::COMMIT:
-      Log_info("time to COMMIT: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
+      Log_info("[%d] time to COMMIT: %lld", coo_id_, std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
       verify(phase_ % n_phase == Phase::INIT_END);
       verify(committed_ != aborted_);
       if (committed_) {

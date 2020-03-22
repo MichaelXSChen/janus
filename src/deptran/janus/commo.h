@@ -47,6 +47,7 @@ class JanusCommo : public RccCommo {
 
   bool IsGraphOrphan(RccGraph& graph, txnid_t cmd_id);
 
+
 };
 
 } // namespace

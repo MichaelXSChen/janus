@@ -281,7 +281,7 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
                               const function<void()> &callback) {
   // TODO to support cascade abort
   gettimeofday(&my_time, NULL);
-  Log_info("on commit-begin: %llx %ld", cmd_id,my_time.tv_sec*1000000+ my_time.tv_usec);
+  //Log_info("on commit-begin: %llx %ld", cmd_id,my_time.tv_sec*1000000+ my_time.tv_usec);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
@@ -342,7 +342,7 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
 //    }
   }
    gettimeofday(&my_time, NULL);
-   Log_info("on commit-end: %llx %ld", cmd_id,my_time.tv_sec*1000000+ my_time.tv_usec);
+   //Log_info("on commit-end: %llx %ld", cmd_id,my_time.tv_sec*1000000+ my_time.tv_usec);
 }
 
 int SchedulerJanus::OnInquire(epoch_t epoch,

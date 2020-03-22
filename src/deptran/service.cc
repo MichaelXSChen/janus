@@ -244,7 +244,8 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand>& cmd,
                                        TxnOutput* p_output,
                                        MarshallDeputy* p_md_res_graph,
                                        DeferredReply* p_defer) {
-    Log_info("%s called", __FUNCTION__);
+
+    auto start = std::chrono::high_resolution_clock::now();
 
     std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
     auto sp_graph = std::make_shared<RccGraph>();
@@ -260,6 +261,10 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand>& cmd,
     }
     verify(p_md_res_graph->kind_ != MarshallDeputy::UNKNOWN);
     p_defer->reply();
+
+    auto elapsed = std::chrono::high_resolution_clock::now() - start; 
+
+    Log_info("RPC JanusDispatch time = %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
 }
 
 void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
@@ -267,6 +272,7 @@ void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
                                      int32_t* res,
                                      TxnOutput* output,
                                      DeferredReply* defer) {
+  auto start = std::chrono::high_resolution_clock::now(); 
   std::lock_guard<std::mutex> guard(mtx_);
   RccGraph* p_graph = dynamic_cast<RccGraph*>(graph.sp_data_.get());
   SchedulerJanus* p_sched = (SchedulerJanus*) dtxn_sched_;
@@ -275,21 +281,29 @@ void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
                     res,
                     output,
                     [defer]() { defer->reply(); });
+  auto elapsed = std::chrono::high_resolution_clock::now() - start; 
+
+  Log_info("RPC JanusCommit time: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
 }
 
 void ClassicServiceImpl::JanusCommitWoGraph(const cmdid_t& cmd_id,
                                             int32_t* res,
                                             TxnOutput* output,
                                             DeferredReply* defer) {
+  auto start = std::chrono::high_resolution_clock::now(); 
   std::lock_guard<std::mutex> guard(mtx_);
   SchedulerJanus* sched = (SchedulerJanus*) dtxn_sched_;
   sched->OnCommit(cmd_id, nullptr, res, output, [defer]() { defer->reply(); });
+  auto elapsed = std::chrono::high_resolution_clock::now() - start; 
+
+  Log_info("RPC JanusCommit w/o graph: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
 }
 
 void ClassicServiceImpl::JanusInquire(const epoch_t& epoch,
                                       const cmdid_t& tid,
                                       MarshallDeputy* p_md_graph,
                                       rrr::DeferredReply* defer) {
+  auto start = std::chrono::high_resolution_clock::now(); 
   std::lock_guard<std::mutex> guard(mtx_);
   p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
   SchedulerJanus* p_sched = (SchedulerJanus*) dtxn_sched_;
@@ -297,6 +311,9 @@ void ClassicServiceImpl::JanusInquire(const epoch_t& epoch,
                      tid,
                      dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_),
                      [defer]() { defer->reply(); });
+  auto elapsed = std::chrono::high_resolution_clock::now() - start; 
+
+  Log_info("RPC JanusInquire time: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
 }
 
 void ClassicServiceImpl::JanusPreAccept(const cmdid_t& txnid,
@@ -305,6 +322,7 @@ void ClassicServiceImpl::JanusPreAccept(const cmdid_t& txnid,
                                         int32_t* res,
                                         MarshallDeputy* p_md_res_graph,
                                         DeferredReply* defer) {
+  auto start = std::chrono::high_resolution_clock::now(); 
   std::lock_guard<std::mutex> guard(mtx_);
   RccGraph* p_graph = dynamic_cast<RccGraph*>(md_graph.sp_data_.get());
   verify(p_graph);
@@ -316,6 +334,10 @@ void ClassicServiceImpl::JanusPreAccept(const cmdid_t& txnid,
                      res,
                      dynamic_pointer_cast<RccGraph>(p_md_res_graph->sp_data_));
   defer->reply();
+
+  auto elapsed = std::chrono::high_resolution_clock::now() - start; 
+
+  Log_info("RPC JanusPreAccept time: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
 }
 
 void ClassicServiceImpl::JanusPreAcceptWoGraph(const cmdid_t& txnid,
@@ -323,6 +345,9 @@ void ClassicServiceImpl::JanusPreAcceptWoGraph(const cmdid_t& txnid,
                                                int32_t* res,
                                                MarshallDeputy* res_graph,
                                                DeferredReply* defer) {
+
+  auto start = std::chrono::high_resolution_clock::now(); 
+
   std::lock_guard<std::mutex> guard(mtx_);
   res_graph->SetMarshallable(std::make_shared<RccGraph>());
   SchedulerJanus* p_sched = (SchedulerJanus*) dtxn_sched_;
@@ -332,6 +357,10 @@ void ClassicServiceImpl::JanusPreAcceptWoGraph(const cmdid_t& txnid,
                        res,
                        dynamic_pointer_cast<RccGraph>(res_graph->sp_data_));
   defer->reply();
+
+  auto elapsed = std::chrono::high_resolution_clock::now() - start; 
+
+  Log_info("RPC JanusPreAccept w/o graph time: %lld", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
 }
 
 void ClassicServiceImpl::JanusAccept(const cmdid_t& txnid,

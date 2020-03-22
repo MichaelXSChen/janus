@@ -105,5 +105,10 @@ class CoordinatorJanus : public RccCoord {
   void Reset() override;
 
   std::chrono::high_resolution_clock::time_point time_dbg;
+  
+  std::chrono::high_resolution_clock::time_point pre_accept_start_time_;
+  std::chrono::high_resolution_clock::time_point pre_accept_first_ack_time_;
+  std::chrono::high_resolution_clock::time_point pre_accept_finish_time_;
+  bool pre_accept_first_ack_; 
 };
 } // namespace janus
