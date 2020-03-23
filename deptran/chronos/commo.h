@@ -3,13 +3,13 @@
 //
 
 #pragma once
-#include "../janus/commo.h"
+#include "brq/commo.h"
 
-namespace janus {
+namespace rococo {
 
-class ChronosCommo : public JanusCommo {
+class ChronosCommo : public BrqCommo {
  public:
-  using JanusCommo::JanusCommo;
+  using BrqCommo::BrqCommo;
 
   void SendHandoutRo(SimpleCommand& cmd,
                      const function<void(int res,
@@ -17,10 +17,7 @@ class ChronosCommo : public JanusCommo {
                                          map<int, mdb::version_t>& vers)>&)
   override;
 
-  void SendFinish(parid_t pid,
-                  txnid_t tid,
-                  shared_ptr<RccGraph> graph,
-                  const function<void(TxnOutput&)>&) override;
+
 
   void SendInquire(parid_t pid,
                    epoch_t epoch,

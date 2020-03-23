@@ -6,7 +6,8 @@ namespace rococo {
 
 class BrqFrame : public Frame {
  public:
-  BrqFrame() : Frame(MODE_BRQ) { }
+  BrqFrame(int mode = MODE_BRQ) : Frame(mode) { }
+
   Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;
   Coordinator *CreateCoord(cooid_t coo_id,
                            Config *config,

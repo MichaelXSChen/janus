@@ -11,6 +11,7 @@
 #include "rcc/sched.h"
 #include "brq/sched.h"
 #include "benchmark_control_rpc.h"
+#include "chronos/scheduler.h"
 
 namespace rococo {
 
@@ -338,6 +339,74 @@ void ClassicServiceImpl::RegisterStats() {
     scsi_->set_stat(ServerControlServiceImpl::STAT_RO6_SZ_VECTOR,
                     &stat_ro6_sz_vector_);
   }
+}
+
+
+void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
+                                         const ChronosDispatchReq &req,
+                                         int32_t *p_res,
+                                         ChronosDispatchRes *chr_res,
+                                         TxnOutput *p_output,
+                                         DeferredReply *p_defer) {
+
+  Log_info("%s called", __PRETTY_FUNCTION__);
+
+  std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
+  auto *sched = (SchedulerChronos *) dtxn_sched_;
+
+  sched->OnDispatch(cmd, req, p_res, chr_res, p_output);
+
+  //xs step 1: get the dep of cmd.
+  //xs step 2: get the max timestamp.
+  //xs step 3: return
+
+
+  p_defer->reply();
+
+  Log_info("%s returned", __PRETTY_FUNCTION__);
+
+}
+
+void ClassicServiceImpl::ChronosPreAccept(const uint64_t &txn_id,
+                                          const std::vector<SimpleCommand> &cmds,
+                                          const ChronosPreAcceptReq &chr_req,
+                                          rrr::i32 *res,
+                                          ChronosPreAcceptRes *chr_res,
+                                          rrr::DeferredReply *defer) {
+
+  std::lock_guard<std::mutex> guard(mtx_);
+  SchedulerChronos *sched = (SchedulerChronos *) dtxn_sched_;
+  sched->OnPreAccept(txn_id,
+                     cmds,
+                     chr_req,
+                     res,
+                     chr_res);
+  defer->reply();
+}
+
+void ClassicServiceImpl::ChronosAccept(const uint64_t &txn_id,
+                                       const int64_t &ballot,
+                                       const ChronosAcceptReq &chr_req,
+                                       rrr::i32 *res,
+                                       ChronosAcceptRes *chr_res,
+                                       rrr::DeferredReply *defer) {
+
+  std::lock_guard<std::mutex> guard(mtx_);
+  SchedulerChronos *sched = (SchedulerChronos *) dtxn_sched_;
+  sched->OnAccept(txn_id, ballot, chr_req, res, chr_res);
+
+  defer->reply();
+}
+
+void ClassicServiceImpl::ChronosCommit(const uint64_t &id,
+                                       const ChronosCommitReq &chr_req,
+                                       int32_t *res,
+                                       ChronosCommitRes *chr_res,
+                                       TxnOutput *output,
+                                       rrr::DeferredReply *defer) {
+  std::lock_guard<std::mutex> guard(mtx_);
+  SchedulerChronos *sched = (SchedulerChronos *) dtxn_sched_;
+  sched->OnCommit(id, chr_req, res,  output, chr_res, [defer](){defer->reply();});
 }
 
 

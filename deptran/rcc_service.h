@@ -163,9 +163,41 @@ class ClassicServiceImpl: public ClassicService {
                  const Marshallable& graph,
                  int32_t* res,
                  DeferredReply* defer) override;
+  void ChronosPreAccept(const cmdid_t &txn_id,
+                        const std::vector<SimpleCommand> &cmd,
+                        const ChronosPreAcceptReq &req,
+                        rrr::i32 *res,
+                        ChronosPreAcceptRes *chr_res,
+                        rrr::DeferredReply *defer) override;
+
+  void ChronosAccept(const cmdid_t &txn_id,
+                     const ballot_t &ballot,
+                     const ChronosAcceptReq &req,
+                     rrr::i32 *res,
+                     ChronosAcceptRes *chr_res,
+                     rrr::DeferredReply *defer) override ;
+
+  void ChronosCommit(const cmdid_t &id,
+                     const ChronosCommitReq &req,
+                     int32_t *res,
+                     ChronosCommitRes *chr_res,
+                     TxnOutput *output,
+                     rrr::DeferredReply *defer) override;
+
+  void ChronosDispatch(const vector<SimpleCommand>& cmd,
+                       const ChronosDispatchReq& req,
+                       int32_t* p_res,
+                       ChronosDispatchRes *chr_res,
+                       TxnOutput* p_output,
+                       DeferredReply* p_defer) override;
+
+
+
+
   protected:
     void RegisterStats();
   };
+
 
 } // namespace rcc
 

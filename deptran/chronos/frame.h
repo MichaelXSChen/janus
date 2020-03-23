@@ -11,7 +11,7 @@ namespace rococo{
 
 class ChronosFrame : public BrqFrame {
  public:
-  ChronosFrame(int mode = MODE_CHRONOS) : BrqFrame {};
+  ChronosFrame(int mode = MODE_CHRONOS) : BrqFrame(mode) {}
 
   //xs: always null ptr, whats that for?
   Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;
@@ -45,7 +45,7 @@ class ChronosFrame : public BrqFrame {
 //
 //
 ////  //xs: called in each site.
-  shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
+  DTxn* CreateDTxn(epoch_t epoch, txnid_t tid,
                           bool ro, Scheduler *mgr) override;
 
   //created by each client **and** each server

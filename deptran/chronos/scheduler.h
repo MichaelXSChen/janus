@@ -4,17 +4,15 @@
 
 
 #pragma once
-#include "deptran/janus/scheduler.h"
+#include "deptran/brq/sched.h"
 #include "deptran/rcc_rpc.h"
-namespace janus {
+namespace rococo {
 
 class RccGraph;
 class ChronosCommo;
-class SchedulerChronos : public SchedulerJanus {
+class SchedulerChronos : public BrqSched {
  public:
-  using SchedulerJanus::SchedulerJanus;
-
-  map<txnid_t, shared_ptr<TxRococo>> Aggregate(RccGraph& graph);
+  using BrqSched::BrqSched;
 
 
   int OnDispatch(const vector<SimpleCommand> &cmd,

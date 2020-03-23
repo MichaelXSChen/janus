@@ -107,6 +107,31 @@ abstract service Classic {
                   ballot_t ballot,
                   Marshallable graph |
                   i32 res);
+
+
+  defer ChronosDispatch(vector<SimpleCommand> cmd,
+                        ChronosDispatchReq req |
+                        i32 res,
+                        ChronosDispatchRes chr_res,
+                        TxnOutput output);
+
+  defer ChronosPreAccept(cmdid_t txn_id,
+                         vector<SimpleCommand> cmd,
+                         ChronosPreAcceptReq req |
+                         i32 res,
+                         ChronosPreAcceptRes chr_res);
+
+  defer ChronosAccept(cmdid_t txn_id,
+                      ballot_t ballot,
+                      ChronosAcceptReq req |
+                      i32 res,
+                      ChronosAcceptRes chr_res);
+
+  defer ChronosCommit(cmdid_t id,
+                    ChronosCommitReq req |
+                    int32_t res,
+                    ChronosCommitRes chr_res,
+                    TxnOutput output);
 }
 
 
@@ -175,4 +200,44 @@ abstract service ClientControl {
     defer client_ready_block ( | i32 res);
     client_start ( | );
     defer DispatchTxn(TxnDispatchRequest req | TxnReply result);
+}
+
+
+//xs todo: move to another beter place
+
+struct ChronosDispatchReq{
+    i64 ts_min;
+    i64 ts_max;
+}
+
+struct ChronosDispatchRes{
+    i64 ts_left;
+    i64 ts_right;
+}
+
+struct ChronosPreAcceptReq {
+    i64 ts_min;
+    i64 ts_max;
+}
+
+struct ChronosPreAcceptRes {
+    i64 ts_left;
+    i64 ts_right;
+    i64 dep_reqs;
+}
+
+struct ChronosAcceptReq{
+    i64 ts;
+}
+
+struct ChronosAcceptRes{
+
+}
+
+struct ChronosCommitReq{
+    i64 commit_ts;
+}
+
+struct ChronosCommitRes{
+
 }
