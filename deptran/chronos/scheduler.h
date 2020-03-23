@@ -44,7 +44,7 @@ class SchedulerChronos : public BrqSched {
 
   int OnInquire(epoch_t epoch,
                 cmdid_t cmd_id,
-                shared_ptr<RccGraph> graph,
+                RccGraph* graph,
                 const function<void()> &callback) override;
 
   ChronosCommo* commo();

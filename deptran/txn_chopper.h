@@ -110,6 +110,9 @@ class SimpleCommand: public ContainerCommand {
   virtual ~SimpleCommand() {};
 };
 
+typedef SimpleCommand TxPieceData;
+
+
 class BatchCommand: public ContainerCommand {
  public:
   ContainerCommand* root_ = nullptr;

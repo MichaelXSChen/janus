@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <ctime>
-
+#include <list>
 #include "utils.h"
 #include "schema.h"
 #include "locking.h"
@@ -515,6 +515,10 @@ class VersionedRow: public CoarseLockedRow {
 //    ver_ = new version_t[n_columns];
 //    memset(ver_, 0, sizeof(version_t) * n_columns);
     ver_.resize(n_columns, 0);
+    wver_.resize(n_columns, 0);
+    rver_.resize(n_columns, 0);
+    prepared_rver_.resize(n_columns, {});
+    prepared_wver_.resize(n_columns, {});
   }
 
  protected:
@@ -530,6 +534,12 @@ class VersionedRow: public CoarseLockedRow {
     row->init_ver(n_columns);
 //    memcpy(row->ver_, this->ver_, n_columns * sizeof(version_t));
     row->ver_ = this->ver_;
+    row->wver_ = this->wver_;
+    row->rver_ = this->rver_;
+
+    row->prepared_rver_ = this->prepared_rver_;
+    row->prepared_wver_ = this->prepared_wver_;
+
     verify(row->ver_.size() > 0);
   }
 
@@ -561,6 +571,97 @@ class VersionedRow: public CoarseLockedRow {
     v.ver_ = get_column_ver(column_id);
     return v;
   }
+
+  //chronos code
+  std::vector<std::list<version_t>> prepared_rver_{};
+  std::vector<std::list<version_t>> prepared_wver_{};
+
+  std::vector<version_t> wver_{};
+  std::vector<version_t> rver_{};
+
+  version_t max_prepared_rver(column_id_t column_id) {
+    if (prepared_wver_[column_id].size() > 0) {
+      return prepared_wver_[column_id].back();
+    } else {
+      return 0;
+    }
+  }
+
+  version_t min_prepared_rver(column_id_t column_id) {
+    if (prepared_wver_[column_id].size() > 0) {
+      return prepared_wver_[column_id].front();
+    } else {
+      return 0;
+    }
+  }
+
+  version_t min_prepared_wver(column_id_t column_id) {
+    if (prepared_rver_[column_id].size() > 0) {
+      return prepared_rver_[column_id].front();
+    } else {
+      return 0;
+    }
+  }
+
+  version_t max_prepared_wver(column_id_t column_id) {
+    if (prepared_rver_[column_id].size() > 0) {
+      return prepared_rver_[column_id].back();
+    } else {
+      return 0;
+    }
+  }
+
+  void insert_prepared_wver(column_id_t column_id, version_t ver) {
+    prepared_wver_[column_id].push_back(ver);
+    prepared_rver_[column_id].sort(); // TODO optimize
+  }
+
+  void remove_prepared_wver(column_id_t column_id, version_t ver) {
+    prepared_wver_[column_id].remove(ver);
+  }
+
+  void insert_prepared_rver(column_id_t column_id, version_t ver) {
+    prepared_rver_[column_id].push_back(ver);
+    prepared_rver_[column_id].sort(); // TODO optimize
+  }
+
+  void remove_prepared_rver(column_id_t column_id, version_t ver) {
+    prepared_rver_[column_id].remove(ver);
+  }
+
+  version_t get_column_rver(column_id_t column_id) const {
+    verify(rver_.size() > 0);
+    verify(column_id < rver_.size());
+    return rver_[column_id];
+  }
+
+  version_t get_column_wver(column_id_t column_id) const {
+    verify(wver_.size() > 0);
+    verify(column_id < wver_.size());
+    return wver_[column_id];
+  }
+
+  void set_column_ver(column_id_t column_id, version_t ver) {
+    ver_[column_id] = ver;
+  }
+
+  void set_column_rver(column_id_t column_id, version_t ver) {
+    rver_[column_id] = ver;
+  }
+
+  void set_column_wver(column_id_t column_id, version_t ver) {
+    wver_[column_id] = ver;
+  }
+
+
+
+
+
+
+
+
+
+
 
   template<class Container>
   static VersionedRow *create(const Schema *schema, const Container &values) {

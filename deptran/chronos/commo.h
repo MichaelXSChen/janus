@@ -19,15 +19,9 @@ class ChronosCommo : public BrqCommo {
 
 
 
-  void SendInquire(parid_t pid,
-                   epoch_t epoch,
-                   txnid_t tid,
-                   const function<void(RccGraph& graph)>&) override;
 
 
 
-
-  bool IsGraphOrphan(RccGraph& graph, txnid_t cmd_id);
 
 
   //xs's code

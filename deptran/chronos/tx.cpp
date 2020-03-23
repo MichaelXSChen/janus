@@ -5,7 +5,7 @@
 
 #include "tx.h"
 
-namespace janus {
+namespace rococo {
 
 
 //SimpleCommand is a typedef of TxnPieceData
@@ -23,41 +23,34 @@ void TxChronos::DispatchExecute(SimpleCommand &cmd,
       return;
   }
   verify(txn_reg_);
-
-  //xs: step 2: get the definition (stored procedure) of the txn.
-  //So next question, what is conflicts.
-  TxnPieceDef& piece = txn_reg_->get(cmd.root_type_, cmd.type_);
-  auto& conflicts = piece.conflicts_;
-  for (auto& c: conflicts) {
-    vector<Value> pkeys;
-    for (int i = 0; i < c.primary_keys.size(); i++) {
-      pkeys.push_back(cmd.input.at(c.primary_keys[i]));
-    }
-    auto row = Query(GetTable(c.table), pkeys, c.row_context_id);
-    verify(row != nullptr);
-
-    //No need for chronos
-    //for (auto col_id : c.columns) {
-//        TraceDep(row, col_id, TXN_DEFERRED);
-    //}
+  // execute the IR actions.
+  verify(txn_reg_);
+  auto pair = txn_reg_->get(cmd);
+  // To tolerate deprecated codes
+  int xxx, *yyy;
+  if (pair.defer == DF_REAL) {
+    yyy = &xxx;
+    dreqs_.push_back(cmd);
+  } else if (pair.defer == DF_NO) {
+    yyy = &xxx;
+  } else if (pair.defer == DF_FAKE) {
+    dreqs_.push_back(cmd);
+    return;
+//    verify(0);
+  } else {
+    verify(0);
   }
-  dreqs_.push_back(cmd);
-
-  // TODO are these preemptive actions proper?
-  int ret_code;
-  cmd.input.Aggregate(ws_);
-  piece.proc_handler_(nullptr,
-                      *this,
-                      cmd,
-                      &ret_code,
-                      *output);
-  ws_.insert(*output);
+  pair.txn_handler(nullptr,
+                   this,
+                   const_cast<SimpleCommand&>(cmd),
+                   yyy,
+                   *output);
+  *res = pair.defer;
 }
 
 
-
 bool TxChronos::ReadColumn(mdb::Row *row,
-                           mdb::colid_t col_id,
+                           mdb::column_id_t col_id,
                            Value *value,
                            int hint_flag) {
 
@@ -146,7 +139,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
 
 
 bool TxChronos::WriteColumn(Row *row,
-                            colid_t col_id,
+                            column_id_t col_id,
                             const Value &value,
                             int hint_flag) {
 
@@ -220,13 +213,13 @@ bool TxChronos::WriteColumn(Row *row,
 void TxChronos::CommitExecute() {
 //  verify(phase_ == PHASE_RCC_START);
   phase_ = PHASE_CHRONOS_COMMIT;
-  TxWorkspace ws;
+  TxnWorkspace ws;
   for (auto &cmd: dreqs_) {
-    TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
+    auto pair = txn_reg_->get(cmd);
     int tmp;
     cmd.input.Aggregate(ws);
     auto& m = output_[cmd.inn_id_];
-    p.proc_handler_(nullptr, *this, cmd, &tmp, m);
+    pair.txn_handler(nullptr, this, cmd, &tmp, m);
     ws.insert(m);
   }
   committed_ = true;

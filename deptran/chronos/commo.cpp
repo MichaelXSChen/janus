@@ -2,13 +2,13 @@
 // Created by micha on 2020/3/23.
 //
 
-#include "../procedure.h"
-#include "deptran/janus/tx.h"
-#include "../rococo/graph_marshaler.h"
+#include "deptran/rcc/dtxn.h"
+#include "../rcc/graph_marshaler.h"
 #include "commo.h"
 #include "marshallable.h"
+#include "txn_chopper.h"
 
-namespace janus {
+namespace rococo {
 
 void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
                                 const ChronosDispatchReq& chr_req,
@@ -44,50 +44,6 @@ void ChronosCommo::SendHandoutRo(SimpleCommand &cmd,
   verify(0);
 }
 
-void ChronosCommo::SendFinish(parid_t pid,
-                              txnid_t tid,
-                              shared_ptr<RccGraph> graph,
-                              const function<void(TxnOutput &output)> &callback) {
-  verify(0);
-  FutureAttr fuattr;
-  function<void(Future *)> cb = [callback](Future *fu) {
-    int32_t res;
-    TxnOutput outputs;
-    fu->get_reply() >> res >> outputs;
-    callback(outputs);
-  };
-  fuattr.callback = cb;
-  auto proxy = NearestProxyForPartition(pid).second;
-  MarshallDeputy md(graph);
-  Future::safe_release(proxy->async_JanusCommit(tid, md, fuattr));
-}
-
-void ChronosCommo::SendInquire(parid_t pid,
-                               epoch_t epoch,
-                               txnid_t tid,
-                               const function<void(RccGraph &graph)> &callback) {
-  FutureAttr fuattr;
-  function<void(Future *)> cb = [callback](Future *fu) {
-    MarshallDeputy md;
-    fu->get_reply() >> md;
-    auto graph = dynamic_cast<RccGraph &>(*md.sp_data_);
-    callback(graph);
-  };
-  fuattr.callback = cb;
-  // TODO fix.
-  auto proxy = NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_JanusInquire(epoch, tid, fuattr));
-}
-
-bool ChronosCommo::IsGraphOrphan(RccGraph &graph, txnid_t cmd_id) {
-  if (graph.size() == 1) {
-    auto v = graph.FindV(cmd_id);
-    verify(v);
-    return true;
-  } else {
-    return false;
-  }
-}
 
 void ChronosCommo::BroadcastPreAccept(
     parid_t par_id,

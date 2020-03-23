@@ -8,14 +8,14 @@
 #include "../command.h"
 #include "../command_marshaler.h"
 #include "../communicator.h"
-#include "../rococo/rcc_row.h"
+#include "../rcc/rcc_row.h"
 #include "commo.h"
 #include "frame.h"
 #include "coordinator.h"
 #include "scheduler.h"
 #include "tx.h"
 
-namespace janus {
+namespace rococo {
 
 static Frame *chronos_frame_s = Frame::RegFrame(MODE_CHRONOS,
                                                 {"chronos"},
@@ -102,18 +102,12 @@ Scheduler *ChronosFrame::CreateScheduler() {
 //  return r;
 //}
 //
-shared_ptr<Tx> ChronosFrame::CreateTx(epoch_t epoch, txnid_t tid,
-                                      bool ro, Scheduler *mgr) {
-  if (site_info_ != nullptr){
-    Log_info("[site %d] [chronos] created txn", site_info_->id);
-  }else{
-    Log_info("[site null] [chronos] created txn");
-  }
+DTxn* ChronosFrame::CreateDTxn(uint32_t epoch, uint64_t tid, bool ro, Scheduler *mgr) {
 
-
-  shared_ptr<Tx> sp_tx(new TxChronos(epoch, tid, mgr, ro));
-  return sp_tx;
+  auto dtxn = new TxChronos(epoch, tid, mgr, ro);
+  return dtxn;
 }
+
 
 Communicator *ChronosFrame::CreateCommo(PollMgr *poll) {
   if (site_info_ != NULL){

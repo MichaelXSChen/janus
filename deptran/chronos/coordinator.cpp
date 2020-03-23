@@ -3,12 +3,12 @@
 //
 
 #include "../__dep__.h"
-#include "deptran/procedure.h"
+#include "txn_chopper.h"
 #include "frame.h"
 #include "commo.h"
 #include "coordinator.h"
 
-namespace janus {
+namespace rococo {
 
 
 ChronosCommo *CoordinatorChronos::commo() {
@@ -31,7 +31,7 @@ void CoordinatorChronos::PreAccept() {
   Log_info("%s:%s called", __FILE__, __FUNCTION__);
 
   for (auto par_id : cmd_->GetPartitionIds()) {
-    auto cmds = tx_data().GetCmdsByPartition(par_id);
+    auto cmds = txn().GetCmdsByPartition(par_id);
 
     Log_info("Calling BroadCastPreAccept %d", par_id);
 
@@ -104,10 +104,10 @@ void CoordinatorChronos::Accept() {
   verify(!fast_path_);
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
   ChooseGraph();
-  TxData *txn = (TxData *) cmd_;
-  auto dtxn = sp_graph_->FindV(cmd_->id_);
+  TxnCommand *txn = (TxnCommand *) cmd_;
+  auto dtxn = graph_.FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
+  graph_.UpgradeStatus(dtxn, TXN_CMT);
   ChronosAcceptReq chr_req;
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastAccept(par_id,
@@ -204,7 +204,7 @@ void CoordinatorChronos::CommitAck(phase_t phase,
 }
 
 bool CoordinatorChronos::FastpathPossible() {
-  auto pars = tx_data().GetPartitionIds();
+  auto pars = txn().GetPartitionIds();
   bool all_fast_quorum_possible = true;
   for (auto &par_id : pars) {
     int r = FastQuorumCheck(par_id);
@@ -218,7 +218,7 @@ int32_t CoordinatorChronos::GetQuorumSize(parid_t par_id) {
 }
 
 bool CoordinatorChronos::AllFastQuorumsReached() {
-  auto pars = tx_data().GetPartitionIds();
+  auto pars = txn().GetPartitionIds();
   for (auto &par_id : pars) {
     int r = FastQuorumCheck(par_id);
     if (r == 2) {
@@ -236,7 +236,7 @@ bool CoordinatorChronos::AllFastQuorumsReached() {
 }
 
 bool CoordinatorChronos::AcceptQuorumReached() {
-  auto pars = tx_data().GetPartitionIds();
+  auto pars = txn().GetPartitionIds();
   for (auto &par_id : pars) {
     if (n_fast_accept_oks_[par_id] < GetQuorumSize(par_id)) {
       return false;
@@ -287,10 +287,10 @@ int CoordinatorChronos::GetTsIntersection(uint32_t par_id, int32_t& t_left, int3
 void CoordinatorChronos::Dispatch() {
   verify(ro_state_ == BEGIN);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto txn = (TxData *) cmd_;
+  auto txn = (TxnCommand *) cmd_;
   verify(txn->root_id_ == txn->id_);
   int cnt = 0;
-  auto cmds_by_par = txn->GetReadyPiecesData();
+  auto cmds_by_par = txn->GetReadyCmds();
   Log_info("transaction (id %d) has been divided into %d pieces", txn->id_, cmds_by_par.size());
 
   int index = 0;
@@ -334,7 +334,7 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
 
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
-  verify(tx_data().root_id_ == tx_data().id_);
+  verify(txn().root_id_ == txn().id_);
 
 
   if (chr_res.ts_left > ts_left_){
@@ -348,21 +348,21 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
     n_dispatch_ack_++;
     verify(dispatch_acks_[pair.first] == false);
     dispatch_acks_[pair.first] = true;
-    tx_data().Merge(pair.first, pair.second);
+    txn().Merge(pair.first, pair.second);
     Log_info("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-             n_dispatch_ack_, n_dispatch_, tx_data().id_, pair.first);
+             n_dispatch_ack_, n_dispatch_, txn().id_, pair.first);
   }
 
 
-  if (tx_data().HasMoreUnsentPiece()) {
+  if (txn().HasMoreSubCmdReadyNotOut()) {
     Log_info("command has more sub-cmd, cmd_id: %lx,"
              " n_started_: %d, n_pieces: %d",
-             tx_data().id_,
-             tx_data().n_pieces_dispatched_, tx_data().GetNPieceAll());
+             txn().id_,
+             txn().n_pieces_dispatched_, txn().GetNPieceAll());
     Dispatch();
   } else if (AllDispatchAcked()) {
     Log_info("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
-    verify(!tx_data().do_early_return());
+    verify(!txn().do_early_return());
     GotoNextPhase();
   }
 }
