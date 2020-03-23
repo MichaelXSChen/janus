@@ -23,7 +23,7 @@ static Frame *chronos_frame_s = Frame::RegFrame(MODE_CHRONOS,
                                                   return new ChronosFrame();
                                                 });
 
-Coordinator *ChronosFrame::CreateCoordinator(cooid_t coo_id,
+Coordinator *ChronosFrame::CreateCoord(cooid_t coo_id,
                                              Config *config,
                                              int benchmark,
                                              ClientControlServiceImpl *ccsi,

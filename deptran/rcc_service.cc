@@ -385,7 +385,7 @@ void ClassicServiceImpl::ChronosPreAccept(const uint64_t &txn_id,
 }
 
 void ClassicServiceImpl::ChronosAccept(const uint64_t &txn_id,
-                                       const int64_t &ballot,
+                                       const uint64_t &ballot,
                                        const ChronosAcceptReq &chr_req,
                                        rrr::i32 *res,
                                        ChronosAcceptRes *chr_res,

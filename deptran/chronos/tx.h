@@ -25,7 +25,7 @@ class TxChronos : public RccDTxn {
     return VersionedRow::create(schema, values);
   }
 
-  void DispatchExecute(SimpleCommand &cmd,
+  void DispatchExecute(const SimpleCommand &cmd,
                        int *res,
                        map<int32_t, Value> *output) override;
 

@@ -10,7 +10,7 @@ namespace rococo {
 
 //SimpleCommand is a typedef of TxnPieceData
 //add a simpleCommand to the local Tx's dreq
-void TxChronos::DispatchExecute(SimpleCommand &cmd,
+void TxChronos::DispatchExecute(const SimpleCommand &cmd,
                                 int32_t *res,
                                 map<int32_t, Value> *output) {
   Log_info("%s called" , __FUNCTION__);

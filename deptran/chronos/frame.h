@@ -20,7 +20,7 @@ class ChronosFrame : public BrqFrame {
   //broadcastAccept to communicators.
   //call acceptrACK to do after receive ACK.
   //created by the client process/thread.
-  Coordinator *CreateCoordinator(cooid_t coo_id,
+  Coordinator *CreateCoord(cooid_t coo_id,
                                  Config *config,
                                  int benchmark,
                                  ClientControlServiceImpl *ccsi,
