@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <set>
-
+#include <functional>
 using std::map;
 using std::unordered_map;
 using std::string;
