@@ -75,6 +75,7 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
     pre_accept_acks_[par_id] = chr_res;
     Log_info("Received pre-accpet ok for par_id: %d", par_id);
   } else if (res == REJECT) {
+    Log_info("Reject not handled yet");
     verify(0);
     //n_fast_accept_rejects_[par_id]++;
   } else {

@@ -427,6 +427,7 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
     case MODE_TAPIR:
     case MODE_JANUS:
     case MODE_RCC:
+    case MODE_CHRONOS:
       result.push_back(new ClassicServiceImpl(dtxn_sched, poll_mgr, scsi));
       break;
     default:
@@ -438,6 +439,7 @@ map<string, int> &Frame::FrameNameToMode() {
   static map<string, int> frame_name_mode_s = {
       {"none",          MODE_NONE},
       {"2pl",           MODE_2PL},
+      {"chronos",   MODE_CHRONOS},
       {"occ",           MODE_OCC},
       {"ro6",           MODE_RO6},
       {"rpc_null",      MODE_RPC_NULL},
