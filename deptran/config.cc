@@ -359,6 +359,7 @@ void Config::LoadSiteYML(YAML::Node config) {
 int Config::GetClientPort(std::string site_name) {
   auto config = Config::GetConfig();
   std::vector<std::string> sites;
+  Log_info("%s: site_proc_map_.size = %d, site_name = %s", __FUNCTION__ , site_proc_map_.size(), site_name.c_str());
   for (auto site_host_pair : site_proc_map_) {
     sites.push_back(site_host_pair.first);
   }
@@ -366,6 +367,7 @@ int Config::GetClientPort(std::string site_name) {
   std::sort(sites.begin(), sites.end());
   std::vector<std::string> hosts;
   for (auto s : sites) {
+    Log_info("Adding %s", site_proc_map_[s].c_str());
     if (std::find(hosts.begin(), hosts.end(), site_proc_map_[s]) == hosts.end()) {
       if (s == site_name) {
         return Config::BASE_CLIENT_CTRL_PORT + hosts.size();
@@ -383,7 +385,7 @@ void Config::BuildSiteProcMap(YAML::Node process) {
   for (auto it = process.begin(); it != process.end(); it++) {
     auto site_name = it->first.as<string>();
     auto proc_name = it->second.as<string>();
-
+    Log_info("site_proc_map [%s] = %s", site_name.c_str(), proc_name.c_str());
     site_proc_map_[site_name] = proc_name;
   }
 }
