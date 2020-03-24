@@ -7,13 +7,13 @@
 
 namespace rococo {
 
-
+char * defer_str[] = {"defer_real", "defer_no", "defer_fake"};
+char * hint_str[] = {"n/a", "bypass", "safe", "instant", "deferred"};
 //SimpleCommand is a typedef of TxnPieceData
 //add a simpleCommand to the local Tx's dreq
 void TxChronos::DispatchExecute(const SimpleCommand &cmd,
                                 int32_t *res,
                                 map<int32_t, Value> *output) {
-  Log_info("%s called" , __FUNCTION__);
 
   phase_ = PHASE_CHRONOS_DISPATCH;
 
@@ -24,9 +24,10 @@ void TxChronos::DispatchExecute(const SimpleCommand &cmd,
   }
   verify(txn_reg_);
   // execute the IR actions.
-  verify(txn_reg_);
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
+
+  Log_info("%s called, defer= %s" , __FUNCTION__, defer_str[pair.defer]);
   int xxx, *yyy;
   if (pair.defer == DF_REAL) {
     yyy = &xxx;
@@ -54,7 +55,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
                            Value *value,
                            int hint_flag) {
 
-//  Log_info("Rtti = %d", row->rtti());
+  //Log_info("Rtti = %d", row->rtti());
   auto r = dynamic_cast<mdb::VersionedRow*>(row);
   verify(r->rtti() == symbol_t::ROW_VERSIONED);
 
@@ -76,10 +77,11 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       int64_t  t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("ReadColumn, Prepare phase1: table = %s, col_id = %d,  hint_flag = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+      Log_info("[txn %d] ReadColumn, Prepare phase1: table = %s, col_id = %d,  hint_flag = %s, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+                this->id(),
                row->get_table()->Name().c_str(),
                col_id,
-               hint_flag,
+               hint_str[hint_flag],
                t_pw,
                t_cw,
                t_low,
@@ -102,10 +104,11 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       int64_t  t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("ReadColumn, Prepare phase2: table = %s, col_id = %d,  hint_flag = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
-               row->get_table()->Name().c_str(),
+      Log_info("[txn %d] ReadColumn, Prepare phase2: table = %s, col_id = %d,  hint_flag = %s, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+                this->id(),
+          row->get_table()->Name().c_str(),
                col_id,
-               hint_flag,
+               hint_str[hint_flag],
                t_pw,
                t_cw,
                t_low,
@@ -118,10 +121,11 @@ bool TxChronos::ReadColumn(mdb::Row *row,
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
       //For commit
 
-      Log_info("ReadColumn, commit phase: table = %s, col_id = %d,  hint_flag = %d, commit_ts = %d,",
-               row->get_table()->Name().c_str(),
+      Log_info("[txn %d] ReadColumn, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
+                id(),
+          row->get_table()->Name().c_str(),
                col_id,
-               hint_flag,
+               hint_str[hint_flag],
                commit_ts_);
 
       auto c = r->get_column(col_id);
@@ -157,10 +161,11 @@ bool TxChronos::WriteColumn(Row *row,
       int64_t t_left = t_pr > t_cr ? t_pr : t_cr;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("Write Column, Prepare phase1: table = %s, col_id = %d,  hint_flag = %d, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
-               row->get_table()->Name().c_str(),
+      Log_info("[txn %d] Write Column, Prepare phase1: table = %s, col_id = %d,  hint_flag = %s, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
+                id(),
+          row->get_table()->Name().c_str(),
                col_id,
-               hint_flag,
+               hint_str[hint_flag],
                t_pr,
                t_cr,
                t_low,
@@ -178,10 +183,11 @@ bool TxChronos::WriteColumn(Row *row,
       int64_t t_left = t_pr > t_cr ? t_pr : t_cr;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("Write Column, Prepare phase2: table = %s, col_id = %d,  hint_flag = %d, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
-               row->get_table()->Name().c_str(),
+      Log_info("[txn %d] Write Column, Prepare phase2: table = %s, col_id = %d,  hint_flag = %s, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
+              id(),
+          row->get_table()->Name().c_str(),
                col_id,
-               hint_flag,
+               hint_str[hint_flag],
                t_pr,
                t_cr,
                t_low,
@@ -191,10 +197,11 @@ bool TxChronos::WriteColumn(Row *row,
     }
   } else if (phase_ == PHASE_CHRONOS_COMMIT) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
-      Log_info("Write Column, commit phase: table = %s, col_id = %d,  hint_flag = %d, commit_ts = %d,",
-               row->get_table()->Name().c_str(),
+      Log_info("[txn %d] Write Column, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
+              id(),
+          row->get_table()->Name().c_str(),
                col_id,
-               hint_flag,
+               hint_str[hint_flag],
                commit_ts_);
       r->wver_[col_id] = commit_ts_;
       //TODO: remove prepared ts for GC

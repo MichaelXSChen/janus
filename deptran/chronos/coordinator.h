@@ -20,7 +20,6 @@ class CoordinatorChronos : public BrqCoord {
   using BrqCoord::BrqCoord;
 
 
-  map<parid_t, std::shared_ptr<ChronosPreAcceptRes>> pre_accept_acks_;
 
 
   virtual ~CoordinatorChronos() {}
@@ -107,6 +106,10 @@ class CoordinatorChronos : public BrqCoord {
 
   void GotoNextPhase() override;
 
+
+  map<parid_t, std::shared_ptr<ChronosPreAcceptRes>> pre_accept_acks_;
+
+  //
   int64_t ts_left_;
   int64_t ts_right_;
 
