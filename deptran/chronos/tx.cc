@@ -7,6 +7,7 @@
 
 namespace rococo {
 
+
 char * defer_str[] = {"defer_real", "defer_no", "defer_fake"};
 char * hint_str[] = {"n/a", "bypass", "safe", "instant", "deferred"};
 //SimpleCommand is a typedef of TxnPieceData
