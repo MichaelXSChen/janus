@@ -29,6 +29,9 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
       };
   fuattr.callback = cb;
   auto proxy_info = NearestProxyForPartition(cmd[0].PartitionId());
+  //xs: seems to dispatch only the nearst replica fo the shard
+
+
   auto proxy = proxy_info.second;
   //XS: proxy is the rpc client side handler.
   Log_info("dispatch to %ld, proxy (site) = %d", cmd[0].PartitionId(), proxy_info.first);

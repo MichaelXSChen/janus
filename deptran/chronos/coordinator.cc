@@ -77,27 +77,27 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
   } else if (res == REJECT) {
     Log_info("Reject not handled yet");
     verify(0);
-    //n_fast_accept_rejects_[par_id]++;
   } else {
     verify(0);
   }
 
 
-  if (FastpathPossible()) {
-    if (AllFastQuorumsReached()) {
+  if(PreAcceptQuroumAck()){
+    //Received quorum ACK from all participating partitions.
+    if(CheckTsIntersection()){
       fast_path_ = true;
+      Log_info("[Txn id = %d] Fast path, commit_ts = %d", this->txn().id_, ts_fast_commit_);
       GotoNextPhase();
-    } else {
-      // skip, wait
-    }
-  } else {
-    //Fall back to
-    Log_info("Falling back to slow case");
-    if (PreAcceptAllSlowQuorumsReached()) {
+    }else{
+      Log_info("[Txn id = %d] Slow path", this->txn().id_);
       GotoNextPhase();
     }
+
   }
+
 }
+
+
 
 
 void CoordinatorChronos::Accept() {
@@ -153,7 +153,7 @@ void CoordinatorChronos::AcceptAck(phase_t phase,
 void CoordinatorChronos::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   ChronosCommitReq chr_req;
-  chr_req.commit_ts = ts_left_;
+  chr_req.commit_ts = ts_fast_commit_;
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
@@ -264,6 +264,7 @@ bool CoordinatorChronos::PreAcceptAllSlowQuorumsReached() {
 // 0: more wait
 int CoordinatorChronos::FastQuorumCheck(uint32_t par_id) {
   auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
+  //the number of
   Log_info("fast quorum check, par %d, size %d", par_id, par_size);
 
   int32_t t_left, t_right;
@@ -277,22 +278,19 @@ int CoordinatorChronos::FastQuorumCheck(uint32_t par_id) {
 //1 has intersection
 //-1 has no intersection
 //0 more wait
-int CoordinatorChronos::GetTsIntersection(uint32_t par_id, int32_t& t_left, int32_t& t_right) {
 
-  t_left = 0;
-  t_right = 100;
-  return 1;
-}
 
 
 void CoordinatorChronos::Dispatch() {
+
+
   verify(ro_state_ == BEGIN);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto txn = (TxnCommand *) cmd_;
   verify(txn->root_id_ == txn->id_);
   int cnt = 0;
-  auto cmds_by_par = txn->GetReadyCmds();
-  Log_info("transaction (id %d) has been divided into %d pieces", txn->id_, cmds_by_par.size());
+  map<parid_t, vector<SimpleCommand*>> cmds_by_par = txn->GetReadyCmds();
+  Log_info("transaction (id %d) has %d ready pieces", txn->id_, cmds_by_par.size());
 
   int index = 0;
   for (auto &pair: cmds_by_par) {
@@ -304,7 +302,7 @@ void CoordinatorChronos::Dispatch() {
     cnt += cmds.size();
     vector<SimpleCommand> cc;
     for (auto c: cmds) {
-      c->id_ = next_pie_id();
+      c->id_ = next_pie_id(); //next_piece_id
       dispatch_acks_[c->inn_id_] = false;
       cc.push_back(*c);
     }
@@ -349,7 +347,7 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
     n_dispatch_ack_++;
     verify(dispatch_acks_[pair.first] == false);
     dispatch_acks_[pair.first] = true;
-    txn().Merge(pair.first, pair.second);
+    txn().Merge(pair.first, pair.second); //For those txn that need the read value for other command.
     Log_info("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
              n_dispatch_ack_, n_dispatch_, txn().id_, pair.first);
   }
@@ -362,6 +360,8 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
              txn().n_pieces_dispatched_, txn().GetNPieceAll());
     Dispatch();
   } else if (AllDispatchAcked()) {
+    //xs: this is for OCC + Paxos based method.
+
     Log_info("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     verify(!txn().do_early_return());
     GotoNextPhase();
@@ -451,4 +451,44 @@ void CoordinatorChronos::Reset() {
 
 
 }
+
+
+bool CoordinatorChronos::PreAcceptQuroumAck() {
+  auto pars = txn().GetPartitionIds();
+  for (auto &par_id : pars) {
+    auto n_replicas = Config::GetConfig()->GetPartitionSize(par_id);
+    if (n_fast_accept_oks_[par_id] < n_replicas/2 + 1){
+      return false;
+    }
+  }
+  return true;
+}
+
+
+bool CoordinatorChronos::CheckTsIntersection() {
+  int64_t t_low = ts_left_;
+  int64_t t_high = ts_right_;
+
+  auto pars = txn().GetPartitionIds();
+
+  for (auto &par_id: pars){
+    for (auto &res: pre_accept_acks_[par_id]){
+      if (res->ts_left < t_low){
+        t_low = res->ts_left;
+      }
+      if (res->ts_right > t_high){
+        t_high= res->ts_right;
+      }
+    }
+  }
+
+  if (t_high >= t_low){
+    ts_fast_commit_ = t_low;
+    return true;
+  }else{
+    return false;
+  }
+
+}
+
 } // namespace janus

@@ -54,14 +54,14 @@ public:
 
   void restart() {verify(0);};
   // functions needed in the fast accept phase.
-  bool FastpathPossible();
-  bool AllFastQuorumsReached();
-  bool SlowpathPossible() {
+  virtual bool FastpathPossible();
+  virtual bool AllFastQuorumsReached();
+  virtual bool SlowpathPossible() {
     // TODO without failures, slow path should always be possible.
     return true;
   };
-  int32_t GetFastQuorum(parid_t par_id);
-  int32_t GetSlowQuorum(parid_t par_id);
+  virtual int32_t GetFastQuorum(parid_t par_id);
+  virtual int32_t GetSlowQuorum(parid_t par_id);
   bool PreAcceptAllSlowQuorumsReached();
 
   void prepare();

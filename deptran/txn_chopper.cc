@@ -131,14 +131,14 @@ map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds(int32_t max) {
   map<parid_t, vector<SimpleCommand*>> cmds;
 
 //  int n_debug = 0;
-  auto sz = status_.size();
-  for (auto &kv : status_) {
+  auto sz = status_.size(); //xs: status_ is the status of each piece of the transaction
+   for (auto &kv : status_) {
     auto pi = kv.first;
     auto &status = kv.second;
     if (status == DISPATCHABLE) {
       status = INIT;
       SimpleCommand *cmd = new SimpleCommand();
-      cmd->inn_id_ = pi;
+      cmd->inn_id_ = pi; //pi is inn_id, actually inner id
       cmd->partition_id_ = GetPiecePartitionId(pi);
       cmd->type_ = pi;
       cmd->root_id_ = id_;

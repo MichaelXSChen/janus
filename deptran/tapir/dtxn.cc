@@ -15,6 +15,7 @@ bool TapirDTxn::ReadColumn(mdb::Row *row,
                            Value *value,
                            int hint_flag) {
   // Ignore hint flags.
+  Log_info("[Txn %d] Tapir Rad column, row = %s, col_id = %d", this->tid_, row->get_table()->Name().c_str(), col_id);
   auto r = dynamic_cast<mdb::VersionedRow*>(row);
   verify(r->rtti() == symbol_t::ROW_VERSIONED);
   auto c = r->get_column(col_id);
@@ -36,6 +37,8 @@ bool TapirDTxn::WriteColumn(Row *row,
                             column_id_t col_id,
                             const Value &value,
                             int hint_flag) {
+
+  Log_info("[Txn %d] Tapir Write column, row = %s, col_id = %d", this->tid_, row->get_table()->Name().c_str(), col_id);
   row->ref_copy(); // TODO
   write_bufs_[row][col_id] = value;
   return true;

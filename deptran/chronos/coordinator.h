@@ -42,7 +42,7 @@ class CoordinatorChronos : public BrqCoord {
     return true;
   };
   int32_t GetSlowQuorum(parid_t par_id);
-  bool PreAcceptAllSlowQuorumsReached();
+  bool PreAcceptAllSlowQuorumsReached() = delete;
 
   // functions needed in the accept phase.
   bool AcceptQuorumPossible() {
@@ -78,9 +78,9 @@ class CoordinatorChronos : public BrqCoord {
   //xs's code start here
   bool FastpathPossible();
   std::atomic<uint64_t> logical_clock {0};
-  int32_t GetQuorumSize(parid_t par_id);
+//  int32_t GetQuorumSize(parid_t par_id);
   int FastQuorumCheck(parid_t par_id);
-  int GetTsIntersection(parid_t par_id, int32_t &t_left, int32_t &t_right);
+
 
   void Dispatch();
   void DispatchAck(phase_t phase,
@@ -93,6 +93,11 @@ class CoordinatorChronos : public BrqCoord {
                     parid_t par_id,
                     int res,
                     std::shared_ptr<ChronosPreAcceptRes> chr_res);
+
+  bool CheckTsIntersection();
+  bool PreAcceptQuroumAck();
+
+
 
   void Accept();
   void AcceptAck(phase_t phase, parid_t par_id, int res, ChronosAcceptRes &chr_res);
@@ -107,14 +112,16 @@ class CoordinatorChronos : public BrqCoord {
   void GotoNextPhase() override;
 
 
-  map<parid_t, std::shared_ptr<ChronosPreAcceptRes>> pre_accept_acks_;
+
+  map<parid_t, std::vector<std::shared_ptr<ChronosPreAcceptRes>>> pre_accept_acks_;
 
   //
   int64_t ts_left_;
   int64_t ts_right_;
-
   int64_t ts_delta_ = 10;
 
+  //
+  int64_t ts_fast_commit_;
 };
 } // namespace janus
 
