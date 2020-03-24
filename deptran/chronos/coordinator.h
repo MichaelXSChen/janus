@@ -31,18 +31,11 @@ class CoordinatorChronos : public BrqCoord {
 
 
 
-
-  // do_one inherits from RccCoord;
-
-  void restart() { verify(0); };
   // functions needed in the fast accept phase.
-  bool AllFastQuorumsReached();
   bool SlowpathPossible() {
     // TODO without failures, slow path should always be possible.
     return true;
   };
-  int32_t GetSlowQuorum(parid_t par_id);
-  bool PreAcceptAllSlowQuorumsReached() = delete;
 
   // functions needed in the accept phase.
   bool AcceptQuorumPossible() {
@@ -76,10 +69,8 @@ class CoordinatorChronos : public BrqCoord {
 
 
   //xs's code start here
-  bool FastpathPossible();
   std::atomic<uint64_t> logical_clock {0};
 //  int32_t GetQuorumSize(parid_t par_id);
-  int FastQuorumCheck(parid_t par_id);
 
 
   void Dispatch();

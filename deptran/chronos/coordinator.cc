@@ -72,7 +72,7 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
   }
   if (res == SUCCESS) {
     n_fast_accept_oks_[par_id]++;
-    pre_accept_acks_[par_id] = chr_res;
+    pre_accept_acks_[par_id].push_back(chr_res);
     Log_info("Received pre-accpet ok for par_id: %d", par_id);
   } else if (res == REJECT) {
     Log_info("Reject not handled yet");
@@ -204,80 +204,18 @@ void CoordinatorChronos::CommitAck(phase_t phase,
   return;
 }
 
-bool CoordinatorChronos::FastpathPossible() {
-  auto pars = txn().GetPartitionIds();
-  bool all_fast_quorum_possible = true;
-  for (auto &par_id : pars) {
-    int r = FastQuorumCheck(par_id);
-    return (r == 1);
-  }
-};
 
-int32_t CoordinatorChronos::GetQuorumSize(parid_t par_id) {
-  int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
-  return n/2 + 1;
-}
-
-bool CoordinatorChronos::AllFastQuorumsReached() {
-  auto pars = txn().GetPartitionIds();
-  for (auto &par_id : pars) {
-    int r = FastQuorumCheck(par_id);
-    if (r == 2) {
-      return false;
-    } else if (r == 1) {
-      // do nothing
-    } else if (r == 3) {
-      // do nothing
-      return false;
-    } else {
-      verify(0);
-    }
-  }
-  return true;
-}
 
 bool CoordinatorChronos::AcceptQuorumReached() {
   auto pars = txn().GetPartitionIds();
   for (auto &par_id : pars) {
-    if (n_fast_accept_oks_[par_id] < GetQuorumSize(par_id)) {
+    if (n_fast_accept_oks_[par_id] < 1) {
+      //xstodo: temporarily chenged to 1 for code refinement
       return false;
     }
   }
   return true;
 }
-
-bool CoordinatorChronos::PreAcceptAllSlowQuorumsReached() {
-  auto pars = cmd_->GetPartitionIds();
-  bool all_slow_quorum_reached =
-      std::all_of(pars.begin(),
-                  pars.end(),
-                  [this](parid_t par_id) {
-                    return n_fast_accept_oks_[par_id] >= GetQuorumSize(par_id);
-                  });
-  return all_slow_quorum_reached;
-};
-
-
-// return value
-// 1: a fast quorum reached
-// -1: fast quorum not possible.
-// 0: more wait
-int CoordinatorChronos::FastQuorumCheck(uint32_t par_id) {
-  auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
-  //the number of
-  Log_info("fast quorum check, par %d, size %d", par_id, par_size);
-
-  int32_t t_left, t_right;
-
-  int ret = GetTsIntersection(par_id, t_left, t_right);
-
-  return ret;
-}
-
-//Return value
-//1 has intersection
-//-1 has no intersection
-//0 more wait
 
 
 
