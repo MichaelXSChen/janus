@@ -10,27 +10,34 @@ set<Row*> TapirExecutor::locked_rows_s = {};
 void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
                                int32_t* res) {
   // validate read versions
+  if (txn_cmds.size() > 0){
+    Log_info("[%s]: id = %d, type = %d, size of txn_cmds = %d", __FUNCTION__, txn_cmds[0].root_id_, txn_cmds[0].root_type_, txn_cmds.size());
+  }else{
+    Log_info("[%s]: size = 0", __FUNCTION__);
+  }
   *res = SUCCESS;
 
-  map<int32_t, Value> output_m;
+  map<varid_t, Value> output_m;
   for (auto& c: txn_cmds) {
-    output_m.insert(c.output.begin(), c.output.end());
+    output_m.insert(c.output.begin(), c.output.end()); //xs: add all cmds' output during the dispatch phase
   }
 
-  phase_ = tapir_fast;
+  phase_ = tapir_fast; // added by xs for debug
+
+  //map<innid_t, map<int32_t, Value>> TxnOutput;
   TxnOutput output;
   Execute(txn_cmds, &output);
   for (auto& pair : output) {
-    for (auto& ppair: pair.second) {
-      auto& idx = ppair.first;
-      Value& value = ppair.second;
+    for (auto &ppair: pair.second) {
+      auto &idx = ppair.first; //var_id
+      Value &value = ppair.second;
       if (output_m.count(idx) == 0 ||
           value.ver_ != output_m.at(idx).ver_) {
         *res = REJECT;
         return;
       }
     }
-  }
+  }//the output value is different from the dispatch phase
 
   // TODO lock read items.
   auto& read_vers = dtxn()->read_vers_;
@@ -123,7 +130,7 @@ TapirDTxn* TapirExecutor::dtxn() {
 
 void TapirExecutor::Execute(const vector<SimpleCommand>& cmds,
                        TxnOutput* output) {
-  Log_info("Execute called, phase = %d", phase_);
+  Log_info("[%s]: id = %d, type = %d, phase = %d, size of txn_cmds = %d", __FUNCTION__, cmds[0].root_id_, cmds[0].type_, phase_ , cmds.size());
   TxnWorkspace ws;
   for (const SimpleCommand& c: cmds) {
     auto& cmd = const_cast<SimpleCommand&>(c);
@@ -142,6 +149,9 @@ void TapirExecutor::Execute(const vector<SimpleCommand>& cmds,
       verify(pair.second.get_kind() != Value::UNKNOWN);
     }
 #endif
+    for (auto &pair: m){
+      Log_info("[id = %d, type = %d, inn_id = %d] output key = %d", c.root_id_, c.root_type_, c.inn_id_, pair.first);
+    }
   }
 }
 

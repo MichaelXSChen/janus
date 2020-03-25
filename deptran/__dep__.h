@@ -118,4 +118,6 @@ class dummy_class {
 static dummy_class dummy___;
 
 #include "constants.h"
-typedef map<innid_t, map<int32_t, Value>> TxnOutput;
+typedef int32_t varid_t;
+
+typedef map<innid_t, map<varid_t, Value>> TxnOutput;

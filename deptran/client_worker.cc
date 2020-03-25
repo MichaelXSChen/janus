@@ -221,7 +221,7 @@ void ClientWorker::AcceptForwardedRequest(TxnRequest &request, TxnReply* txn_rep
 void ClientWorker::DispatchRequest(Coordinator *coo) {
     const char* f = __FUNCTION__;
     std::function<void()> task = [=]() {
-      Log_info("%s: %d", f, cli_id_);
+      Log_debug("%s: %d", f, cli_id_);
       TxnRequest req;
       {
         std::lock_guard<std::mutex> lock(this->request_gen_mutex);

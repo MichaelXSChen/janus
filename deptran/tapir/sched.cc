@@ -18,7 +18,7 @@ int TapirSched::OnDispatch(const vector<SimpleCommand> &cmds,
   //Although this output may need to be aborted.
   //But without the output it cannot move forward
 
-  //exec->Execute(cmds, output);
+  exec->Execute(cmds, output);
   *res = SUCCESS;
   callback();
   return 0;
@@ -30,7 +30,7 @@ int TapirSched::OnFastAccept(cmdid_t cmd_id,
                              int32_t* res,
                              const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  Log_info("receive fast accept for cmd_id: %llx", cmd_id);
+  Log_info("receive fast accept for cmd_id: %d", cmd_id);
   auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd_id);
   exec->FastAccept(txn_cmds, res);
 

@@ -79,7 +79,7 @@ void ClassicCoord::do_one(TxnRequest &req) {
       Log_info("forward to leader: %d; cooid: %d", forward_status_, this->coo_id_);
       ForwardTxnRequest(req);
     } else {
-      Log_info("start txn!!! : %d", forward_status_);
+      //Log_info("start txn!!! : %d", forward_status_);
       GotoNextPhase();
     }
 }

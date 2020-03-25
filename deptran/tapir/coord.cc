@@ -46,7 +46,7 @@ void TapirCoord::Dispatch() {
                                     std::placeholders::_1,
                                     std::placeholders::_2));
   }
-  Log_info("sent %d SubCmds\n", cnt);
+  Log_info("[txn %d] sent %d SubCmds\n", this->txn().id_, cnt);
 }
 
 
@@ -67,9 +67,9 @@ void TapirCoord::DispatchAck(phase_t phase,
     txn->Merge(pair.first, pair.second);
   }
   if (txn->HasMoreSubCmdReadyNotOut()) {
-    Log_info("command has more sub-cmd, cmd_id: %llx,"
+    Log_info("command has more sub-cmd, cmd_id: %d, type = %d"
                   " n_started_: %d, n_pieces: %d",
-              txn->id_, txn->n_pieces_dispatched_, txn->GetNPieceAll());
+              txn->id_, txn->type_, txn->n_pieces_dispatched_, txn->GetNPieceAll());
     Dispatch();
   } else if (AllDispatchAcked()) {
     Log_info("receive all start acks, txn_id: %llx; START PREPARE",
