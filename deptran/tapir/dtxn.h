@@ -6,6 +6,7 @@
 namespace rococo {
 
 
+
 class TapirDTxn : public DTxn {
  public:
   map<Row*, map<column_id_t, mdb::version_t>> read_vers_ = {};

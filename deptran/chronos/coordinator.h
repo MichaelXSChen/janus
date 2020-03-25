@@ -63,7 +63,6 @@ class CoordinatorChronos : public BrqCoord {
     ret = (ret << 32 | coo_id_);
     return ret;
   }
-  int FastQuorumGraphCheck(parid_t par_id) = delete;
   void Reset() override;
 
 

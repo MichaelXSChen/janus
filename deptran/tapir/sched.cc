@@ -10,10 +10,15 @@ int TapirSched::OnDispatch(const vector<SimpleCommand> &cmds,
                            int32_t* res,
                            TxnOutput *output,
                            const function<void()> &callback) {
+  Log_info("Here");
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = GetOrCreateExecutor(cmds[0].root_id_);
   verify(exec->mdb_txn());
-  exec->Execute(cmds, output);
+  //xs: I need the output
+  //Although this output may need to be aborted.
+  //But without the output it cannot move forward
+
+  //exec->Execute(cmds, output);
   *res = SUCCESS;
   callback();
   return 0;
@@ -25,7 +30,7 @@ int TapirSched::OnFastAccept(cmdid_t cmd_id,
                              int32_t* res,
                              const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  Log_debug("receive fast accept for cmd_id: %llx", cmd_id);
+  Log_info("receive fast accept for cmd_id: %llx", cmd_id);
   auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd_id);
   exec->FastAccept(txn_cmds, res);
 

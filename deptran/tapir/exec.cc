@@ -17,6 +17,7 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
     output_m.insert(c.output.begin(), c.output.end());
   }
 
+  phase_ = tapir_fast;
   TxnOutput output;
   Execute(txn_cmds, &output);
   for (auto& pair : output) {
@@ -118,5 +119,31 @@ TapirDTxn* TapirExecutor::dtxn() {
   verify(d);
   return d;
 }
+
+
+void TapirExecutor::Execute(const vector<SimpleCommand>& cmds,
+                       TxnOutput* output) {
+  Log_info("Execute called, phase = %d", phase_);
+  TxnWorkspace ws;
+  for (const SimpleCommand& c: cmds) {
+    auto& cmd = const_cast<SimpleCommand&>(c);
+    const auto &handler = txn_reg_->get(c).txn_handler;
+    auto& m = (*output)[c.inn_id_];
+    int res;
+    cmd.input.Aggregate(ws);
+    handler(this,
+            dtxn_,
+            cmd,
+            &res,
+            m);
+    ws.insert(m);
+#ifdef DEBUG_CODE
+    for (auto &pair: output) {
+      verify(pair.second.get_kind() != Value::UNKNOWN);
+    }
+#endif
+  }
+}
+
 
 } // namespace rococo

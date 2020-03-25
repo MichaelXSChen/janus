@@ -4,6 +4,7 @@
 
 namespace rococo {
 
+
 class SimpleCommand;
 class TapirSched : public ClassicSched {
  public:
@@ -25,6 +26,8 @@ class TapirSched : public ClassicSched {
   int OnDecide(cmdid_t cmd_id,
                int32_t decision,
                const function<void()>& callback);
+
+
 };
 
 } // namespace rococo

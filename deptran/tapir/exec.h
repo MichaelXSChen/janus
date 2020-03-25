@@ -4,9 +4,18 @@
 #include "../executor.h"
 
 namespace rococo {
+
+
+enum tapir_phase_t {
+  tapir_dispatch,
+  tapir_fast,
+  tapir_decide
+};
+
 class TapirDTxn;
 class TapirExecutor : public Executor {
  public:
+  tapir_phase_t phase_ = tapir_dispatch;
   using Executor::Executor;
   set<VersionedRow*> locked_rows_ = {};
   static set<Row*> locked_rows_s;
@@ -14,6 +23,10 @@ class TapirExecutor : public Executor {
                   int32_t *res);
   void Commit();
   void Abort();
+
+  void Execute(const vector<SimpleCommand>& cmd,
+               TxnOutput* output) override ;
+
 
   TapirDTxn* dtxn();
 };
