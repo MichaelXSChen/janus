@@ -63,11 +63,11 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
                                       int res,
                                       std::shared_ptr<ChronosPreAcceptRes> chr_res) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  Log_info("[[%s]] callled", __PRETTY_FUNCTION__);
+  //Log_info("[[%s]] callled", __PRETTY_FUNCTION__);
 
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) {
-    Log_info("already in next phase, return. Current phase = %d, suppose to be %d", phase_, phase);
+    //Log_info("already in next phase, return. Current phase = %d, suppose to be %d", phase_, phase);
     return;
   }
   if (res == SUCCESS) {
@@ -386,6 +386,7 @@ void CoordinatorChronos::Reset() {
   n_commit_oks_.clear();
   //xstodo: think about how to forward the clock
   logical_clock = ++ts_right_;
+  pre_accept_acks_.clear();
 
 
 }
@@ -411,15 +412,17 @@ bool CoordinatorChronos::CheckTsIntersection() {
 
   for (auto &par_id: pars){
     for (auto &res: pre_accept_acks_[par_id]){
-      if (res->ts_left < t_low){
+        Log_info("res, t_left = %d, t_right = %d", res->ts_left, res->ts_right);
+      if (res->ts_left > t_low){
         t_low = res->ts_left;
       }
-      if (res->ts_right > t_high){
+      if (res->ts_right < t_high){
         t_high= res->ts_right;
       }
     }
   }
 
+  Log_info("t_high = %d, t_low = %d", t_high, t_low);
   if (t_high >= t_low){
     ts_fast_commit_ = t_low;
     return true;
