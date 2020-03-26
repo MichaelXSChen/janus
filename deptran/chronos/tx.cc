@@ -9,7 +9,7 @@ namespace rococo {
 
 
 char * defer_str[] = {"defer_real", "defer_no", "defer_fake"};
-char * hint_str[] = {"n/a", "bypass", "safe", "instant", "deferred"};
+char * hint_str[] = {"n/a", "bypass", "instant", "n/a",  "deferred"};
 //SimpleCommand is a typedef of TxnPieceData
 //add a simpleCommand to the local Tx's dreq
 void TxChronos::DispatchExecute(const SimpleCommand &cmd,
@@ -53,7 +53,7 @@ void TxChronos::DispatchExecute(const SimpleCommand &cmd,
 
 void TxChronos::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t, Value> *output) {
 
-  phase_ = PHASE_CHRONOS_DISPATCH;
+  phase_ = PHASE_CHRONOS_PREPARE;
 
   //xs: Step 1: skip this simpleCommand if it is already in the dreqs.
 
@@ -108,14 +108,14 @@ bool TxChronos::ReadColumn(mdb::Row *row,
 
 
   verify(!read_only_);
-  if (phase_ == PHASE_CHRONOS_DISPATCH|| phase_ == PHASE_CHRONOS_PREPARE) {
+  if (phase_ == PHASE_CHRONOS_DISPATCH) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
+      //seems there is no instant read
       //Currently the same for different Hint-flag
       r ->rlock_row_by(this->tid_);
       locked_rows_.insert(r);
       auto c = r->get_column(col_id);
       row->ref_copy();
-      Log_info("Received instant txn");
       *value = c;
 
 
@@ -137,12 +137,46 @@ bool TxChronos::ReadColumn(mdb::Row *row,
                t_left,
                received_prepared_ts_right_);
       prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
+      return true;
+    }
+    if (hint_flag == TXN_DEFERRED) {
+      //xs: seems no need to read for a deferred
+      return true;
+    }
+  }else if (phase_ == PHASE_CHRONOS_PREPARE) {
+    if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
+      //Currently the same for different Hint-flag
+      r->rlock_row_by(this->tid_);
+      locked_rows_.insert(r);
+      auto c = r->get_column(col_id);
+      row->ref_copy();
+      Log_info("Received instant txn");
+      *value = c;
 
+      int64_t t_pw = r->max_prepared_wver(col_id);
+      int64_t t_cw = r->wver_[col_id];
+      int64_t t_low = received_prepared_ts_left_;
+
+      int64_t t_left = t_pw > t_cw ? t_pw : t_cw;
+      t_left = t_left > t_low ? t_left : t_low;
+
+      Log_info(
+          "[txn %d] ReadColumn, Prepare phase1: table = %s, col_id = %d,  hint_flag = %s, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+          this->id(),
+          row->get_table()->Name().c_str(),
+          col_id,
+          hint_str[hint_flag],
+          t_pw,
+          t_cw,
+          t_low,
+          t_left,
+          received_prepared_ts_right_);
+      prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
 
       return true;
     }
     if (hint_flag == TXN_INSTANT || hint_flag == TXN_DEFERRED) {
-      r ->rlock_row_by(this->tid_);
+      r->rlock_row_by(this->tid_);
       locked_rows_.insert(r);
       auto c = r->get_column(col_id);
       row->ref_copy();
@@ -152,23 +186,25 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       int64_t t_cw = r->wver_[col_id];
       int64_t t_low = received_prepared_ts_left_;
 
-      int64_t  t_left = t_pw > t_cw ? t_pw : t_cw;
+      int64_t t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("[txn %d] ReadColumn, Prepare phase2: table = %s, col_id = %d,  hint_flag = %s, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
-                this->id(),
+      Log_info(
+          "[txn %d] ReadColumn, Prepare phase2: table = %s, col_id = %d,  hint_flag = %s, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+          this->id(),
           row->get_table()->Name().c_str(),
-               col_id,
-               hint_str[hint_flag],
-               t_pw,
-               t_cw,
-               t_low,
-               t_left,
-               received_prepared_ts_right_);
+          col_id,
+          hint_str[hint_flag],
+          t_pw,
+          t_cw,
+          t_low,
+          t_left,
+          received_prepared_ts_right_);
       prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
       return true;
     }
-  } else if (phase_ == PHASE_CHRONOS_COMMIT) {
+  }
+  else if (phase_ == PHASE_CHRONOS_COMMIT) {
     if(r->rver_[col_id] < commit_ts_ ){
       r->rver_[col_id] = commit_ts_;
     }

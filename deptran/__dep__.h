@@ -112,6 +112,7 @@ class dummy_class {
     Log::set_level(Log::DEBUG);
 #else
     Log::set_level(Log::INFO);
+//    Log::set_level(Log::WARN);
 #endif
   }
 };
