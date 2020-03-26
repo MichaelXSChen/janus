@@ -28,7 +28,7 @@ void TxChronos::DispatchExecute(const SimpleCommand &cmd,
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
 
-  Log_info("%s called, defer= %s" , __FUNCTION__, defer_str[pair.defer]);
+  Log_info("%s called, defer= %s, txn_id = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_);
   int xxx, *yyy;
   if (pair.defer == DF_REAL) {
     yyy = &xxx;
@@ -38,6 +38,52 @@ void TxChronos::DispatchExecute(const SimpleCommand &cmd,
   } else if (pair.defer == DF_FAKE) {
     dreqs_.push_back(cmd);
     return;
+//    verify(0);
+  } else {
+    verify(0);
+  }
+  pair.txn_handler(nullptr,
+                   this,
+                   const_cast<SimpleCommand&>(cmd),
+                   yyy,
+                   *output);
+  *res = pair.defer;
+}
+
+
+void TxChronos::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t, Value> *output) {
+
+  phase_ = PHASE_CHRONOS_DISPATCH;
+
+  //xs: Step 1: skip this simpleCommand if it is already in the dreqs.
+
+  bool already_dispatched = false;
+  for (auto& c: dreqs_) {
+    if (c.inn_id() == cmd.inn_id()) {
+      // already received this piece, no need to push_back again.
+      already_dispatched = true;
+    }
+  }
+  verify(txn_reg_);
+  // execute the IR actions.
+  auto pair = txn_reg_->get(cmd);
+  // To tolerate deprecated codes
+
+  Log_info("%s called, defer= %s, txn_id = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_);
+  int xxx, *yyy;
+  if (pair.defer == DF_REAL) {
+    yyy = &xxx;
+    if (!already_dispatched){
+      dreqs_.push_back(cmd);
+    }
+  } else if (pair.defer == DF_NO) {
+    yyy = &xxx;
+  } else if (pair.defer == DF_FAKE) {
+    if (!already_dispatched){
+      dreqs_.push_back(cmd);
+      //xs: don't know the meaning of this
+      return;
+    }
 //    verify(0);
   } else {
     verify(0);
@@ -65,6 +111,8 @@ bool TxChronos::ReadColumn(mdb::Row *row,
   if (phase_ == PHASE_CHRONOS_DISPATCH|| phase_ == PHASE_CHRONOS_PREPARE) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
       //Currently the same for different Hint-flag
+      r ->rlock_row_by(this->tid_);
+      locked_rows_.insert(r);
       auto c = r->get_column(col_id);
       row->ref_copy();
       Log_info("Received instant txn");
@@ -88,12 +136,14 @@ bool TxChronos::ReadColumn(mdb::Row *row,
                t_low,
                t_left,
                received_prepared_ts_right_);
-      prepared_read_ranges_[row][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
+      prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
 
 
       return true;
     }
     if (hint_flag == TXN_INSTANT || hint_flag == TXN_DEFERRED) {
+      r ->rlock_row_by(this->tid_);
+      locked_rows_.insert(r);
       auto c = r->get_column(col_id);
       row->ref_copy();
       *value = c;
@@ -115,13 +165,15 @@ bool TxChronos::ReadColumn(mdb::Row *row,
                t_low,
                t_left,
                received_prepared_ts_right_);
-      prepared_read_ranges_[row][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
+      prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
       return true;
     }
   } else if (phase_ == PHASE_CHRONOS_COMMIT) {
+    if(r->rver_[col_id] < commit_ts_ ){
+      r->rver_[col_id] = commit_ts_;
+    }
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
       //For commit
-
       Log_info("[txn %d] ReadColumn, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
                 id(),
           row->get_table()->Name().c_str(),
@@ -132,7 +184,6 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       auto c = r->get_column(col_id);
       *value = c;
       //TODO: remove prepared read version
-      r->rver_[col_id] = commit_ts_;
     } else {
       verify(0);
     }
@@ -154,7 +205,8 @@ bool TxChronos::WriteColumn(Row *row,
   verify(!read_only_);
   if (phase_ == PHASE_CHRONOS_DISPATCH || phase_ == PHASE_CHRONOS_PREPARE) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
-
+      r->wlock_row_by(this->tid_);
+      locked_rows_.insert(r);
       int64_t t_pr = r->max_prepared_rver(col_id);
       int64_t t_cr = r->rver_[col_id];
       int64_t t_low = received_prepared_ts_left_;
@@ -172,11 +224,13 @@ bool TxChronos::WriteColumn(Row *row,
                t_low,
                t_left,
                received_prepared_ts_right_);
-      prepared_read_ranges_[row][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
+      prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
       mdb_txn()->write_column(row, col_id, value);
 
     }
     if (hint_flag == TXN_INSTANT || hint_flag == TXN_DEFERRED) {
+      r->wlock_row_by(this->tid_);
+      locked_rows_.insert(r);
       int64_t t_pr = r->max_prepared_rver(col_id);
       int64_t t_cr = r->rver_[col_id];
       int64_t t_low = received_prepared_ts_left_;
@@ -194,9 +248,12 @@ bool TxChronos::WriteColumn(Row *row,
                t_low,
                t_left,
                received_prepared_ts_right_);
-      prepared_read_ranges_[row][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
+      prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
     }
   } else if (phase_ == PHASE_CHRONOS_COMMIT) {
+    if (r->wver_[col_id] < commit_ts_){
+      r->wver_[col_id] = commit_ts_;
+    };
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
       Log_info("[txn %d] Write Column, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
               id(),
@@ -204,7 +261,6 @@ bool TxChronos::WriteColumn(Row *row,
                col_id,
                hint_str[hint_flag],
                commit_ts_);
-      r->wver_[col_id] = commit_ts_;
       //TODO: remove prepared ts for GC
       mdb_txn()->write_column(row, col_id, value);
     } else {
@@ -233,10 +289,10 @@ void TxChronos::CommitExecute() {
   committed_ = true;
 }
 
-bool TxChronos::GetTsBound(int64_t &left, int64_t &right) {
+bool TxChronos::GetTsBound() {
 
-  left = received_prepared_ts_left_;
-  right = received_prepared_ts_right_;
+  int64_t left = received_prepared_ts_left_;
+  int64_t right = received_prepared_ts_right_;
 
   for (auto &pair: prepared_read_ranges_){
     for (auto &col_range: pair.second){
@@ -259,7 +315,49 @@ bool TxChronos::GetTsBound(int64_t &left, int64_t &right) {
       }
     }
   }
+
+  local_prepared_ts_left_ = left;
+  local_prepared_ts_right_ = right;
 }
 
+bool TxChronos::StorePreparedVers() {
+  for (auto &pair: prepared_read_ranges_){
+    auto vrow = pair.first;
+    auto col_ver_map = pair.second;
+    for (auto &m: col_ver_map){
+      vrow->insert_prepared_rver(m.first, this->local_prepared_ts_left_);
+    }
+    vrow->unlock_row_by(this->tid_);
+  }
+
+  for (auto &pair: prepared_write_ranges_){
+    auto vrow = pair.first;
+    auto col_ver_map = pair.second;
+    for (auto &m: col_ver_map){
+      vrow->insert_prepared_wver(m.first, this->local_prepared_ts_left_);
+    }
+    vrow->unlock_row_by(this->tid_);
+  }
+}
+
+bool TxChronos::RemovePreparedVers() {
+  for (auto &pair: prepared_read_ranges_){
+    auto vrow = pair.first;
+    auto col_ver_map = pair.second;
+    for (auto &m: col_ver_map){
+      vrow->remove_prepared_rver(m.first, this->local_prepared_ts_left_);
+    }
+    vrow->unlock_row_by(this->tid_);
+  }
+
+  for (auto &pair: prepared_write_ranges_){
+    auto vrow = pair.first;
+    auto col_ver_map = pair.second;
+    for (auto &m: col_ver_map){
+      vrow->remove_prepared_wver(m.first, this->local_prepared_ts_left_);
+    }
+    vrow->unlock_row_by(this->tid_);
+  }
+}
 
 } // namespace janus

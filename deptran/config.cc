@@ -442,6 +442,7 @@ void Config::InitMode(string &cc_name, string& ab_name) {
 }
 
 void Config::InitBench(std::string &bench_str) {
+  Log_info("Benmark_str= %s", bench_str.c_str());
   if (bench_str == "tpca") {
     benchmark_ = TPCA;
   } else if (bench_str == "tpcc") {

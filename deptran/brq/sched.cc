@@ -317,7 +317,7 @@ void BrqSched::OnAccept(const txnid_t txn_id,
 //  }
 //}
 
-
+//why there is abort
 void BrqSched::OnCommit(const txnid_t cmd_id,
                         RccGraph* graph,
                         int32_t* res,

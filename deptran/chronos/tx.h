@@ -29,7 +29,11 @@ class TxChronos : public RccDTxn {
                        int *res,
                        map<int32_t, Value> *output) override;
 
-  virtual void CommitExecute() override;
+  void PreAcceptExecute(const SimpleCommand &cmd,
+                       int *res,
+                       map<int32_t, Value> *output);
+
+  void CommitExecute() override;
 
   bool ReadColumn(mdb::Row *row,
                   mdb::column_id_t col_id,
@@ -42,18 +46,21 @@ class TxChronos : public RccDTxn {
                    int hint_flag = TXN_INSTANT) override;
 
 
-  bool GetTsBound(int64_t &left, int64_t &right);
+  bool GetTsBound();
+  bool StorePreparedVers();
+  bool RemovePreparedVers();
 
+  std::set<VersionedRow *> locked_rows_ = {};
 
-  int64_t local_ts_left_ = 0;
-  int64_t local_ts_right_ = 0;
 
   int64_t received_prepared_ts_left_ = 0;
   int64_t received_prepared_ts_right_ = 0;
 
-  map<Row *, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_read_ranges_ = {};
-  map<Row *, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_write_ranges_ = {};
+  map<VersionedRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_read_ranges_ = {};
+  map<VersionedRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_write_ranges_ = {};
 
+  int64_t local_prepared_ts_left_;
+  int64_t local_prepared_ts_right_;
 
   int64_t commit_ts_;
 

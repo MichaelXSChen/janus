@@ -17,7 +17,8 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
                                  int32_t* res,
                                  ChronosDispatchRes *chr_res,
                                  TxnOutput* output) {
-
+  //Pre-execute the tranasction.
+  //Provide the local timestamp as a basic.
 
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   txnid_t txn_id = cmd[0].root_id_; //should have the same root_id
@@ -42,10 +43,11 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
 
 
   int64_t reply_ts_left, reply_ts_right;
-  dtxn->GetTsBound(reply_ts_left, reply_ts_right);
+  dtxn->GetTsBound();
 
   chr_res->ts_left = reply_ts_left;
   chr_res->ts_right = reply_ts_right;
+
 
   Log_info("[Scheduler %d] DispatchReturn, txn_id = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, chr_res->ts_left, chr_res->ts_right);
   return 0;
@@ -83,6 +85,7 @@ void SchedulerChronos::OnPreAccept(const txnid_t txn_id,
   dtxn->involve_flag_ = RccDTxn::INVOLVED;
   TxChronos &tinfo = *dtxn;
   if (dtxn->max_seen_ballot_ > 0) {
+    //xs: for recovery
     *res = REJECT;
   } else {
     //Normal case
@@ -90,7 +93,8 @@ void SchedulerChronos::OnPreAccept(const txnid_t txn_id,
       if (dtxn->phase_ < PHASE_CHRONOS_DISPATCH && tinfo.status() < TXN_CMT) {
         for (auto &c: cmds) {
           map<int32_t, Value> output;
-          dtxn->DispatchExecute(const_cast<SimpleCommand &>(c), res, &output);
+          //this will lock the rows
+          dtxn->PreAcceptExecute(const_cast<SimpleCommand &>(c), res, &output);
         }
       }
     } else {
@@ -103,8 +107,10 @@ void SchedulerChronos::OnPreAccept(const txnid_t txn_id,
     verify(!tinfo.fully_dispatched);
 
 
-    int64_t reply_ts_left, reply_ts_right;
-    dtxn->GetTsBound(reply_ts_left, reply_ts_right);
+    dtxn->GetTsBound();
+
+
+
 
     tinfo.fully_dispatched = true;
     if (tinfo.status() >= TXN_CMT) {
@@ -112,18 +118,22 @@ void SchedulerChronos::OnPreAccept(const txnid_t txn_id,
       verify(dtxn->epoch_ > 0);
     }
 
-    chr_res->ts_left = reply_ts_left;
-    chr_res->ts_right = reply_ts_right;
+
+    chr_res->ts_left = dtxn->local_prepared_ts_left_;
+    chr_res->ts_right = dtxn->local_prepared_ts_right_;
 
 
 
-    if (reply_ts_left <= reply_ts_right){
+    if (chr_res->ts_left <= chr_res->ts_right){
+     //save the prepared version to database
+     //unlock
+      dtxn->StorePreparedVers();
       *res = SUCCESS;
+      Log_info("[Scheduler %d] Preaccept success, txn_id = %d, res = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, *res, chr_res->ts_left, chr_res->ts_right);
     }else{
       *res =  REJECT;
+      Log_info("[Scheduler %d] Preaccept reject, txn_id = %d, res = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, *res, chr_res->ts_left, chr_res->ts_right);
     }
-
-    Log_info("[Scheduler %d] Preaccept returns, txn_id = %d, res = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, *res, reply_ts_left, reply_ts_right);
   }
 }
 
@@ -159,15 +169,16 @@ void SchedulerChronos::OnCommit(const txnid_t cmd_id,
   dtxn->ptr_output_repy_ = output;
   dtxn->commit_ts_ = chr_req.commit_ts;
 
-
   if (dtxn->IsExecuted()) {
     *res = SUCCESS;
+    Log_info("%s, Is executed", __FUNCTION__);
     callback();
   } else if (dtxn->IsAborted()) {
-    verify(0);
+    verify(0); //this should not hanppen
     *res = REJECT;
     callback();
   } else {
+    Log_info("%s, will execute", __FUNCTION__);
     //Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
     dtxn->commit_request_received_ = true;
     dtxn->finish_reply_callback_ = [callback, res](int r) {
@@ -177,6 +188,7 @@ void SchedulerChronos::OnCommit(const txnid_t cmd_id,
     verify(dtxn->fully_dispatched); //cannot handle non-dispatched now.
     UpgradeStatus(dtxn, TXN_DCD);
     Execute(*dtxn);
+    dtxn->RemovePreparedVers();
     if (dtxn->to_checks_.size() > 0) {
       for (auto child : dtxn->to_checks_) {
         waitlist_.insert(child);
