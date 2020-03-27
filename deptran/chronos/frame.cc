@@ -14,6 +14,7 @@
 #include "coordinator.h"
 #include "scheduler.h"
 #include "tx.h"
+#include "memdb/row_mv.h"
 
 namespace rococo {
 
@@ -125,7 +126,7 @@ mdb::Row *ChronosFrame::CreateRow(const mdb::Schema *schema,
 
   //Log_info("[%s] CreateRow Called ", __FILE__);
   //Log_info("created chronos row");
-  mdb::Row *r = mdb::VersionedRow::create(schema, row_data);
+  mdb::Row *r = ChronosRow::create(schema, row_data);
 
   return r;
 }

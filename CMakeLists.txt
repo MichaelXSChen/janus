@@ -119,7 +119,7 @@ add_library(RRR
     ${RRR_SRC})
 
 add_library(MEMDB
-    ${MEMDB_SRC})
+    ${MEMDB_SRC} memdb/row_mv.cc memdb/row_mv.h)
 
 #add_library(ROCOCO
 ##    ${RRR_SRC}

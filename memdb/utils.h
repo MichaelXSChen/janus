@@ -28,6 +28,7 @@ typedef enum {
     ROW_FINE,
     ROW_VERSIONED,
     ROW_MULTIVER,
+    ROW_CHRONOS,
 
     TBL_SORTED,
     TBL_UNSORTED,

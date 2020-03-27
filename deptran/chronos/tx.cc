@@ -4,7 +4,7 @@
 
 
 #include "tx.h"
-
+#include "memdb/row_mv.h"
 namespace rococo {
 
 
@@ -103,8 +103,8 @@ bool TxChronos::ReadColumn(mdb::Row *row,
                            int hint_flag) {
   //Seems no instant through out the process
   //Log_info("Rtti = %d", row->rtti());
-  auto r = dynamic_cast<mdb::VersionedRow*>(row);
-  verify(r->rtti() == symbol_t::ROW_VERSIONED);
+  auto r = dynamic_cast<ChronosRow*>(row);
+  verify(r->rtti() == symbol_t::ROW_CHRONOS);
 
 
   verify(!read_only_);
@@ -236,8 +236,8 @@ bool TxChronos::WriteColumn(Row *row,
                             const Value &value,
                             int hint_flag) {
 
-  auto r = dynamic_cast<mdb::VersionedRow*>(row);
-  verify(r->rtti() == symbol_t::ROW_VERSIONED);
+  auto r = dynamic_cast<ChronosRow*>(row);
+  verify(r->rtti() == symbol_t::ROW_CHRONOS);
 
   verify(!read_only_);
   if (phase_ == PHASE_CHRONOS_DISPATCH || phase_ == PHASE_CHRONOS_PREPARE) {

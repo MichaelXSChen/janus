@@ -5,7 +5,7 @@
 
 #include "deptran/rcc/dtxn.h"
 #include "../command.h"
-
+#include "memdb/row_mv.h"
 namespace rococo {
 
 #define PHASE_CHRONOS_DISPATCH (1)
@@ -22,7 +22,7 @@ class TxChronos : public RccDTxn {
       const mdb::Schema *schema,
       const std::vector<mdb::Value> &values) override {
     Log_info("[[%s]] called", __PRETTY_FUNCTION__);
-    return VersionedRow::create(schema, values);
+    return ChronosRow::create(schema, values);
   }
 
   void DispatchExecute(const SimpleCommand &cmd,
@@ -50,14 +50,14 @@ class TxChronos : public RccDTxn {
   bool StorePreparedVers();
   bool RemovePreparedVers();
 
-  std::set<VersionedRow *> locked_rows_ = {};
+  std::set<ChronosRow *> locked_rows_ = {};
 
 
   int64_t received_prepared_ts_left_ = 0;
   int64_t received_prepared_ts_right_ = 0;
 
-  map<VersionedRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_read_ranges_ = {};
-  map<VersionedRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_write_ranges_ = {};
+  map<ChronosRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_read_ranges_ = {};
+  map<ChronosRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_write_ranges_ = {};
 
   int64_t local_prepared_ts_left_;
   int64_t local_prepared_ts_right_;
