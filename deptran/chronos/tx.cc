@@ -101,7 +101,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
                            mdb::column_id_t col_id,
                            Value *value,
                            int hint_flag) {
-
+  //Seems no instant through out the process
   //Log_info("Rtti = %d", row->rtti());
   auto r = dynamic_cast<mdb::VersionedRow*>(row);
   verify(r->rtti() == symbol_t::ROW_VERSIONED);
@@ -144,8 +144,10 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       return true;
     }
   }else if (phase_ == PHASE_CHRONOS_PREPARE) {
+    //In the pre-accept phase
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
       //Currently the same for different Hint-flag
+      //xs to do: these seems already handled
       r->rlock_row_by(this->tid_);
       locked_rows_.insert(r);
       auto c = r->get_column(col_id);
@@ -175,7 +177,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
 
       return true;
     }
-    if (hint_flag == TXN_INSTANT || hint_flag == TXN_DEFERRED) {
+    if (hint_flag == TXN_DEFERRED) {
       r->rlock_row_by(this->tid_);
       locked_rows_.insert(r);
       auto c = r->get_column(col_id);
@@ -209,7 +211,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       r->rver_[col_id] = commit_ts_;
     }
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
-      //For commit
+      //For fast path_, seems no need to read.
       Log_info("[txn %d] ReadColumn, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
                 id(),
           row->get_table()->Name().c_str(),
@@ -219,7 +221,6 @@ bool TxChronos::ReadColumn(mdb::Row *row,
 
       auto c = r->get_column(col_id);
       *value = c;
-      //TODO: remove prepared read version
     } else {
       verify(0);
     }
