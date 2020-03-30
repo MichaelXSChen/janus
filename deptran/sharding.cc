@@ -314,6 +314,8 @@ bool Sharding::Ready2Populate(tb_info_t *tb_info) {
       return false;
   }
   Log_info("returning true");
+    Log_info("returning true");
+    Log_info("returning true");
   return true;
 }
 
