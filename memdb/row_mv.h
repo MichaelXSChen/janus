@@ -111,7 +111,7 @@ class ChronosRow : public mdb::CoarseLockedRow {
   }
 
   // data structure to keep all old versions for a row
-  std::map<mdb::column_id_t, std::map<i64, Value> > old_values_;
+  std::map<mdb::column_id_t, std::map<i64, Value> > old_values_ = {};
   // data structure to keep real time for each 100 versions. used for GC
   std::map<mdb::column_id_t, std::map<i64, std::map<i64, Value>::iterator> > time_segment;
 
@@ -156,6 +156,7 @@ class ChronosRow : public mdb::CoarseLockedRow {
 
     template<class Container>
     static ChronosRow *create(const mdb::Schema *schema, const Container &values) {
+      Log_info("Calling create");
       verify(values.size() == schema->columns_count());
       std::vector<const Value *> values_ptr(values.size(), nullptr);
       size_t fill_counter = -1;

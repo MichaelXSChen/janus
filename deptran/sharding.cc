@@ -298,8 +298,11 @@ int Sharding::GetTableNames(parid_t par_id,
 }
 
 bool Sharding::Ready2Populate(tb_info_t *tb_info) {
+  Log_info("%s called", __PRETTY_FUNCTION__);
   auto &columns = tb_info->columns;
+  Log_info("abc");
   for (auto c_it = columns.begin(); c_it != columns.end(); c_it++) {
+    Log_info("def: %s", c_it->name.c_str());
     auto fcol = c_it->foreign;
     if ((fcol != nullptr) &&
         (fcol->values != nullptr) &&
@@ -307,14 +310,18 @@ bool Sharding::Ready2Populate(tb_info_t *tb_info) {
       // have foreign table
       // foreign table has some mysterious values
       // those values have not been put in
+      Log_info("returning false");
       return false;
   }
+  Log_info("returning true");
   return true;
 }
 
 int Sharding::PopulateTable(tb_info_t *tb_info,
                             parid_t par_id) {
   // find table and secondary table
+  Log_info("%s called", __FUNCTION__);
+
   mdb::Table *const table_ptr = dtxn_sched_->get_table(tb_info->tb_name);
   const mdb::Schema *schema = table_ptr->schema();
   mdb::SortedTable *tbl_sec_ptr = nullptr;
@@ -378,6 +385,7 @@ int Sharding::PopulateTables(parid_t par_id) {
         populated = true;
       }
     }
+    usleep(1000*1000);
     verify(populated);
   } while (n_left > 0);
 
