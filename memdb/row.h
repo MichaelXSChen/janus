@@ -560,9 +560,13 @@ class VersionedRow: public CoarseLockedRow {
     return v;
   }
 
+  void set_column_ver(column_id_t column_id, version_t ver) {
+      ver_[column_id] = ver;
+  }
 
 
-  template<class Container>
+
+    template<class Container>
   static VersionedRow *create(const Schema *schema, const Container &values) {
     verify(values.size() == schema->columns_count());
     std::vector<const Value *> values_ptr(values.size(), nullptr);

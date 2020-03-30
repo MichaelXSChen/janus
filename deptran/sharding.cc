@@ -302,7 +302,7 @@ bool Sharding::Ready2Populate(tb_info_t *tb_info) {
   auto &columns = tb_info->columns;
   Log_info("abc");
   for (auto c_it = columns.begin(); c_it != columns.end(); c_it++) {
-    Log_info("def: %s", c_it->name.c_str());
+//    Log_info("def: %s", c_it->name.c_str());
     auto fcol = c_it->foreign;
     if ((fcol != nullptr) &&
         (fcol->values != nullptr) &&
@@ -314,8 +314,6 @@ bool Sharding::Ready2Populate(tb_info_t *tb_info) {
       return false;
   }
   Log_info("returning true");
-    Log_info("returning true");
-    Log_info("returning true");
   return true;
 }
 
