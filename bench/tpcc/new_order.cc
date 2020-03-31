@@ -142,10 +142,14 @@ void TpccPiece::RegNewOrder() {
             TPCC_TB_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_3, DF_FAKE) {
     verify(cmd.input.size() >= 6);
-    Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_3);
+    Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_3);
     i32 oi = 0;
     mdb::Table *tbl = dtxn->GetTable(TPCC_TB_ORDER);
-
+//    if (tbl == nullptr){
+//      Log_info("null ptr");
+//    }else{
+//      Log_info("table name %s", tbl->Name().c_str());
+//    }
     mdb::MultiBlob mb(3);
     mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
     mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
@@ -154,9 +158,9 @@ void TpccPiece::RegNewOrder() {
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                               mb,
                               ROW_ORDER_SEC);
+
     verify(r);
     verify(r->schema_);
-
     // W order
     std::vector<Value> row_data= {
         cmd.input.at(TPCC_VAR_D_ID),
@@ -168,10 +172,10 @@ void TpccPiece::RegNewOrder() {
         cmd.input[TPCC_VAR_OL_CNT],
         cmd.input[TPCC_VAR_O_ALL_LOCAL]
     };
+
     CREATE_ROW(tbl->schema(), row_data);
     verify(r->schema_);
     dtxn->InsertRow(tbl, r);
-
 //    r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
 //                    mb,
 //                    ROW_ORDER_SEC);
@@ -214,7 +218,7 @@ void TpccPiece::RegNewOrder() {
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(0), 1000, DF_NO)
     verify(cmd.input.size() >= 1);
-    Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_RI(I));
+    Log_info("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_RI(I));
     auto tbl_item = dtxn->GetTable(TPCC_TB_ITEM);
     mdb::Row *row_item = dtxn->Query(tbl_item,
                                      cmd.input[TPCC_VAR_I_ID(I)].get_blob(),

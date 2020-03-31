@@ -6,108 +6,123 @@
 #define ROCOCO_MEMDB_ROW_MV_H_
 
 #include "memdb/row.h"
+#include <mutex>
 
-namespace rococo{
+namespace rococo {
 
 class ChronosRow : public mdb::CoarseLockedRow {
-  using version_t = mdb::version_t ;
-  using column_id_t  = mdb::column_id_t ;
+  using version_t = mdb::version_t;
+  using column_id_t  = mdb::column_id_t;
   using Value = mdb::Value;
   using i64 = mdb::i64;
- public:
+public:
   std::vector<std::list<version_t>> prepared_rver_{};
   std::vector<std::list<version_t>> prepared_wver_{};
 
   std::vector<version_t> wver_{};
   std::vector<version_t> rver_{};
 
- public:
+  std::recursive_mutex ver_lock;
+
+public:
   ~ChronosRow() {
-    //no need
+      //no need
   }
 
   void init_ver(int n_columns);
 
-  void copy_into(ChronosRow *row) const;
+  void copy_into(ChronosRow *row);
 
   virtual mdb::symbol_t rtti() const {
-    return mdb::symbol_t::ROW_CHRONOS;
+      return mdb::symbol_t::ROW_CHRONOS;
   }
 
-  virtual Row *copy() const {
-    ChronosRow *row = new ChronosRow();
-    copy_into(row);
-    return row;
+  virtual Row *copy() {
+      ChronosRow *row = new ChronosRow();
+      copy_into(row);
+      return row;
   }
 
   version_t max_prepared_rver(column_id_t column_id) {
-    if (prepared_wver_[column_id].size() > 0) {
-      return prepared_wver_[column_id].back();
-    } else {
-      return 0;
-    }
+      std::unique_lock<std::recursive_mutex> vl(ver_lock);
+      if (prepared_wver_[column_id].size() > 0) {
+          return prepared_wver_[column_id].back();
+      } else {
+          return 0;
+      }
   }
 
   version_t min_prepared_rver(column_id_t column_id) {
-    if (prepared_wver_[column_id].size() > 0) {
-      return prepared_wver_[column_id].front();
-    } else {
-      return 0;
-    }
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      if (prepared_wver_[column_id].size() > 0) {
+          return prepared_wver_[column_id].front();
+      } else {
+          return 0;
+      }
   }
 
   version_t min_prepared_wver(column_id_t column_id) {
-    if (prepared_rver_[column_id].size() > 0) {
-      return prepared_rver_[column_id].front();
-    } else {
-      return 0;
-    }
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      if (prepared_rver_[column_id].size() > 0) {
+          return prepared_rver_[column_id].front();
+      } else {
+          return 0;
+      }
   }
 
   version_t max_prepared_wver(column_id_t column_id) {
-    if (prepared_rver_[column_id].size() > 0) {
-      return prepared_rver_[column_id].back();
-    } else {
-      return 0;
-    }
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      if (prepared_rver_[column_id].size() > 0) {
+          return prepared_rver_[column_id].back();
+      } else {
+          return 0;
+      }
   }
 
   void insert_prepared_wver(column_id_t column_id, version_t ver) {
-    prepared_wver_[column_id].push_back(ver);
-    prepared_rver_[column_id].sort(); // TODO optimize
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      prepared_wver_[column_id].push_back(ver);
+      prepared_rver_[column_id].sort(); // TODO optimize
   }
 
   void remove_prepared_wver(column_id_t column_id, version_t ver) {
-    prepared_wver_[column_id].remove(ver);
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      prepared_wver_[column_id].remove(ver);
   }
 
   void insert_prepared_rver(column_id_t column_id, version_t ver) {
-    prepared_rver_[column_id].push_back(ver);
-    prepared_rver_[column_id].sort(); // TODO optimize
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      prepared_rver_[column_id].push_back(ver);
+      prepared_rver_[column_id].sort(); // TODO optimize
   }
 
   void remove_prepared_rver(column_id_t column_id, version_t ver) {
-    prepared_rver_[column_id].remove(ver);
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      prepared_rver_[column_id].remove(ver);
   }
 
-  version_t get_column_rver(column_id_t column_id) const {
-    verify(rver_.size() > 0);
-    verify(column_id < rver_.size());
-    return rver_[column_id];
+  version_t get_column_rver(column_id_t column_id) {
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      verify(rver_.size() > 0);
+      verify(column_id < rver_.size());
+      return rver_[column_id];
   }
 
-  version_t get_column_wver(column_id_t column_id) const {
-    verify(wver_.size() > 0);
-    verify(column_id < wver_.size());
-    return wver_[column_id];
+  version_t get_column_wver(column_id_t column_id) {
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      verify(wver_.size() > 0);
+      verify(column_id < wver_.size());
+      return wver_[column_id];
   }
 
   void set_column_rver(column_id_t column_id, version_t ver) {
-    rver_[column_id] = ver;
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      rver_[column_id] = ver;
   }
 
   void set_column_wver(column_id_t column_id, version_t ver) {
-    wver_[column_id] = ver;
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
+      wver_[column_id] = ver;
   }
 
   // data structure to keep all old versions for a row
@@ -120,8 +135,9 @@ class ChronosRow : public mdb::CoarseLockedRow {
 
 
   //This is the entry function
+  //no need to lock as the called function will call mutex
   void update_with_ver(int column_id, const Value &v, i64 txn_id, i64 ver) {
-    update_internal(column_id, v, ver, txn_id);
+      update_internal(column_id, v, ver, txn_id);
   }
 //
 //  void update_with_ver(int column_id, i64 v, i64 txn_id, i64 ver) {
@@ -141,45 +157,56 @@ class ChronosRow : public mdb::CoarseLockedRow {
 //  }
 //
 
-    /*
-     * For reads, we need the id for this read txn
-     */
+  /*
+   * For reads, we need the id for this read txn
+   */
 
 
-    // retrieve current version number
-    version_t getCurrentVersion(int column_id){
+  // retrieve current version number
+  version_t getCurrentVersion(int column_id) {
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
       return wver_[column_id];
-    }
+  }
 
-    // get a value specified by a version number
-    Value get_column_by_ver(int column_id, i64 txn_number, i64 version_num);
+  // get a value specified by a version number
+  Value get_column_by_ver(int column_id, i64 txn_number, i64 version_num);
 
-    template<class Container>
-    static ChronosRow *create(const mdb::Schema *schema, const Container &values) {
-      Log_info("Calling create");
+  template<class Container>
+  static ChronosRow *create(const mdb::Schema *schema, const Container &values) {
       verify(values.size() == schema->columns_count());
       std::vector<const Value *> values_ptr(values.size(), nullptr);
-      size_t fill_counter = -1;
+      size_t fill_counter = 0;
       for (auto it = values.begin(); it != values.end(); ++it) {
-        fill_values_ptr(schema, values_ptr, *it, fill_counter);
-        fill_counter++;
+          fill_values_ptr(schema, values_ptr, *it, fill_counter);
+          fill_counter++;
       }
       ChronosRow *raw_row = new ChronosRow();
       raw_row->init_ver(schema->columns_count());
       return (ChronosRow *) Row::create(raw_row, schema, values_ptr);
       // TODO (for haonan) initialize the data structure for a new row here.
-    }
+  }
 
-    template<typename Type>
-    void update_internal(int column_id, Type v, i64 ver, i64 txn_id) {
+  template<typename Type>
+  void update_internal(int column_id, Type v, i64 ver, i64 txn_id) {
+      std::unique_lock<std::recursive_mutex> lk(ver_lock);
       // first get current value before update, and put current value in old_values_
       Value currentValue = this->Row::get_column(column_id);
       // get current version
       version_t currentVersionNumber = getCurrentVersion(column_id);
-      // push this new value to the old versions map
-      std::pair<i64, Value> valueEntry = std::make_pair(currentVersionNumber, currentValue);
-      // insert this old version to old_values_
-      old_values_[column_id].insert(valueEntry);
+
+      if (ver > currentVersionNumber){
+          //step 1: insert the current version into old_values;
+          std::pair<i64, Value> valueEntry = std::make_pair(currentVersionNumber, currentValue);
+          old_values_[column_id].insert(valueEntry);
+
+          //step 2: update current version
+          Row::update(column_id, v);
+          this->wver_[column_id] = ver;
+      }
+      else{
+          std::pair<i64, Value> valueEntry = std::make_pair(ver, v);
+          old_values_[column_id].insert(valueEntry);
+      }
 
 
       // map.insert will not insert to the map (i.e., not overwrite) if there is already elementes with the same key in the map.
@@ -198,12 +225,10 @@ class ChronosRow : public mdb::CoarseLockedRow {
 //      rtxn_tracker.checkIfTxnIdBeenRecorded(column_id, txnId, true, currentVersionNumber);
 //    }
       // then update column as normal
-      Row::update(column_id, v);
-      this->wver_[column_id] = ver;
 
-    }
+  }
 
-  };
+};
 
 }
 #endif //ROCOCO_MEMDB_ROW_MV_H_

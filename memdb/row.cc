@@ -281,7 +281,6 @@ Row* Row::create(Row* raw_row, const Schema* schema, const std::vector<const Val
     if (schema->var_size_cols_ > 0) {
         row->dense_var_idx_ = new int[schema->var_size_cols_];
     }
-
     // 1st pass, write fixed part, and calculate var part size
     int var_part_size = 0;
     int fixed_pos = 0;

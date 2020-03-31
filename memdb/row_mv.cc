@@ -6,13 +6,15 @@
 namespace rococo {
 
 void ChronosRow::init_ver(int n_columns) {
+    std::unique_lock<std::recursive_mutex> lk(ver_lock);
   wver_.resize(n_columns, 0);
   rver_.resize(n_columns, 0);
   prepared_rver_.resize(n_columns, {});
   prepared_wver_.resize(n_columns, {});
 }
 
-void ChronosRow::copy_into(ChronosRow *row) const {
+void ChronosRow::copy_into(ChronosRow *row)  {
+    std::unique_lock<std::recursive_mutex> lk(ver_lock);
   this->mdb::CoarseLockedRow::copy_into((mdb::CoarseLockedRow *) row);
   int n_columns = schema_->columns_count();
   row->init_ver(n_columns);
@@ -25,6 +27,7 @@ void ChronosRow::copy_into(ChronosRow *row) const {
 }
 
 mdb::Value ChronosRow::get_column_by_ver(int column_id, mdb::i64 txn_id, mdb::i64 ver) {
+    std::unique_lock<std::recursive_mutex> lk(ver_lock);
   mdb::i64 current_ver = this->getCurrentVersion(column_id);
   mdb::Value v;
   if (ver >= current_ver){

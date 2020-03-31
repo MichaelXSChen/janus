@@ -18,17 +18,22 @@ void TxChronos::DispatchExecute(const SimpleCommand &cmd,
 
   phase_ = PHASE_CHRONOS_DISPATCH;
 
+  //xs: for debug;
+  this->root_type = cmd.root_type_;
+
   //xs: Step 1: skip this simpleCommand if it is already in the dreqs.
   for (auto& c: dreqs_) {
     if (c.inn_id() == cmd.inn_id()) // already handled?
       return;
   }
+
+
   verify(txn_reg_);
   // execute the IR actions.
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
 
-  Log_info("%s called, defer= %s, txn_id = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_);
+  Log_info("%s called, defer= %s, txn_id = %d, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
   int xxx, *yyy;
   if (pair.defer == DF_REAL) {
     yyy = &xxx;
@@ -53,7 +58,7 @@ void TxChronos::DispatchExecute(const SimpleCommand &cmd,
 
 void TxChronos::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t, Value> *output) {
 
-  phase_ = PHASE_CHRONOS_PREPARE;
+  phase_ = PHASE_CHRONOS_PRE_ACCEPT;
 
   //xs: Step 1: skip this simpleCommand if it is already in the dreqs.
 
@@ -69,7 +74,7 @@ void TxChronos::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
 
-  Log_info("%s called, defer= %s, txn_id = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_);
+  Log_info("%s called, defer= %s, txn_id = %d, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
   int xxx, *yyy;
   if (pair.defer == DF_REAL) {
     yyy = &xxx;
@@ -81,10 +86,12 @@ void TxChronos::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t
   } else if (pair.defer == DF_FAKE) {
     if (!already_dispatched){
       dreqs_.push_back(cmd);
-      //xs: don't know the meaning of this
-      return;
     }
-//    verify(0);
+    /*
+     * xs: don't know the meaning of DF_FAKE
+     * seems cannot run pieces with DF_FAKE now, other wise it will cause segfault when retrieving input values
+     */
+    return;
   } else {
     verify(0);
   }
@@ -96,7 +103,20 @@ void TxChronos::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t
   *res = pair.defer;
 }
 
-
+/*
+ * XS notes;
+ * Bypass Read: read immutable columns (e.g., name, addr), ``not'' need to be serialized
+ * Bypass Write: never used
+ *
+ * Instant:  Not used in RW and TPCC.
+ *
+ * Deferred: read/writes pieces that need to be serialized.
+ *  DF_REAL: that can be executed
+ *  DF_FAKE: old implementations that cannot run properly with janus's read/write mechanism,
+ *           these pieces should be treated as deferred, by will cause segfault.
+ *           So, these pieces will be executed in the commit phase.
+ *           After all other pieces has been executed?
+ */
 bool TxChronos::ReadColumn(mdb::Row *row,
                            mdb::column_id_t col_id,
                            Value *value,
@@ -106,53 +126,68 @@ bool TxChronos::ReadColumn(mdb::Row *row,
   auto r = dynamic_cast<ChronosRow*>(row);
   verify(r->rtti() == symbol_t::ROW_CHRONOS);
 
-
   verify(!read_only_);
   if (phase_ == PHASE_CHRONOS_DISPATCH) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
-      //seems there is no instant read
-      //Currently the same for different Hint-flag
-      r ->rlock_row_by(this->tid_);
-      locked_rows_.insert(r);
+      //xs notes 1: seems there is no instant read in TPCC and RW benchmark.
+
+
+      /*
+       * xs notes 2: assumes that workload has already been re-writen to one-shot transactions,
+       * s.t., this read values are immutable.
+       * In such a scenario, the dispatch is only used to calibrate the timestamps.
+       * Takeaways:
+       * 1. No need to lock
+       * 2. No need to track the timestamps for these locks.
+       * (3) that's why they are named bypass?
+      */
+//      r ->rlock_row_by(this->tid_);
+//      locked_rows_.insert(r);
       auto c = r->get_column(col_id);
       row->ref_copy();
       *value = c;
 
 
-      int64_t t_pw = r->max_prepared_wver(col_id);
-      int64_t t_cw = r->wver_[col_id];
-      int64_t t_low = received_prepared_ts_left_;
+      int64_t t_pw  = r->max_prepared_wver(col_id);
+      int64_t t_cw  = r->wver_[col_id];
+      int64_t t_low = received_dispatch_ts_left_;
 
       int64_t  t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("[txn %d] ReadColumn, Prepare phase1: table = %s, col_id = %d,  hint_flag = %s, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+      Log_info("[txn %d] ReadColumn, Dispatch phase1: table = %s, col_id = %d,  hint_flag = %s, root_tyep = %d,  t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
                 this->id(),
                row->get_table()->Name().c_str(),
                col_id,
                hint_str[hint_flag],
+               this->root_type,
                t_pw,
                t_cw,
                t_low,
                t_left,
-               received_prepared_ts_right_);
-      prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
+               received_dispatch_ts_right_);
+
+      //xs notes 2, cont'd  no need to save prepared for this
+      //prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
+      dispatch_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_dispatch_ts_right_);
       return true;
     }
     if (hint_flag == TXN_DEFERRED) {
       //xs: seems no need to read for a deferred
       return true;
     }
-  }else if (phase_ == PHASE_CHRONOS_PREPARE) {
+  }else if (phase_ == PHASE_CHRONOS_PRE_ACCEPT) {
     //In the pre-accept phase
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
-      //Currently the same for different Hint-flag
-      //xs to do: these seems already handled
+      /*
+       * xs notes
+       *
+       *
+       */
       r->rlock_row_by(this->tid_);
       locked_rows_.insert(r);
       auto c = r->get_column(col_id);
       row->ref_copy();
-      Log_info("Received instant txn");
       *value = c;
 
       int64_t t_pw = r->max_prepared_wver(col_id);
@@ -161,13 +196,13 @@ bool TxChronos::ReadColumn(mdb::Row *row,
 
       int64_t t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
-
       Log_info(
-          "[txn %d] ReadColumn, Prepare phase1: table = %s, col_id = %d,  hint_flag = %s, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+          "[txn %d] ReadColumn, pre-accept phase1: table = %s, col_id = %d,  hint_flag = %s, tyep = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
           this->id(),
           row->get_table()->Name().c_str(),
           col_id,
           hint_str[hint_flag],
+          root_type,
           t_pw,
           t_cw,
           t_low,
@@ -192,11 +227,12 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       t_left = t_left > t_low ? t_left : t_low;
 
       Log_info(
-          "[txn %d] ReadColumn, Prepare phase2: table = %s, col_id = %d,  hint_flag = %s, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+          "[txn %d] ReadColumn, pre-accept phase2: table = %s, col_id = %d,  hint_flag = %s, tyep = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
           this->id(),
           row->get_table()->Name().c_str(),
           col_id,
           hint_str[hint_flag],
+          this->root_type,
           t_pw,
           t_cw,
           t_low,
@@ -240,7 +276,7 @@ bool TxChronos::WriteColumn(Row *row,
   verify(r->rtti() == symbol_t::ROW_CHRONOS);
 
   verify(!read_only_);
-  if (phase_ == PHASE_CHRONOS_DISPATCH || phase_ == PHASE_CHRONOS_PREPARE) {
+  if (phase_ == PHASE_CHRONOS_DISPATCH || phase_ == PHASE_CHRONOS_PRE_ACCEPT) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
       r->wlock_row_by(this->tid_);
       locked_rows_.insert(r);
@@ -262,6 +298,7 @@ bool TxChronos::WriteColumn(Row *row,
                t_left,
                received_prepared_ts_right_);
       prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
+      //xs notes: If readlly there ``are'' instant writes, then we should apply it here.
       mdb_txn()->write_column(row, col_id, value);
 
     }
@@ -285,7 +322,8 @@ bool TxChronos::WriteColumn(Row *row,
                t_low,
                t_left,
                received_prepared_ts_right_);
-      prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
+      //xs: add to prepared_write_ranges
+      prepared_write_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
     }
   } else if (phase_ == PHASE_CHRONOS_COMMIT) {
     if (r->wver_[col_id] < commit_ts_){
@@ -355,6 +393,20 @@ bool TxChronos::GetTsBound() {
 
   local_prepared_ts_left_ = left;
   local_prepared_ts_right_ = right;
+}
+
+bool TxChronos::GetDispatchTsHint(int64_t &left, int64_t &right) {
+  for (auto &pair: dispatch_ranges_){
+    for (auto &col_range: pair.second){
+      if (col_range.second.first > left){
+        left = col_range.second.first;
+      }
+      if (col_range.second.second < right){
+        right = col_range.second.second;
+      }
+    }
+  }
+  Log_info("%s: left = %d, right =%d", __FUNCTION__, left, right);
 }
 
 bool TxChronos::StorePreparedVers() {

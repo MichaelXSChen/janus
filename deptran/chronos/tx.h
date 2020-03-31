@@ -9,7 +9,7 @@
 namespace rococo {
 
 #define PHASE_CHRONOS_DISPATCH (1)
-#define PHASE_CHRONOS_PREPARE (2)
+#define PHASE_CHRONOS_PRE_ACCEPT (2)
 #define PHASE_CHRONOS_COMMIT (3)
 
 
@@ -49,6 +49,7 @@ class TxChronos : public RccDTxn {
   bool GetTsBound();
   bool StorePreparedVers();
   bool RemovePreparedVers();
+  bool GetDispatchTsHint(int64_t &ts_left, int64_t &ts_right);
 
   std::set<ChronosRow *> locked_rows_ = {};
 
@@ -59,12 +60,18 @@ class TxChronos : public RccDTxn {
   map<ChronosRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_read_ranges_ = {};
   map<ChronosRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_write_ranges_ = {};
 
+
+
+  int64_t received_dispatch_ts_left_ = 0;
+  int64_t received_dispatch_ts_right_ = 0;
+  map<ChronosRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> dispatch_ranges_ = {};
+
   int64_t local_prepared_ts_left_;
   int64_t local_prepared_ts_right_;
 
   int64_t commit_ts_;
 
-
+  cmdtype_t root_type = 0;
 };
 
 } // namespace janus

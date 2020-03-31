@@ -50,7 +50,7 @@ void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
     yyy = &xxx;
   } else if (pair.defer == DF_FAKE) {
     dreqs_.push_back(cmd);
-    return;
+    return; //xs: does not need to execute here
 //    verify(0);
   } else {
     verify(0);

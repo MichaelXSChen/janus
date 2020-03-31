@@ -8,6 +8,7 @@
 #include "deptran/chronos/tx.h"
 #include <climits>
 #include "deptran/frame.h"
+#include <limits>
 
 using namespace rococo;
 class Frame;
@@ -25,9 +26,8 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
   auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id)); //type is shared_pointer
   verify(dtxn->id() == txn_id);
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
-  dtxn->received_prepared_ts_left_ = chr_req.ts_min;
-  dtxn->received_prepared_ts_right_ = chr_req.ts_max;
-
+  dtxn->received_dispatch_ts_left_ = chr_req.ts_min;
+  dtxn->received_dispatch_ts_right_ = chr_req.ts_max;
 
 
   Log_info("[Scheduler %d] On Dispatch, txn_id = %d, ts_range = [%d, %d]", this->frame_->site_info_->id, txn_id, chr_req.ts_min, chr_req.ts_max);
@@ -42,8 +42,9 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
   verify(cmd[0].root_id_ == txn_id);
 
 
-  int64_t reply_ts_left, reply_ts_right;
-  dtxn->GetTsBound();
+  int64_t reply_ts_left = 0;
+  int64_t reply_ts_right = std::numeric_limits<long long>::max();
+  dtxn->GetDispatchTsHint(reply_ts_left, reply_ts_right);
 
   chr_res->ts_left = reply_ts_left;
   chr_res->ts_right = reply_ts_right;
@@ -90,7 +91,7 @@ void SchedulerChronos::OnPreAccept(const txnid_t txn_id,
   } else {
     //Normal case
     if (dtxn->status() < TXN_CMT) {
-      if (dtxn->phase_ < PHASE_CHRONOS_DISPATCH && tinfo.status() < TXN_CMT) {
+      if (dtxn->phase_ < PHASE_CHRONOS_PRE_ACCEPT && tinfo.status() < TXN_CMT) {
         for (auto &c: cmds) {
           map<int32_t, Value> output;
           //this will lock the rows
