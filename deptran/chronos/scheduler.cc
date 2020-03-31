@@ -188,7 +188,8 @@ void SchedulerChronos::OnCommit(const txnid_t cmd_id,
     };
     verify(dtxn->fully_dispatched); //cannot handle non-dispatched now.
     UpgradeStatus(dtxn, TXN_DCD);
-    Execute(*dtxn);
+//    Execute(*dtxn);
+    dtxn->CommitExecute();
     dtxn->RemovePreparedVers();
     if (dtxn->to_checks_.size() > 0) {
       for (auto child : dtxn->to_checks_) {

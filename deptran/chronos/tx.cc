@@ -352,6 +352,7 @@ bool TxChronos::WriteColumn(Row *row,
 void TxChronos::CommitExecute() {
 //  verify(phase_ == PHASE_RCC_START);
   phase_ = PHASE_CHRONOS_COMMIT;
+  Log_info("%s called", __FUNCTION__);
   TxnWorkspace ws;
   for (auto &cmd: dreqs_) {
     auto pair = txn_reg_->get(cmd);
