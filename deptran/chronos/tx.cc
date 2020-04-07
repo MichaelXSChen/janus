@@ -362,6 +362,7 @@ void TxChronos::CommitExecute() {
     pair.txn_handler(nullptr, this, cmd, &tmp, m);
     ws.insert(m);
   }
+  Log_info("%s returned", __FUNCTION__);
   committed_ = true;
 }
 
@@ -431,6 +432,7 @@ bool TxChronos::StorePreparedVers() {
 }
 
 bool TxChronos::RemovePreparedVers() {
+  Log_info("%s called", __FUNCTION__);
   for (auto &pair: prepared_read_ranges_){
     auto vrow = pair.first;
     auto col_ver_map = pair.second;
@@ -448,6 +450,7 @@ bool TxChronos::RemovePreparedVers() {
     }
     vrow->unlock_row_by(this->tid_);
   }
+  Log_info("%s returned", __FUNCTION__);
 }
 
 } // namespace janus

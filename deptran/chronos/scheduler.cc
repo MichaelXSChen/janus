@@ -197,7 +197,9 @@ void SchedulerChronos::OnCommit(const txnid_t cmd_id,
       }
       CheckWaitlist();
     }
+    dtxn->ReplyFinishOk();
   }
+  Log_info("%s returned", __FUNCTION__);
 }
 
 
