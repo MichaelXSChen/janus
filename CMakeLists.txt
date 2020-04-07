@@ -130,7 +130,7 @@ add_library(MEMDB
 add_executable(ROCOCO_SERVER
 #        deptran/s_main.cc
         ${DEPTRAN_SRC}
-        ${BENCH_SRC} deptran/chronos/frame.cc deptran/chronos/frame.h deptran/chronos/commo.h deptran/chronos/commo.cc deptran/chronos/commo.h deptran/chronos/coordinator.cc deptran/chronos/coordinator.h deptran/chronos/scheduler.cc deptran/chronos/scheduler.h deptran/chronos/tx.cc deptran/chronos/tx.h)
+        ${BENCH_SRC} deptran/chronos/frame.cc deptran/chronos/frame.h deptran/chronos/commo.h deptran/chronos/commo.cc deptran/chronos/commo.h deptran/chronos/coordinator.cc deptran/chronos/coordinator.h deptran/chronos/scheduler.cc deptran/chronos/scheduler.h deptran/chronos/tx.cc deptran/chronos/tx.h deptran/ocean_vista/ov-gossiper.cc deptran/ocean_vista/ov-gossiper.h deptran/ocean_vista/ov-commo.h deptran/ocean_vista/ov-tx.cc)
 #add_executable(ROCOCO_CLIENT deptran/c_main.cc)
 add_dependencies(ROCOCO_SERVER gen-rpc)
 
