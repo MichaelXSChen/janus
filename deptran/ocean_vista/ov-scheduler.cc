@@ -5,7 +5,7 @@
 
 #include "ov-scheduler.h"
 #include "ov-commo.h"
-#include "deptran/chronos/tx.h"
+#include "ov-tx.h"
 #include <climits>
 #include "deptran/frame.h"
 #include <limits>
@@ -13,7 +13,7 @@
 using namespace rococo;
 class Frame;
 
-int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
+int SchedulerOV::OnDispatch(const vector<SimpleCommand>& cmd,
                                  const ChronosDispatchReq &chr_req,
                                  int32_t* res,
                                  ChronosDispatchRes *chr_res,
@@ -23,7 +23,7 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
 
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   txnid_t txn_id = cmd[0].root_id_; //should have the same root_id
-  auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id)); //type is shared_pointer
+  auto dtxn = (TxOV* )(GetOrCreateDTxn(txn_id)); //type is shared_pointer
   verify(dtxn->id() == txn_id);
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
   dtxn->received_dispatch_ts_left_ = chr_req.ts_min;
@@ -56,7 +56,7 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
 
 
 
-void SchedulerChronos::OnPreAccept(const txnid_t txn_id,
+void SchedulerOV::OnPreAccept(const txnid_t txn_id,
                                    const vector<SimpleCommand> &cmds,
                                    const ChronosPreAcceptReq &chr_req,
                                    int32_t *res,
@@ -73,7 +73,7 @@ void SchedulerChronos::OnPreAccept(const txnid_t txn_id,
   //Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
-  auto dtxn = (TxChronos*)(GetOrCreateDTxn(txn_id));
+  auto dtxn = (TxOV*)(GetOrCreateDTxn(txn_id));
 
   dtxn->received_prepared_ts_left_ = chr_req.ts_min;
   dtxn->received_prepared_ts_right_ = chr_req.ts_max;
@@ -84,7 +84,7 @@ void SchedulerChronos::OnPreAccept(const txnid_t txn_id,
 
 
   dtxn->involve_flag_ = RccDTxn::INVOLVED;
-  TxChronos &tinfo = *dtxn;
+  TxOV &tinfo = *dtxn;
   if (dtxn->max_seen_ballot_ > 0) {
     //xs: for recovery
     *res = REJECT;
@@ -138,13 +138,13 @@ void SchedulerChronos::OnPreAccept(const txnid_t txn_id,
   }
 }
 
-void SchedulerChronos::OnAccept(const txnid_t txn_id,
+void SchedulerOV::OnAccept(const txnid_t txn_id,
                                 const ballot_t &ballot,
                                 const ChronosAcceptReq &chr_req,
                                 int32_t *res,
                                 ChronosAcceptRes *chr_res) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto dtxn = (TxChronos*)(GetOrCreateDTxn(txn_id));
+  auto dtxn = (TxOV*)(GetOrCreateDTxn(txn_id));
   if (dtxn->max_seen_ballot_ > ballot) {
     *res = REJECT;
     verify(0); // do not support failure recovery so far.
@@ -155,7 +155,7 @@ void SchedulerChronos::OnAccept(const txnid_t txn_id,
 }
 
 
-void SchedulerChronos::OnCommit(const txnid_t cmd_id,
+void SchedulerOV::OnCommit(const txnid_t cmd_id,
                                 const ChronosCommitReq &chr_req,
                                 int32_t *res,
                                 TxnOutput *output,
@@ -165,7 +165,7 @@ void SchedulerChronos::OnCommit(const txnid_t cmd_id,
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   *res = SUCCESS;
   //union the graph into dep graph
-  auto dtxn = (TxChronos *)(GetOrCreateDTxn(cmd_id));
+  auto dtxn = (TxOV *)(GetOrCreateDTxn(cmd_id));
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
   dtxn->commit_ts_ = chr_req.commit_ts;
@@ -203,13 +203,13 @@ void SchedulerChronos::OnCommit(const txnid_t cmd_id,
 }
 
 
-int SchedulerChronos::OnInquire(epoch_t epoch,
+int SchedulerOV::OnInquire(epoch_t epoch,
                                 cmdid_t cmd_id,
                                 RccGraph* graph,
                                 const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO check epoch, cannot be a too old one.
-  auto dtxn = (TxChronos *)(GetOrCreateDTxn(cmd_id));
+  auto dtxn = (TxOV *)(GetOrCreateDTxn(cmd_id));
   RccDTxn &info = *dtxn;
 //  TxRococo &info = *dtxn;
   //register an event, triggered when the status >= COMMITTING;
@@ -237,9 +237,9 @@ int SchedulerChronos::OnInquire(epoch_t epoch,
 
 
 
-ChronosCommo *SchedulerChronos::commo() {
+OVCommo *SchedulerOV::commo() {
 
-  auto commo = dynamic_cast<ChronosCommo *>(commo_);
+  auto commo = dynamic_cast<OVCommo *>(commo_);
   verify(commo != nullptr);
   return commo;
 }

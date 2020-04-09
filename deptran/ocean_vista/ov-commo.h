@@ -5,7 +5,7 @@
 
 namespace rococo {
 
-class ChronosCommo : public BrqCommo {
+class OVCommo : public BrqCommo {
  public:
   using BrqCommo::BrqCommo;
 

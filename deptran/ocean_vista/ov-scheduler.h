@@ -8,9 +8,8 @@
 #include "deptran/rcc_rpc.h"
 namespace rococo {
 
-class RccGraph;
-class ChronosCommo;
-class SchedulerChronos : public BrqSched {
+class OVCommo;
+class SchedulerOV : public BrqSched {
  public:
   using BrqSched::BrqSched;
 
@@ -47,9 +46,7 @@ class SchedulerChronos : public BrqSched {
                 RccGraph* graph,
                 const function<void()> &callback) override;
 
-  ChronosCommo* commo();
-
-  std::atomic<uint64_t> logical_clock {0};
+  OVCommo* commo();
 
 };
 } // namespace janus

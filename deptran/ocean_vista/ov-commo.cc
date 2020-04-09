@@ -4,13 +4,13 @@
 
 #include "deptran/rcc/dtxn.h"
 #include "../rcc/graph_marshaler.h"
-#include "commo.h"
+#include "ov-commo.h"
 #include "marshallable.h"
 #include "txn_chopper.h"
 
 namespace rococo {
 
-void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
+void OVCommo::SendDispatch(vector<TxPieceData> &cmd,
                                 const ChronosDispatchReq& chr_req,
                                 const function<void(int res,
                                                     TxnOutput &cmd,
@@ -39,7 +39,7 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
   Future::safe_release(proxy->async_ChronosDispatch(cmd, chr_req, fuattr));
 }
 
-void ChronosCommo::SendHandoutRo(SimpleCommand &cmd,
+void OVCommo::SendHandoutRo(SimpleCommand &cmd,
                                  const function<void(int res,
                                                      SimpleCommand &cmd,
                                                      map<int,
@@ -48,7 +48,7 @@ void ChronosCommo::SendHandoutRo(SimpleCommand &cmd,
 }
 
 
-void ChronosCommo::BroadcastPreAccept(
+void OVCommo::BroadcastPreAccept(
     parid_t par_id,
     txnid_t txn_id,
     ballot_t ballot,
@@ -72,13 +72,12 @@ void ChronosCommo::BroadcastPreAccept(
 
     verify(txn_id > 0);
     Future *f = nullptr;
-    Log_info("ChronosPreAccept");
     f = proxy->async_ChronosPreAccept(txn_id, cmds, chr_req, fuattrChro);
     Future::safe_release(f);
   }
 }
 
-void ChronosCommo::BroadcastAccept(parid_t par_id,
+void OVCommo::BroadcastAccept(parid_t par_id,
                                    txnid_t cmd_id,
                                    ballot_t ballot,
                                    ChronosAcceptReq &chr_req,
@@ -102,7 +101,7 @@ void ChronosCommo::BroadcastAccept(parid_t par_id,
   }
 }
 
-void ChronosCommo::BroadcastCommit(
+void OVCommo::BroadcastCommit(
     parid_t par_id,
     txnid_t cmd_id,
     ChronosCommitReq &chr_req,

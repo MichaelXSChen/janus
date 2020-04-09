@@ -9,9 +9,9 @@
 #include "deptran/brq/frame.h"
 namespace rococo{
 
-class ChronosFrame : public BrqFrame {
+class OVFrame : public BrqFrame {
  public:
-  ChronosFrame(int mode = MODE_CHRONOS) : BrqFrame(mode) {}
+  OVFrame(int mode = MODE_OV) : BrqFrame(mode) {}
 
   //xs: always null ptr, whats that for?
   Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;

@@ -6,13 +6,14 @@
 #include "ov-tx.h"
 #include "memdb/row_mv.h"
 namespace rococo {
-
-
-char * defer_str[] = {"defer_real", "defer_no", "defer_fake"};
-char * hint_str[] = {"n/a", "bypass", "instant", "n/a",  "deferred"};
+//
+//
+//Already defined
+static char * defer_str[] = {"defer_real", "defer_no", "defer_fake"};
+static char * hint_str[] = {"n/a", "bypass", "instant", "n/a",  "deferred"};
 //SimpleCommand is a typedef of TxnPieceData
 //add a simpleCommand to the local Tx's dreq
-void TxChronos::DispatchExecute(const SimpleCommand &cmd,
+void TxOV::DispatchExecute(const SimpleCommand &cmd,
                                 int32_t *res,
                                 map<int32_t, Value> *output) {
 
@@ -56,7 +57,7 @@ void TxChronos::DispatchExecute(const SimpleCommand &cmd,
 }
 
 
-void TxChronos::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t, Value> *output) {
+void TxOV::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t, Value> *output) {
 
   phase_ = PHASE_CHRONOS_PRE_ACCEPT;
 
@@ -117,7 +118,7 @@ void TxChronos::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t
  *           So, these pieces will be executed in the commit phase.
  *           After all other pieces has been executed?
  */
-bool TxChronos::ReadColumn(mdb::Row *row,
+bool TxOV::ReadColumn(mdb::Row *row,
                            mdb::column_id_t col_id,
                            Value *value,
                            int hint_flag) {
@@ -267,7 +268,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
 }
 
 
-bool TxChronos::WriteColumn(Row *row,
+bool TxOV::WriteColumn(Row *row,
                             column_id_t col_id,
                             const Value &value,
                             int hint_flag) {
@@ -349,7 +350,7 @@ bool TxChronos::WriteColumn(Row *row,
 
 
 
-void TxChronos::CommitExecute() {
+void TxOV::CommitExecute() {
 //  verify(phase_ == PHASE_RCC_START);
   phase_ = PHASE_CHRONOS_COMMIT;
   Log_info("%s called", __FUNCTION__);
@@ -366,7 +367,7 @@ void TxChronos::CommitExecute() {
   committed_ = true;
 }
 
-bool TxChronos::GetTsBound() {
+bool TxOV::GetTsBound() {
 
   int64_t left = received_prepared_ts_left_;
   int64_t right = received_prepared_ts_right_;
@@ -397,7 +398,7 @@ bool TxChronos::GetTsBound() {
   local_prepared_ts_right_ = right;
 }
 
-bool TxChronos::GetDispatchTsHint(int64_t &left, int64_t &right) {
+bool TxOV::GetDispatchTsHint(int64_t &left, int64_t &right) {
   for (auto &pair: dispatch_ranges_){
     for (auto &col_range: pair.second){
       if (col_range.second.first > left){
@@ -411,7 +412,7 @@ bool TxChronos::GetDispatchTsHint(int64_t &left, int64_t &right) {
   Log_info("%s: left = %d, right =%d", __FUNCTION__, left, right);
 }
 
-bool TxChronos::StorePreparedVers() {
+bool TxOV::StorePreparedVers() {
   for (auto &pair: prepared_read_ranges_){
     auto vrow = pair.first;
     auto col_ver_map = pair.second;
@@ -431,7 +432,7 @@ bool TxChronos::StorePreparedVers() {
   }
 }
 
-bool TxChronos::RemovePreparedVers() {
+bool TxOV::RemovePreparedVers() {
   Log_info("%s called", __FUNCTION__);
   for (auto &pair: prepared_read_ranges_){
     auto vrow = pair.first;

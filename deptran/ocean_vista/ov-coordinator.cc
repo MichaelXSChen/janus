@@ -11,21 +11,21 @@
 namespace rococo {
 
 
-ChronosCommo *CoordinatorChronos::commo() {
+OVCommo *CoordinatorOV::commo() {
   if (commo_ == nullptr) {
     commo_ = frame_->CreateCommo();
     commo_->loc_id_ = loc_id_;
   }
   verify(commo_ != nullptr);
-  return dynamic_cast<ChronosCommo *>(commo_);
+  return dynamic_cast<OVCommo *>(commo_);
 }
 
-void CoordinatorChronos::launch_recovery(cmdid_t cmd_id) {
+void CoordinatorOV::launch_recovery(cmdid_t cmd_id) {
   // TODO
   prepare();
 }
 
-void CoordinatorChronos::PreAccept() {
+void CoordinatorOV::PreAccept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 
   Log_info("%s:%s called", __FILE__, __FUNCTION__);
@@ -49,7 +49,7 @@ void CoordinatorChronos::PreAccept() {
                                 magic_ballot(),
                                 cmds,
                                 chr_req,
-                                std::bind(&CoordinatorChronos::PreAcceptAck,
+                                std::bind(&CoordinatorOV::PreAcceptAck,
                                           this,
                                           phase_,
                                           par_id,
@@ -58,7 +58,7 @@ void CoordinatorChronos::PreAccept() {
   }
 }
 
-void CoordinatorChronos::PreAcceptAck(phase_t phase,
+void CoordinatorOV::PreAcceptAck(phase_t phase,
                                       parid_t par_id,
                                       int res,
                                       std::shared_ptr<ChronosPreAcceptRes> chr_res) {
@@ -100,7 +100,7 @@ void CoordinatorChronos::PreAcceptAck(phase_t phase,
 
 
 
-void CoordinatorChronos::Accept() {
+void CoordinatorOV::Accept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   verify(!fast_path_);
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
@@ -115,7 +115,7 @@ void CoordinatorChronos::Accept() {
                              cmd_->id_,
                              ballot_,
                              chr_req,
-                             std::bind(&CoordinatorChronos::AcceptAck,
+                             std::bind(&CoordinatorOV::AcceptAck,
                                        this,
                                        phase_,
                                        par_id,
@@ -124,7 +124,7 @@ void CoordinatorChronos::Accept() {
   }
 }
 
-void CoordinatorChronos::AcceptAck(phase_t phase,
+void CoordinatorOV::AcceptAck(phase_t phase,
                                    parid_t par_id,
                                    int res,
                                    ChronosAcceptRes &chr_res) {
@@ -150,7 +150,7 @@ void CoordinatorChronos::AcceptAck(phase_t phase,
   // if have reached a quorum
 }
 
-void CoordinatorChronos::Commit() {
+void CoordinatorOV::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   ChronosCommitReq chr_req;
   chr_req.commit_ts = ts_fast_commit_;
@@ -158,7 +158,7 @@ void CoordinatorChronos::Commit() {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
                              chr_req,
-                             std::bind(&CoordinatorChronos::CommitAck,
+                             std::bind(&CoordinatorOV::CommitAck,
                                        this,
                                        phase_,
                                        par_id,
@@ -172,7 +172,7 @@ void CoordinatorChronos::Commit() {
   }
 }
 
-void CoordinatorChronos::CommitAck(phase_t phase,
+void CoordinatorOV::CommitAck(phase_t phase,
                                    parid_t par_id,
                                    int32_t res,
                                    ChronosCommitRes &chr_res,
@@ -206,7 +206,7 @@ void CoordinatorChronos::CommitAck(phase_t phase,
 
 
 
-bool CoordinatorChronos::AcceptQuorumReached() {
+bool CoordinatorOV::AcceptQuorumReached() {
   auto pars = txn().GetPartitionIds();
   for (auto &par_id : pars) {
     if (n_fast_accept_oks_[par_id] < 1) {
@@ -219,7 +219,7 @@ bool CoordinatorChronos::AcceptQuorumReached() {
 
 
 
-void CoordinatorChronos::Dispatch() {
+void CoordinatorOV::Dispatch() {
 
 
   verify(ro_state_ == BEGIN);
@@ -245,7 +245,7 @@ void CoordinatorChronos::Dispatch() {
       cc.push_back(*c);
     }
 
-    auto callback = std::bind(&CoordinatorChronos::DispatchAck,
+    auto callback = std::bind(&CoordinatorOV::DispatchAck,
                               this,
                               phase_,
                               std::placeholders::_1,
@@ -264,7 +264,7 @@ void CoordinatorChronos::Dispatch() {
 
 //xs: callback for handling Dispatch ACK
 //xs: What is the meaning of this function.
-void CoordinatorChronos::DispatchAck(phase_t phase,
+void CoordinatorOV::DispatchAck(phase_t phase,
                                      int res,
                                      TxnOutput &output,
                                      ChronosDispatchRes &chr_res) {
@@ -306,7 +306,7 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
   }
 }
 
-void CoordinatorChronos::GotoNextPhase() {
+void CoordinatorOV::GotoNextPhase() {
 
   int n_phase = 5;
   int current_phase = phase_++ % n_phase; // for debug
@@ -374,7 +374,7 @@ void CoordinatorChronos::GotoNextPhase() {
 
 }
 
-void CoordinatorChronos::Reset() {
+void CoordinatorOV::Reset() {
   RccCoord::Reset();
   fast_path_ = false;
   fast_commit_ = false;
@@ -392,7 +392,7 @@ void CoordinatorChronos::Reset() {
 }
 
 
-bool CoordinatorChronos::PreAcceptQuroumAck() {
+bool CoordinatorOV::PreAcceptQuroumAck() {
   auto pars = txn().GetPartitionIds();
   for (auto &par_id : pars) {
     auto n_replicas = Config::GetConfig()->GetPartitionSize(par_id);
@@ -404,7 +404,7 @@ bool CoordinatorChronos::PreAcceptQuroumAck() {
 }
 
 
-bool CoordinatorChronos::CheckTsIntersection() {
+bool CoordinatorOV::CheckTsIntersection() {
   int64_t t_low = ts_left_;
   int64_t t_high = ts_right_;
 

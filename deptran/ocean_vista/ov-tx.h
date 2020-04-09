@@ -13,7 +13,7 @@ namespace rococo {
 #define PHASE_CHRONOS_COMMIT (3)
 
 
-class TxChronos : public RccDTxn {
+class TxOV : public RccDTxn {
  public:
   using RccDTxn::RccDTxn;
 

@@ -18,13 +18,13 @@
 
 namespace rococo {
 
-static Frame *chronos_frame_s = Frame::RegFrame(MODE_CHRONOS,
-                                                {"chronos"},
+static Frame *OV_frame_s = Frame::RegFrame(MODE_OV,
+                                                {"ov", "ocean-vista", "ocean_vista"},
                                                 []() -> Frame * {
-                                                  return new ChronosFrame();
+                                                  return new OVFrame();
                                                 });
 
-Coordinator *ChronosFrame::CreateCoord(cooid_t coo_id,
+Coordinator *OVFrame::CreateCoord(cooid_t coo_id,
                                              Config *config,
                                              int benchmark,
                                              ClientControlServiceImpl *ccsi,
@@ -32,14 +32,14 @@ Coordinator *ChronosFrame::CreateCoord(cooid_t coo_id,
                                              TxnRegistry *txn_reg) {
 
   if (site_info_ != nullptr){
-    Log_info("[site %d] created chronos coordinator", site_info_->id);
+    Log_info("[site %d] created ov coordinator", site_info_->id);
   }else{
-    Log_info("[site null] created chronos coordinator");
+    Log_info("[site null] created ov coordinator");
   }
 
 
   verify(config != nullptr);
-  CoordinatorChronos *coord = new CoordinatorChronos(coo_id,
+  CoordinatorOV *coord = new CoordinatorOV(coo_id,
                                                      benchmark,
                                                      ccsi,
                                                      id);
@@ -48,80 +48,47 @@ Coordinator *ChronosFrame::CreateCoord(cooid_t coo_id,
   return coord;
 }
 
-Executor *ChronosFrame::CreateExecutor(uint64_t, Scheduler *sched) {
+Executor *OVFrame::CreateExecutor(uint64_t, Scheduler *sched) {
   if (site_info_ != nullptr){
-    Log_info("[site %d] created chronos executor", site_info_->id);
+    Log_info("[site %d] created ov executor", site_info_->id);
   }else{
-    Log_info("[site null] created chronos executor");
+    Log_info("[site null] created ov executor");
   }
   verify(0);
   return nullptr;
 }
 
-Scheduler *ChronosFrame::CreateScheduler() {
+Scheduler *OVFrame::CreateScheduler() {
   if (site_info_ != nullptr){
-    Log_info("[site %d] created chronos scheduler", site_info_->id);
+    Log_info("[site %d] created ov scheduler", site_info_->id);
   }else{
-    Log_info("[site null] created chronos scheduler");
+    Log_info("[site null] created ov scheduler");
   }
 
-  Scheduler *sched = new SchedulerChronos();
+  Scheduler *sched = new SchedulerOV();
   sched->frame_ = this;
   return sched;
 }
 
-////XS: seems no need to override. Use the base funciton is ok.
-////for now, only debug print is slightly different
-//vector<rrr::Service *>
-//ChronosFrame::CreateRpcServices(uint32_t site_id,
-//                              Scheduler *sched,
-//                              rrr::PollMgr *poll_mgr,
-//                              ServerControlServiceImpl *scsi) {
-//
-//
-//
-//  if (site_info_ != nullptr){
-//    Log_info("[site %d] created rpc services", site_info_->id);
-//  }else{
-//    Log_info("[site null] created rpc services");
-//  }
-//
-//  return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
-//}
+DTxn* OVFrame::CreateDTxn(uint32_t epoch, uint64_t tid, bool ro, Scheduler *mgr) {
 
-//mdb::Row *ChronosFrame::CreateRow(const mdb::Schema *schema,
-//                                vector<Value> &row_data) {
-//  if (site_info_ != nullptr){
-//    Log_info("[site %d] [Chronos] created row", site_info_->id);
-//  }else{
-//    Log_info("[site null] [Chrnonos] created row");
-//  }
-//
-//
-//
-//  mdb::Row *r = RCCRow::create(schema, row_data);
-//  return r;
-//}
-//
-DTxn* ChronosFrame::CreateDTxn(uint32_t epoch, uint64_t tid, bool ro, Scheduler *mgr) {
-
-  auto dtxn = new TxChronos(epoch, tid, mgr, ro);
+  auto dtxn = new TxOV(epoch, tid, mgr, ro);
   return dtxn;
 }
 
 
-Communicator *ChronosFrame::CreateCommo(PollMgr *poll) {
+Communicator *OVFrame::CreateCommo(PollMgr *poll) {
   if (site_info_ != NULL){
-    Log_info("[site %d] Creating chronos communicator", site_info_->id);
+    Log_info("[site %d] Creating OV communicator", site_info_->id);
   }
   else{
-    Log_info("[site null] Creating chronos communicator, I think it should be the client");
+    Log_info("[site null] Creating OV communicator, I think it should be the client");
   }
-  return new ChronosCommo(poll);
+  return new OVCommo(poll);
 }
 
 
-mdb::Row *ChronosFrame::CreateRow(const mdb::Schema *schema,
+mdb::Row *OVFrame::CreateRow(const mdb::Schema *schema,
                                   vector<Value> &row_data) {
 
   mdb::Row *r = ChronosRow::create(schema, row_data);

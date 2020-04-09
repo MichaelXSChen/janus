@@ -8,8 +8,8 @@
 namespace rococo {
 
 
-char * defer_str[] = {"defer_real", "defer_no", "defer_fake"};
-char * hint_str[] = {"n/a", "bypass", "instant", "n/a",  "deferred"};
+static char * defer_str[] = {"defer_real", "defer_no", "defer_fake"};
+static char * hint_str[] = {"n/a", "bypass", "instant", "n/a",  "deferred"};
 //SimpleCommand is a typedef of TxnPieceData
 //add a simpleCommand to the local Tx's dreq
 void TxChronos::DispatchExecute(const SimpleCommand &cmd,

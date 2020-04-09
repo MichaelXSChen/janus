@@ -59,6 +59,7 @@ namespace rococo {
 #define MODE_MDCC   (0x12)
 #define MODE_RPC_NULL   (64)
 #define MODE_CHRONOS  (0x30)
+#define MODE_OV (0x31)
 
     // deprecated.
 #define MODE_DEPTRAN (4)
@@ -94,6 +95,8 @@ namespace rococo {
 #define TPCC_DIST_PART (3)
 #define TPCC_REAL_DIST_PART (4)
 #define MICRO_BENCH (5)
+
+
 
 
 } // namespace rococo
