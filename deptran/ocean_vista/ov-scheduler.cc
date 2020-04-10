@@ -211,6 +211,18 @@ int SchedulerOV::OnInquire(epoch_t epoch,
 
 
 
+void SchedulerOV::OnCreateTs (txnid_t txnid,
+                 int64_t *timestamp,
+                 int64_t *server_id){
+
+  ov_ts_t ovts = tid_mgr_->CreateTs(txnid);
+
+
+  *timestamp = ovts.timestamp;
+  *server_id = ovts.server_id;
+
+  return;
+}
 
 OVCommo *SchedulerOV::commo() {
 

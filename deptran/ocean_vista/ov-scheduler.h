@@ -6,12 +6,19 @@
 #pragma once
 #include "deptran/brq/sched.h"
 #include "deptran/rcc_rpc.h"
+#include "ov-txn_mgr.h"
+#include <memory>
+#include "ov-frame.h"
 namespace rococo {
 
 class OVCommo;
+class OVFrame;
 class SchedulerOV : public BrqSched {
  public:
-  using BrqSched::BrqSched;
+
+  SchedulerOV(): BrqSched() {
+    tid_mgr_ = std::make_unique<TidMgr>(this->frame_->site_info_->id);
+  }
 
 
   int OnDispatch(const vector<SimpleCommand> &cmd,
@@ -26,6 +33,11 @@ class SchedulerOV : public BrqSched {
                    const OVStoreReq &ov_req,
                    int32_t *res,
                    OVStoreRes *ov_res);
+
+  void OnCreateTs (txnid_t txnid,
+                  int64_t *timestamp,
+                   int64_t *server_id);
+
 
 
   void OnAccept(txnid_t txn_id,
@@ -47,6 +59,8 @@ class SchedulerOV : public BrqSched {
                 const function<void()> &callback) override;
 
   OVCommo* commo();
+
+  std::unique_ptr<TidMgr> tid_mgr_;
 
 };
 } // namespace janus

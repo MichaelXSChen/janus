@@ -434,6 +434,11 @@ void ClassicServiceImpl::OVCreateTs(const cmdid_t &txn_id,
                 rrr::i64 *server_id,
                 rrr::DeferredReply *defer) {
 
+  std::lock_guard<std::mutex> guard(mtx_);
+  SchedulerOV *sched = (SchedulerOV *) dtxn_sched_;
+
+  sched->OnCreateTs(txn_id, timestamp, server_id);
+
   defer->reply();
 
 }

@@ -241,7 +241,7 @@ def _enable_cxx11(conf):
     if sys.platform == "darwin":
         conf.env.append_value("CXXFLAGS", "-stdlib=libc++")
         conf.env.append_value("LINKFLAGS", "-stdlib=libc++")
-    conf.env.append_value("CXXFLAGS", "-std=c++11")
+    conf.env.append_value("CXXFLAGS", "-std=c++14")
 
 def _enable_profile(conf):
     if Options.options.prof:

@@ -10,7 +10,7 @@ ov_ts_t TidMgr::CreateTs(mdb::txn_id_t txn_id) {
 
   auto now = std::chrono::system_clock::now();
 
-  uint64_t ts = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+  int64_t ts = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 
   if (ts < last_clock_){
     ts = ++last_clock_;
