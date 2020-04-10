@@ -1,3 +1,4 @@
+#include <deptran/ocean_vista/ov-scheduler.h>
 #include "__dep__.h"
 #include "config.h"
 #include "scheduler.h"
@@ -12,6 +13,7 @@
 #include "brq/sched.h"
 #include "benchmark_control_rpc.h"
 #include "chronos/scheduler.h"
+#include "ocean_vista/ov-scheduler.h"
 
 namespace rococo {
 
@@ -407,6 +409,24 @@ void ClassicServiceImpl::ChronosCommit(const uint64_t &id,
   std::lock_guard<std::mutex> guard(mtx_);
   SchedulerChronos *sched = (SchedulerChronos *) dtxn_sched_;
   sched->OnCommit(id, chr_req, res,  output, chr_res, [defer](){defer->reply();});
+}
+
+
+void ClassicServiceImpl::OVStore(const cmdid_t &txn_id,
+             const std::vector<SimpleCommand> &cmds,
+             const OVStoreReq &ov_req,
+             rrr::i32 *res,
+             OVStoreRes *ov_res,
+             rrr::DeferredReply *defer) {
+
+  std::lock_guard<std::mutex> guard(mtx_);
+  SchedulerOV *sched = (SchedulerOV *) dtxn_sched_;
+  sched->OnStore(txn_id,
+                     cmds,
+                     ov_req,
+                     res,
+                     ov_res);
+  defer->reply();
 }
 
 

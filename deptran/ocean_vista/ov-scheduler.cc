@@ -56,31 +56,20 @@ int SchedulerOV::OnDispatch(const vector<SimpleCommand>& cmd,
 
 
 
-void SchedulerOV::OnPreAccept(const txnid_t txn_id,
+void SchedulerOV::OnStore(const txnid_t txn_id,
                                    const vector<SimpleCommand> &cmds,
-                                   const ChronosPreAcceptReq &chr_req,
+                                   const OVStoreReq &ov_req,
                                    int32_t *res,
-                                   ChronosPreAcceptRes *chr_res) {
+                                   OVStoreRes *ov_res) {
 
 
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  /*
-   * xsTODO: Steps:
-    */
-
-
-  //if (RandomGenerator::rand(1, 2000) <= 1)
-  //Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
   auto dtxn = (TxOV*)(GetOrCreateDTxn(txn_id));
 
-  dtxn->received_prepared_ts_left_ = chr_req.ts_min;
-  dtxn->received_prepared_ts_right_ = chr_req.ts_max;
 
   dtxn->UpdateStatus(TXN_PAC);
-
-  Log_info("[Scheduler %d] pre-accept on txn_id = %d, phase = %d, ts_range [%d, %d]", this->frame_->site_info_->id, txn_id, dtxn->phase_, chr_req.ts_min, chr_req.ts_max);
 
 
   dtxn->involve_flag_ = RccDTxn::INVOLVED;
@@ -119,22 +108,8 @@ void SchedulerOV::OnPreAccept(const txnid_t txn_id,
       verify(dtxn->epoch_ > 0);
     }
 
-
-    chr_res->ts_left = dtxn->local_prepared_ts_left_;
-    chr_res->ts_right = dtxn->local_prepared_ts_right_;
-
-
-
-    if (chr_res->ts_left <= chr_res->ts_right){
-     //save the prepared version to database
-     //unlock
-      dtxn->StorePreparedVers();
-      *res = SUCCESS;
-      Log_info("[Scheduler %d] Preaccept success, txn_id = %d, res = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, *res, chr_res->ts_left, chr_res->ts_right);
-    }else{
-      *res =  REJECT;
-      Log_info("[Scheduler %d] Preaccept reject, txn_id = %d, res = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, *res, chr_res->ts_left, chr_res->ts_right);
-    }
+    dtxn->StorePreparedVers();
+    *res = SUCCESS;
   }
 }
 

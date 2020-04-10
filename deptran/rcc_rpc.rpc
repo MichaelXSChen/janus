@@ -132,6 +132,13 @@ abstract service Classic {
                     int32_t res,
                     ChronosCommitRes chr_res,
                     TxnOutput output);
+
+  defer OVStore(cmdid_t txn_id,
+                  vector<SimpleCommand> cmd,
+                  OVStoreReq ov_req |
+                  i32 res,
+                  OVStoreRes ov_res);
+
 }
 
 
@@ -241,3 +248,14 @@ struct ChronosCommitReq{
 struct ChronosCommitRes{
 
 }
+
+
+struct OVStoreReq {
+    i64 ts;
+    i64 suffix;
+}
+
+struct OVStoreRes {
+    i64 ts;
+}
+

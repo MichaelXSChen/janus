@@ -21,11 +21,11 @@ class SchedulerOV : public BrqSched {
                  TxnOutput* output);
 
 
-  void OnPreAccept(txnid_t txnid,
+  void OnStore(txnid_t txnid,
                    const vector<SimpleCommand> &cmds,
-                   const ChronosPreAcceptReq &chr_req,
+                   const OVStoreReq &ov_req,
                    int32_t *res,
-                   ChronosPreAcceptRes *chr_res);
+                   OVStoreRes *ov_res);
 
 
   void OnAccept(txnid_t txn_id,

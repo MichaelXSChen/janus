@@ -192,6 +192,12 @@ class ClassicServiceImpl: public ClassicService {
                        DeferredReply* p_defer) override;
 
 
+  void OVStore(const cmdid_t &txn_id,
+               const std::vector<SimpleCommand> &cmd,
+               const OVStoreReq &ov_req,
+               rrr::i32 *res,
+               OVStoreRes *ov_res,
+               rrr::DeferredReply *defer) override;
 
 
   protected:
