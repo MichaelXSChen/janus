@@ -139,8 +139,11 @@ abstract service Classic {
                   i32 res,
                   OVStoreRes ov_res);
 
-}
+  defer OVCreateTs(cmdid_t txn_id |
+                    i64 timestamp,
+                    i64 server_id)
 
+}
 
 // Below is for statistics
 

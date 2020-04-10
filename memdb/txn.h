@@ -6,6 +6,7 @@
 #include <map>
 #include <unordered_set>
 #include <set>
+#include "row.h"
 
 #include "utils.h"
 #include "value.h"

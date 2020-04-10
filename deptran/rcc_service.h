@@ -200,6 +200,12 @@ class ClassicServiceImpl: public ClassicService {
                rrr::DeferredReply *defer) override;
 
 
+  void OVCreateTs(const cmdid_t &txn_id,
+                 rrr::i64 *timestamp,
+                 rrr::i64 *server_id,
+                 rrr::DeferredReply *defer) override ;
+
+
   protected:
     void RegisterStats();
   };

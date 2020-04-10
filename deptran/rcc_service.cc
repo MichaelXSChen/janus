@@ -429,5 +429,13 @@ void ClassicServiceImpl::OVStore(const cmdid_t &txn_id,
   defer->reply();
 }
 
+void ClassicServiceImpl::OVCreateTs(const cmdid_t &txn_id,
+                rrr::i64 *timestamp,
+                rrr::i64 *server_id,
+                rrr::DeferredReply *defer) {
+
+  defer->reply();
+
+}
 
 } // namespace rcc
