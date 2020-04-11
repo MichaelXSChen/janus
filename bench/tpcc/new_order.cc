@@ -218,7 +218,7 @@ void TpccPiece::RegNewOrder() {
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(0), 1000, DF_NO)
     verify(cmd.input.size() >= 1);
-    Log_info("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_RI(I));
+//    Log_info("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_RI(I));
     auto tbl_item = dtxn->GetTable(TPCC_TB_ITEM);
     mdb::Row *row_item = dtxn->Query(tbl_item,
                                      cmd.input[TPCC_VAR_I_ID(I)].get_blob(),

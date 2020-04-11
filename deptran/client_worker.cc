@@ -102,7 +102,7 @@ Coordinator* ClientWorker::FindOrCreateCoordinator() {
 Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
 
   cooid_t coo_id = cli_id_;
-  coo_id = (coo_id << 16) + offset_id;
+  coo_id = (coo_id << 16) + offset_id; //xs: don't know why, interesting
   auto coo = frame_->CreateCoord(coo_id,
                                  config_,
                                  benchmark,
@@ -112,7 +112,7 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
   coo->loc_id_ = my_site_.locale_id;
   coo->commo_ = commo_;
   coo->forward_status_ = forward_requests_to_leader_ ? FORWARD_TO_LEADER : NONE;
-  Log_info("coordinator %d created at site %d: forward %d", coo->coo_id_, this->my_site_.id, coo->forward_status_);
+  Log_info("coordinator %u created at site %d: forward %d", coo->coo_id_, this->my_site_.id, coo->forward_status_);
   created_coordinators_.push_back(coo);
   return coo;
 }

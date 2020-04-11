@@ -65,7 +65,7 @@ Scheduler *OVFrame::CreateScheduler() {
     Log_info("[site null] created ov scheduler");
   }
 
-  Scheduler *sched = new SchedulerOV();
+  Scheduler *sched = new SchedulerOV(this->site_info_->id);
   sched->frame_ = this;
   return sched;
 }

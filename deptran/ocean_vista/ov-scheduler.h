@@ -16,8 +16,8 @@ class OVFrame;
 class SchedulerOV : public BrqSched {
  public:
 
-  SchedulerOV(): BrqSched() {
-    tid_mgr_ = std::make_unique<TidMgr>(this->frame_->site_info_->id);
+  SchedulerOV(siteid_t site_id): BrqSched() {
+    tid_mgr_ = std::make_unique<TidMgr>(site_id);
   }
 
 

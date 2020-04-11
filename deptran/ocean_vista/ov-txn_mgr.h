@@ -32,7 +32,7 @@ class TidMgr {
 
 
 public:
-  TidMgr(siteid_t server_id): server_id_(server_id) {};
+  TidMgr(siteid_t site_id): site_id_(site_id) {};
   ov_ts_t CreateTs(mdb::txn_id_t txn_id);
 
 private:
@@ -40,7 +40,7 @@ private:
   std::mutex mu;
 
   //timestamp is made up of two parts, timestamp (clock) | server_id, to ensure uniqueness;
-  siteid_t server_id_;
+  siteid_t site_id_;
   int64_t last_clock_; //This is for ensuring the monotonicity of the clock.
 
   std::map<ov_ts_t, mdb::txn_id_t> s_phase_txns_ = {};  //i.e., ts_set in the paper.

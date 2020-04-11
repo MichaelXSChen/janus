@@ -21,6 +21,7 @@ OVCommo *CoordinatorOV::commo() {
 }
 
 void CoordinatorOV::OVStore() {
+  Log_info("%s called", __FUNCTION__);
  GotoNextPhase();
 }
 

@@ -577,7 +577,7 @@ void RccSched::Execute(const RccScc& scc) {
 }
 
 void RccSched::Execute(RccDTxn& dtxn) {
-  Log_info("%s called", __PRETTY_FUNCTION__ );
+//  Log_info("%s called", __PRETTY_FUNCTION__ );
   dtxn.executed_ = true;
   verify(dtxn.IsDecided());
   verify(dtxn.epoch_ > 0);
