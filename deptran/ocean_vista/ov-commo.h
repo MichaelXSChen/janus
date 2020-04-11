@@ -21,7 +21,11 @@ class OVCommo : public BrqCommo {
                      const function<void(int64_t ts_raw, siteid_t server_id)>&);
 
 
-
+  void BroadcastStore(parid_t par_id,
+                          txnid_t txn_id,
+                          vector<SimpleCommand>& cmds,
+                          OVStoreReq &req,
+                          const function<void(int, OVStoreRes&)>& callback);
 
   //xs's code
   void SendDispatch(vector<SimpleCommand>& cmd,

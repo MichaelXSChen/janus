@@ -68,6 +68,29 @@ void OVCommo::SendHandoutRo(SimpleCommand &cmd,
 }
 
 
+void OVCommo::BroadcastStore(parid_t par_id,
+                    txnid_t txn_id,
+                    vector<SimpleCommand>& cmds,
+                    OVStoreReq &req,
+                    const function<void(int, OVStoreRes&)>& callback){
+  verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
+  for (auto &p : rpc_par_proxies_[par_id]) {
+    auto proxy = (p.second);
+    verify(proxy != nullptr);
+    FutureAttr fuattr;
+    fuattr.callback = [callback](Future *fu) {
+      int32_t res;
+      OVStoreRes ov_res;
+      fu->get_reply() >> res >> ov_res;
+      callback(res, ov_res);
+    };
+    verify(txn_id > 0);
+    Future *f = nullptr;
+    f = proxy->async_OVStore(txn_id, cmds, req, fuattr);
+    Future::safe_release(f);
+  }
+}
+
 void OVCommo::BroadcastPreAccept(
     parid_t par_id,
     txnid_t txn_id,

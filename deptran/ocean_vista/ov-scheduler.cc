@@ -68,49 +68,37 @@ void SchedulerOV::OnStore(const txnid_t txn_id,
   verify(cmds[0].root_id_ == txn_id);
   auto dtxn = (TxOV*)(GetOrCreateDTxn(txn_id));
 
-
   dtxn->UpdateStatus(TXN_PAC);
-
 
   dtxn->involve_flag_ = RccDTxn::INVOLVED;
   TxOV &tinfo = *dtxn;
-  if (dtxn->max_seen_ballot_ > 0) {
-    //xs: for recovery
-    *res = REJECT;
-  } else {
+
     //Normal case
-    if (dtxn->status() < TXN_CMT) {
-      if (dtxn->phase_ < PHASE_CHRONOS_PRE_ACCEPT && tinfo.status() < TXN_CMT) {
-        for (auto &c: cmds) {
-          map<int32_t, Value> output;
-          //this will lock the rows
-          dtxn->PreAcceptExecute(const_cast<SimpleCommand &>(c), res, &output);
-        }
-      }
-    } else {
-      if (dtxn->dreqs_.size() == 0) {
-        for (auto &c: cmds) {
-          dtxn->dreqs_.push_back(c);
-        }
+  if (dtxn->status() < TXN_CMT) {
+    if (dtxn->phase_ < PHASE_CHRONOS_PRE_ACCEPT && tinfo.status() < TXN_CMT) {
+      for (auto &c: cmds) {
+        map<int32_t, Value> output;
+        //this will lock the rows
+        dtxn->PreAcceptExecute(const_cast<SimpleCommand &>(c), res, &output);
       }
     }
-    verify(!tinfo.fully_dispatched);
-
-
-    dtxn->GetTsBound();
-
-
-
-
-    tinfo.fully_dispatched = true;
-    if (tinfo.status() >= TXN_CMT) {
-      waitlist_.insert(dtxn);  //xs: for failure recovery
-      verify(dtxn->epoch_ > 0);
+  } else {
+    if (dtxn->dreqs_.size() == 0) {
+      for (auto &c: cmds) {
+        dtxn->dreqs_.push_back(c);
+      }
     }
-
-    dtxn->StorePreparedVers();
-    *res = SUCCESS;
   }
+  verify(!tinfo.fully_dispatched);
+
+  tinfo.fully_dispatched = true;
+
+  ov_ts_t ovts;
+  ovts.timestamp = ov_req.ts;
+  ovts.site_id = ov_req.site_id;
+
+  stored_txns[ovts] = txn_id;
+  *res = SUCCESS;
 }
 
 void SchedulerOV::OnAccept(const txnid_t txn_id,
@@ -219,7 +207,7 @@ void SchedulerOV::OnCreateTs (txnid_t txnid,
 
 
   *timestamp = ovts.timestamp;
-  *server_id = siteid_t(ovts.server_id);
+  *server_id = siteid_t(ovts.site_id);
 
   return;
 }

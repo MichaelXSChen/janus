@@ -12,7 +12,7 @@
 namespace rococo{
 struct ov_ts_t{
   int64_t timestamp;
-  int16_t server_id;
+  int16_t site_id;
   inline bool operator < (const ov_ts_t rhs) const{
     if (this->timestamp < rhs.timestamp){
       return true;
@@ -21,7 +21,7 @@ struct ov_ts_t{
       return false;
     }
     else {
-      return this->server_id < rhs.server_id;
+      return this->site_id < rhs.site_id;
     }
   }
 };

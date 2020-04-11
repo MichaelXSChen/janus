@@ -62,5 +62,7 @@ class SchedulerOV : public BrqSched {
 
   std::unique_ptr<TidMgr> tid_mgr_;
 
+  std::map<ov_ts_t, txnid_t> stored_txns;
+
 };
 } // namespace janus

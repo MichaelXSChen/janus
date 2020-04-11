@@ -255,7 +255,7 @@ struct ChronosCommitRes{
 
 struct OVStoreReq {
     i64 ts;
-    i64 suffix;
+    i16 site_id;
 }
 
 struct OVStoreRes {

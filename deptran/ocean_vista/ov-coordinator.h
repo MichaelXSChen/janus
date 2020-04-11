@@ -24,6 +24,8 @@ class CoordinatorOV : public BrqCoord {
 
 
 
+  map<parid_t, int> n_store_acks_{};
+
   ov_ts_t my_ovts_;
 
 
@@ -35,6 +37,7 @@ class CoordinatorOV : public BrqCoord {
 
 
 
+  bool TxnStored();
 
 
   // functions needed in the fast accept phase.
@@ -72,7 +75,10 @@ class CoordinatorOV : public BrqCoord {
   void Reset() override;
 
   void OVStore();
-  void OVStoreACK();
+  void OVStoreACK(phase_t phase,
+                  parid_t par_id,
+                  int res,
+                  OVStoreRes& ov_res);
 
   //xs's code start here
   std::atomic<uint64_t> logical_clock {0};

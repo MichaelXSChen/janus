@@ -21,8 +21,53 @@ OVCommo *CoordinatorOV::commo() {
 }
 
 void CoordinatorOV::OVStore() {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  for (auto par_id : cmd_->GetPartitionIds()) {
+    auto cmds = txn().GetCmdsByPartition(par_id);
+
+    OVStoreReq req;
+    req.ts = my_ovts_.timestamp;
+    req.site_id = my_ovts_.site_id;
+
+
+    commo()->BroadcastStore(par_id,
+                            cmd_->id_,
+                            cmds,
+                            req,
+                            std::bind(&CoordinatorOV::OVStoreACK,
+                                      this,
+                                      phase_,
+                                      par_id,
+                                      std::placeholders::_1,
+                                      std::placeholders::_2));
+  }
   Log_info("%s called", __FUNCTION__);
- GotoNextPhase();
+}
+
+void CoordinatorOV::OVStoreACK(phase_t phase, parid_t par_id, int res, OVStoreRes &ov_res) {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  if (phase != phase_) {
+    //Log_info("already in next phase, return. Current phase = %d, suppose to be %d", phase_, phase);
+    return;
+  }
+  //receive quorum ACK from each partition
+
+
+  if (res == SUCCESS) {
+    n_store_acks_[par_id]++;
+    Log_info("Received store ok for par_id: %d", par_id);
+  } else if (res == REJECT) {
+    Log_info("Reject not handled yet");
+    verify(0);
+  } else {
+    verify(0);
+  }
+
+  if(TxnStored()){
+    //Received quorum ACK from all participating partitions.
+      Log_info("[Txn id = %d] store ok, commit_ts = %d", this->txn().id_, ts_fast_commit_);
+      GotoNextPhase();
+  }
 }
 
 void CoordinatorOV::launch_recovery(cmdid_t cmd_id) {
@@ -222,6 +267,19 @@ bool CoordinatorOV::AcceptQuorumReached() {
   return true;
 }
 
+bool CoordinatorOV::TxnStored() {
+  auto pars = txn().GetPartitionIds();
+  for (auto &par_id : pars) {
+    if (n_store_acks_.count(par_id) < 1) {
+      //xstodo: temporarily chenged to 1 for code refinement
+      return false;
+    }
+  }
+  return true;
+}
+
+
+
 void CoordinatorOV::CreateTs() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto txn = (TxnCommand *) cmd_;
@@ -261,7 +319,7 @@ void CoordinatorOV::CreateTsAck(phase_t phase, int64_t ts_raw, siteid_t site_id)
   verify(txn().root_id_ == txn().id_);
 
   my_ovts_.timestamp = ts_raw;
-  my_ovts_.server_id = site_id;
+  my_ovts_.site_id = site_id;
   GotoNextPhase();
 }
 
@@ -354,6 +412,8 @@ void CoordinatorOV::DispatchAck(phase_t phase,
   }
 }
 
+
+
 void CoordinatorOV::GotoNextPhase() {
 
   int n_phase = 4;
@@ -386,7 +446,7 @@ void CoordinatorOV::GotoNextPhase() {
 
       OVStore();
       verify(phase_ % n_phase == Phase::OV_COMMITTED);
-
+      break;
 
     case Phase::OV_COMMITTED: //4
 
