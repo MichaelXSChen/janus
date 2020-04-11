@@ -126,6 +126,9 @@ vector<SimpleCommand> TxnCommand::GetCmdsByPartition(parid_t par_id) {
 }
 
 map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds(int32_t max) {
+
+  Log_info("n_pieces_dispatched = %d, n_pieces_dispatchable = %d, n_pieces_all = %d", n_pieces_dispatched_,  n_pieces_dispatchable_, n_pieces_all_);
+
   verify(n_pieces_dispatched_ < n_pieces_dispatchable_);
   verify(n_pieces_dispatched_ < n_pieces_all_);
   map<parid_t, vector<SimpleCommand*>> cmds;

@@ -39,7 +39,7 @@ class Communicator {
   SiteProxyPair RandomProxyForPartition(parid_t partition_id) const;
   SiteProxyPair LeaderProxyForPartition(parid_t) const;
   SiteProxyPair NearestProxyForPartition(parid_t) const;
-
+  SiteProxyPair NearestRandomProxy();
   SiteProxyPair NearestProxyForAnyPartition(const std::vector<parid_t>& par_ids) const;
 
 

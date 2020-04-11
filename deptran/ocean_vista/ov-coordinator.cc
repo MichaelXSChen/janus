@@ -226,7 +226,10 @@ void CoordinatorOV::CreateTs() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto txn = (TxnCommand *) cmd_;
   verify(txn->root_id_ == txn->id_);
-  map<parid_t, vector<SimpleCommand*>> cmds_by_par = txn->GetReadyCmds();
+
+  //xs: this function is not read only
+  //can only be called in the dispatch function
+//  map<parid_t, vector<SimpleCommand*>> cmds_by_par = txn->GetReadyCmds();
   //choice A
   //randomly get one participating partition, and use the nearest server as the coordinator server
   //this seems will find non-local server, in a non-full replication.
@@ -238,18 +241,18 @@ void CoordinatorOV::CreateTs() {
 
   //Note that this may not be optimal
   //Before the dispatch, ready cmds is not all cmds.
-  std::vector<parid_t> par_ids;
+//  std::vector<parid_t> par_ids;
 
-  for (auto &p: cmds_by_par){
-    par_ids.push_back(p.first);
-  }
+//  for (auto &p: cmds_by_par){
+//    par_ids.push_back(p.first);
+//  }
 
   auto callback = std::bind(&CoordinatorOV::CreateTsAck,
                             this,
                             phase_,
                             std::placeholders::_1,
                             std::placeholders::_2);
-  commo()->SendCreateTs(txn->id_, par_ids, callback);
+  commo()->SendCreateTs(txn->id_, callback);
 }
 
 void CoordinatorOV::CreateTsAck(phase_t phase, int64_t ts_raw, siteid_t site_id){
@@ -270,6 +273,8 @@ void CoordinatorOV::Dispatch() {
   auto txn = (TxnCommand *) cmd_;
   verify(txn->root_id_ == txn->id_);
   int cnt = 0;
+  Log_info("%s called", __PRETTY_FUNCTION__);
+
   map<parid_t, vector<SimpleCommand*>> cmds_by_par = txn->GetReadyCmds();
   Log_info("transaction (id %d) has %d ready pieces", txn->id_, cmds_by_par.size());
 

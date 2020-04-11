@@ -40,7 +40,6 @@ void OVCommo::SendDispatch(vector<TxPieceData> &cmd,
 }
 
 void OVCommo::SendCreateTs(txnid_t txn_id,
-                           vector<parid_t> &par_ids,
                            const function<void(int64_t ts_raw, siteid_t site_id)> &callback) {
 
   rrr::FutureAttr fuattr;
@@ -53,7 +52,7 @@ void OVCommo::SendCreateTs(txnid_t txn_id,
       };
   fuattr.callback = cb;
 
-  auto proxy = NearestProxyForAnyPartition(par_ids).second;
+  auto proxy = NearestRandomProxy().second;
 
 
   Future::safe_release(proxy->async_OVCreateTs(txn_id, fuattr));

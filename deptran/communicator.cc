@@ -210,4 +210,19 @@ Communicator::NearestProxyForAnyPartition(const std::vector<parid_t> &par_ids) c
   int index = loc_id_;
   return partition_proxies[index];
 };
+
+
+std::pair<siteid_t, ClassicProxy*>
+Communicator::NearestRandomProxy() {
+  // TODO Fix me.
+  //xs todo, currently, the code assumes full partition.
+  //The way it find nearest proxy is to find the partition of the same location
+  parid_t rand_par = parid_t (rand() % rpc_par_proxies_.size());
+  verify(rpc_par_proxies_.count(rand_par) != 0);
+
+  auto& partition_proxies = rpc_par_proxies_[rand_par];
+  verify(partition_proxies.size() > loc_id_);
+  int index = loc_id_;
+  return partition_proxies[index];
+};
 } // namespace rococo
