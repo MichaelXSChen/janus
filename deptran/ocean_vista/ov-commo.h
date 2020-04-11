@@ -17,7 +17,9 @@ class OVCommo : public BrqCommo {
 
 
 
-
+  void SendCreateTs(txnid_t txn_id,
+                      vector<parid_t> &par_ids,
+                     const function<void(int64_t ts_raw, siteid_t server_id)>&);
 
 
 

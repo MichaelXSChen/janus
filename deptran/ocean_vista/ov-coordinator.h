@@ -7,6 +7,7 @@
 #include "../constants.h"
 #include "../command.h"
 #include "../brq/coord.h"
+#include "ov-txn_mgr.h"
 
 
 
@@ -15,10 +16,15 @@ namespace rococo {
 class OVCommo;
 class CoordinatorOV : public BrqCoord {
  public:
-  enum Phase {CHR_INIT=0, CHR_DISPATCH=1, CHR_FAST=2, CHR_FALLBACK=3, CHR_COMMIT=4};
+//  enum Phase {CHR_INIT=0, CHR_DISPATCH=1, CHR_FAST=2, CHR_FALLBACK=3, CHR_COMMIT=4};
+  enum Phase {OV_INIT =0, OV_CREATED_TS = 1, OV_DISPATHED = 2, OV_COMMITTED = 3};
+
   enum Decision {CHR_UNK=0, CHR_COMMI=1, CHR_ABORT=2 };
   using BrqCoord::BrqCoord;
 
+
+
+  ov_ts_t my_ovts_;
 
 
 
@@ -65,12 +71,18 @@ class CoordinatorOV : public BrqCoord {
   }
   void Reset() override;
 
-
+  void OVStore();
+  void OVStoreACK();
 
   //xs's code start here
   std::atomic<uint64_t> logical_clock {0};
 //  int32_t GetQuorumSize(parid_t par_id);
 
+
+  void CreateTs();
+  void CreateTsAck(phase_t phase,
+                    int64_t ts_raw,
+                    siteid_t server_id);
 
   void Dispatch();
   void DispatchAck(phase_t phase,

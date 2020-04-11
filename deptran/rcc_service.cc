@@ -431,7 +431,7 @@ void ClassicServiceImpl::OVStore(const cmdid_t &txn_id,
 
 void ClassicServiceImpl::OVCreateTs(const cmdid_t &txn_id,
                 rrr::i64 *timestamp,
-                rrr::i64 *server_id,
+                rrr::i16 *server_id,
                 rrr::DeferredReply *defer) {
 
   std::lock_guard<std::mutex> guard(mtx_);

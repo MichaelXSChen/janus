@@ -36,7 +36,7 @@ class SchedulerOV : public BrqSched {
 
   void OnCreateTs (txnid_t txnid,
                   int64_t *timestamp,
-                   int64_t *server_id);
+                   int16_t *server_id);
 
 
 

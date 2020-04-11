@@ -30,6 +30,17 @@ Communicator::Communicator(PollMgr* poll_mgr) {
     }
     rpc_par_proxies_.insert(std::make_pair(par_id, proxies));
   }
+  //xs print for understanding.
+
+  for (auto &par_item: rpc_par_proxies_){
+    for (auto &pair : par_item.second) {
+      Log_info("rpc_par_proxies: par_id = %d, site = %d", par_item.first, pair.first);
+    }
+  }
+
+
+
+
   client_leaders_connected_.store(false);
   if (config->forwarding_enabled_) {
     threads.push_back(std::thread(&Communicator::ConnectClientLeaders, this));
@@ -184,4 +195,19 @@ Communicator::NearestProxyForPartition(parid_t par_id) const {
   return partition_proxies[index];
 };
 
+
+std::pair<siteid_t, ClassicProxy*>
+Communicator::NearestProxyForAnyPartition(const std::vector<parid_t> &par_ids) const {
+  // TODO Fix me.
+  //xs todo, currently, the code assumes full partition.
+  //The way it find nearest proxy is to find the partition of the same location
+  verify(!par_ids.empty());
+  auto par_id = par_ids[0];
+  auto it = rpc_par_proxies_.find(par_id);
+  verify(it != rpc_par_proxies_.end());
+  auto& partition_proxies = it->second;
+  verify(partition_proxies.size() > loc_id_);
+  int index = loc_id_;
+  return partition_proxies[index];
+};
 } // namespace rococo

@@ -141,7 +141,7 @@ abstract service Classic {
 
   defer OVCreateTs(cmdid_t txn_id |
                     i64 timestamp,
-                    i64 server_id)
+                    i16 server_id)
 
 }
 

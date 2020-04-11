@@ -20,6 +20,10 @@ OVCommo *CoordinatorOV::commo() {
   return dynamic_cast<OVCommo *>(commo_);
 }
 
+void CoordinatorOV::OVStore() {
+ GotoNextPhase();
+}
+
 void CoordinatorOV::launch_recovery(cmdid_t cmd_id) {
   // TODO
   prepare();
@@ -217,7 +221,45 @@ bool CoordinatorOV::AcceptQuorumReached() {
   return true;
 }
 
+void CoordinatorOV::CreateTs() {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  auto txn = (TxnCommand *) cmd_;
+  verify(txn->root_id_ == txn->id_);
+  map<parid_t, vector<SimpleCommand*>> cmds_by_par = txn->GetReadyCmds();
+  //choice A
+  //randomly get one participating partition, and use the nearest server as the coordinator server
+  //this seems will find non-local server, in a non-full replication.
 
+  //choice B:
+  //using this one for now, xs
+  //Get all participating partitions.
+  //Find which proxy is nearest, among all replicas of participating partitions.
+
+  //Note that this may not be optimal
+  //Before the dispatch, ready cmds is not all cmds.
+  std::vector<parid_t> par_ids;
+
+  for (auto &p: cmds_by_par){
+    par_ids.push_back(p.first);
+  }
+
+  auto callback = std::bind(&CoordinatorOV::CreateTsAck,
+                            this,
+                            phase_,
+                            std::placeholders::_1,
+                            std::placeholders::_2);
+  commo()->SendCreateTs(txn->id_, par_ids, callback);
+}
+
+void CoordinatorOV::CreateTsAck(phase_t phase, int64_t ts_raw, siteid_t site_id){
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+  verify(phase == phase_); // cannot proceed without all acks.
+  verify(txn().root_id_ == txn().id_);
+
+  my_ovts_.timestamp = ts_raw;
+  my_ovts_.server_id = site_id;
+  GotoNextPhase();
+}
 
 void CoordinatorOV::Dispatch() {
 
@@ -308,56 +350,42 @@ void CoordinatorOV::DispatchAck(phase_t phase,
 
 void CoordinatorOV::GotoNextPhase() {
 
-  int n_phase = 5;
+  int n_phase = 4;
   int current_phase = phase_++ % n_phase; // for debug
   Log_info("--------------------------------------------------");
   Log_info("%s: phase = %d", __FUNCTION__, current_phase);
 
   switch (current_phase) {
-    case Phase::CHR_INIT:
+    case Phase::OV_INIT:
       /*
        * Collect the local-DC timestamp.
        * Try to make my clock as up-to-date as possible.
        */
-      Dispatch();
-      verify(phase_ % n_phase == Phase::CHR_DISPATCH);
+
+      CreateTs();
+      verify(phase_ % n_phase == OV_CREATED_TS);
       break;
-    case Phase::CHR_DISPATCH: //1
+    case Phase::OV_CREATED_TS: //1
       /*
        * Contact all participant replicas
        * Can enter fast if majority replica replies OK.
        */
 //      phase_++;
-      verify(phase_ % n_phase == Phase::CHR_FAST);
-      PreAccept();
+
+      Dispatch();
+      verify(phase_ % n_phase == Phase::OV_DISPATHED);
       break;
 
-    case Phase::CHR_FAST: //2
+    case Phase::OV_DISPATHED: //2
 
-      if (fast_path_) {
-        phase_++;
-        Log_info("here, phase_ = %d", phase_ % n_phase);
-        verify(phase_ % n_phase == Phase::CHR_COMMIT); //4
-        Commit();
-      } else {
-        /*
-         * Fallback to ocean vista.
-         */
-        verify(phase_ % n_phase == Phase::CHR_FALLBACK); //3
-        Accept();
-      }
-      // TODO
-      break;
+      OVStore();
+      verify(phase_ % n_phase == Phase::OV_COMMITTED);
 
-    case Phase::CHR_FALLBACK: //3
 
-      verify(phase_ % n_phase == Phase::CHR_COMMIT);
+    case Phase::OV_COMMITTED: //4
+
       Commit();
-      break;
-
-    case Phase::CHR_COMMIT: //4
-
-      verify(phase_ % n_phase == Phase::CHR_INIT); //overflow
+      verify(phase_ % n_phase == Phase::OV_INIT); //overflow
       verify(committed_ != aborted_);
       if (committed_) {
         End();

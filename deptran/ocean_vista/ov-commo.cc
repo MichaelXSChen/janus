@@ -39,6 +39,27 @@ void OVCommo::SendDispatch(vector<TxPieceData> &cmd,
   Future::safe_release(proxy->async_ChronosDispatch(cmd, chr_req, fuattr));
 }
 
+void OVCommo::SendCreateTs(txnid_t txn_id,
+                           vector<parid_t> &par_ids,
+                           const function<void(int64_t ts_raw, siteid_t site_id)> &callback) {
+
+  rrr::FutureAttr fuattr;
+  std::function<void(Future *)> cb =
+      [callback ](Future *fu) {
+        int64_t ts_raw;
+        int16_t site_id;
+        fu->get_reply() >> ts_raw >> site_id;
+        callback(ts_raw, site_id);
+      };
+  fuattr.callback = cb;
+
+  auto proxy = NearestProxyForAnyPartition(par_ids).second;
+
+
+  Future::safe_release(proxy->async_OVCreateTs(txn_id, fuattr));
+}
+
+
 void OVCommo::SendHandoutRo(SimpleCommand &cmd,
                                  const function<void(int res,
                                                      SimpleCommand &cmd,
