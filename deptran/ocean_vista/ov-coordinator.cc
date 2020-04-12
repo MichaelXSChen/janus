@@ -445,10 +445,10 @@ void CoordinatorOV::GotoNextPhase() {
     case Phase::OV_DISPATHED: //2
 
       OVStore();
-      verify(phase_ % n_phase == Phase::OV_COMMITTED);
+      verify(phase_ % n_phase == Phase::OV_STORED);
       break;
 
-    case Phase::OV_COMMITTED: //4
+    case Phase::OV_STORED: //4
 
       Commit();
       verify(phase_ % n_phase == Phase::OV_INIT); //overflow

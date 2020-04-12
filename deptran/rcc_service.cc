@@ -443,4 +443,24 @@ void ClassicServiceImpl::OVCreateTs(const cmdid_t &txn_id,
 
 }
 
+void ClassicServiceImpl::OVExecute(const uint64_t &id,
+                                   const OVExecuteReq &req,
+                                   int32_t *res,
+                                   OVExecuteRes *ov_res,
+                                   TxnOutput *output,
+                                   rrr::DeferredReply *defer) {
+
+  std::unique_lock<std::mutex> lk(mtx_);
+  SchedulerOV *sched = (SchedulerOV *) dtxn_sched_;
+  lk.unlock();
+
+  auto callback = [defer](){
+   defer->reply();
+  };
+
+  sched->OnExecute(id, req, res, ov_res, output, callback);
+
+}
+
+
 } // namespace rcc

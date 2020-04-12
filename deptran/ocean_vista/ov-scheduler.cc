@@ -93,11 +93,15 @@ void SchedulerOV::OnStore(const txnid_t txn_id,
 
   tinfo.fully_dispatched = true;
 
-  ov_ts_t ovts;
-  ovts.timestamp = ov_req.ts;
-  ovts.site_id = ov_req.site_id;
+  tinfo.ovts_.timestamp = ov_req.ts;
+  tinfo.ovts_.site_id = ov_req.site_id;
 
-  stored_txns[ovts] = txn_id;
+  TxOV* txovptr = dynamic_cast<TxOV*>(dtxn);
+
+  txovptr->ov_status_ = TxOV::OV_txn_status::STORED;
+
+  stored_txns_by_id_[txn_id] = txovptr;
+
   *res = SUCCESS;
 }
 
@@ -205,9 +209,38 @@ void SchedulerOV::OnCreateTs (txnid_t txnid,
 
   ov_ts_t ovts = tid_mgr_->CreateTs(txnid);
 
-
   *timestamp = ovts.timestamp;
   *server_id = siteid_t(ovts.site_id);
+
+  return;
+}
+
+void SchedulerOV::OnExecute(uint64_t txn_id,
+                            const OVExecuteReq &req,
+                            int32_t *res,
+                            OVExecuteRes *ov_res,
+                            TxnOutput *output,
+                            const function<void()> &callback) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+
+  *res = SUCCESS;
+
+  auto dtxn = (TxOV *) (GetOrCreateDTxn(txn_id));
+  verify(dtxn->ptr_output_repy_ == nullptr);
+  dtxn->ptr_output_repy_ = output;
+
+  verify(!dtxn->IsExecuted());
+
+  if (dtxn->ovts_.timestamp > vwatermark){
+    Log_info("[txn %u] vwatermark not ready, postpone execution, vwatermark = %l, ts = %l", txn_id, vwatermark, dtxn->ovts_.timestamp);
+    dtxn->executed_callback = callback;
+  }
+  else{
+    dtxn->CommitExecute();
+    stored_txns_by_id_.erase(txn_id);
+    Log_info("[txn %u] executed, postpone execution, vwatermark = %l, ts = %l", txn_id,  vwatermark, dtxn->ovts_.timestamp);
+    callback();
+  }
 
   return;
 }

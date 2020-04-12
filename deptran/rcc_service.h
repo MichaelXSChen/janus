@@ -206,6 +206,12 @@ class ClassicServiceImpl: public ClassicService {
                  rrr::DeferredReply *defer) override ;
 
 
+  void OVExecute(const cmdid_t &id,
+                 const OVExecuteReq &req,
+                 int32_t *res,
+                 OVExecuteRes *chr_res,
+                 TxnOutput *output,
+                 rrr::DeferredReply *defer) override;
   protected:
     void RegisterStats();
   };

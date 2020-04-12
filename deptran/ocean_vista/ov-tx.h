@@ -6,6 +6,7 @@
 #include "deptran/rcc/dtxn.h"
 #include "../command.h"
 #include "memdb/row_mv.h"
+#include "ov-txn_mgr.h"
 namespace rococo {
 
 #define PHASE_CHRONOS_DISPATCH (1)
@@ -53,7 +54,9 @@ class TxOV : public RccDTxn {
 
   std::set<ChronosRow *> locked_rows_ = {};
 
-
+  /**
+   * Should deprecated
+   */
   int64_t received_prepared_ts_left_ = 0;
   int64_t received_prepared_ts_right_ = 0;
 
@@ -71,7 +74,26 @@ class TxOV : public RccDTxn {
 
   int64_t commit_ts_;
 
+  /**
+   * Should deprecated end here
+   */
+
+  ov_ts_t ovts_;
+  std::function<void()> executed_callback = [](){
+    Log_fatal("call back not assigned");
+    verify(0);
+  };
+
   cmdtype_t root_type = 0;
+
+  enum OV_txn_status {
+    INIT = 0,
+    STORED = 1,
+    CAN_EXECUTE = 2,
+    EXECUTED = 3
+  };
+
+  OV_txn_status ov_status_ = OV_txn_status::INIT;
 };
 
 } // namespace janus

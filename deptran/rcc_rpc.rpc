@@ -143,6 +143,11 @@ abstract service Classic {
                     i64 timestamp,
                     i16 server_id)
 
+  defer OVExecute(cmdid_t id,
+                    OVExecuteReq req |
+                    int32_t res,
+                    OVExecuteRes ov_res,
+                    TxnOutput output);
 }
 
 // Below is for statistics
@@ -253,6 +258,7 @@ struct ChronosCommitRes{
 }
 
 
+
 struct OVStoreReq {
     i64 ts;
     i16 site_id;
@@ -260,5 +266,13 @@ struct OVStoreReq {
 
 struct OVStoreRes {
     i64 ts;
+}
+
+struct OVExecuteReq{
+
+}
+
+struct OVExecuteRes{
+
 }
 

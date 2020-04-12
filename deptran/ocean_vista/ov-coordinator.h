@@ -17,7 +17,7 @@ class OVCommo;
 class CoordinatorOV : public BrqCoord {
  public:
 //  enum Phase {CHR_INIT=0, CHR_DISPATCH=1, CHR_FAST=2, CHR_FALLBACK=3, CHR_COMMIT=4};
-  enum Phase {OV_INIT =0, OV_CREATED_TS = 1, OV_DISPATHED = 2, OV_COMMITTED = 3};
+  enum Phase {OV_INIT =0, OV_CREATED_TS = 1, OV_DISPATHED = 2, OV_STORED = 3};
 
   enum Decision {CHR_UNK=0, CHR_COMMI=1, CHR_ABORT=2 };
   using BrqCoord::BrqCoord;

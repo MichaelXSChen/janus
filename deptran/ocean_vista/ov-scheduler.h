@@ -9,10 +9,14 @@
 #include "ov-txn_mgr.h"
 #include <memory>
 #include "ov-frame.h"
+#include "ov-tx.h"
+
 namespace rococo {
 
 class OVCommo;
 class OVFrame;
+
+
 class SchedulerOV : public BrqSched {
  public:
 
@@ -58,11 +62,20 @@ class SchedulerOV : public BrqSched {
                 RccGraph* graph,
                 const function<void()> &callback) override;
 
+  void OnExecute(txnid_t txn_id,
+                const OVExecuteReq &req,
+                int32_t *res,
+                OVExecuteRes *ov_res,
+                TxnOutput *output,
+                const function<void()> &callback);
+
   OVCommo* commo();
 
   std::unique_ptr<TidMgr> tid_mgr_;
 
-  std::map<ov_ts_t, txnid_t> stored_txns;
+  std::map<txnid_t, TxOV*> stored_txns_by_id_;
+
+  int64_t vwatermark = 0;
 
 };
 } // namespace janus
