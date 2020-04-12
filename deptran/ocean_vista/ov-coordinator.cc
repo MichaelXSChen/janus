@@ -29,6 +29,7 @@ void CoordinatorOV::OVStore() {
     req.ts = my_ovts_.timestamp;
     req.site_id = my_ovts_.site_id;
 
+    Log_info("%s called, ts = %ld, site_id = %d", __FUNCTION__, req.ts, req.site_id);
 
     commo()->BroadcastStore(par_id,
                             cmd_->id_,
@@ -41,7 +42,6 @@ void CoordinatorOV::OVStore() {
                                       std::placeholders::_1,
                                       std::placeholders::_2));
   }
-  Log_info("%s called", __FUNCTION__);
 }
 
 void CoordinatorOV::OVStoreACK(phase_t phase, parid_t par_id, int res, OVStoreRes &ov_res) {
@@ -318,6 +318,8 @@ void CoordinatorOV::CreateTsAck(phase_t phase, int64_t ts_raw, siteid_t site_id)
   verify(phase == phase_); // cannot proceed without all acks.
   verify(txn().root_id_ == txn().id_);
 
+  Log_info("%s called, ts_raw = %ld, site_id = %d", __FUNCTION__, ts_raw, site_id);
+
   my_ovts_.timestamp = ts_raw;
   my_ovts_.site_id = site_id;
   GotoNextPhase();
@@ -367,7 +369,7 @@ void CoordinatorOV::ExecuteAck(uint32_t phase,
   // if there are still more results to collect.
   bool all_acked = txn().OutputReady();
   if (all_acked){
-   Log_info("[txn %d] all Acked, end");
+   Log_info("[txn %d] all Acked, end", txn().txn_id_);
    End();
 
 
@@ -384,7 +386,7 @@ void CoordinatorOV::Dispatch() {
   auto txn = (TxnCommand *) cmd_;
   verify(txn->root_id_ == txn->id_);
   int cnt = 0;
-  Log_info("%s called", __PRETTY_FUNCTION__);
+//  Log_info("%s called", __PRETTY_FUNCTION__);
 
   map<parid_t, vector<SimpleCommand*>> cmds_by_par = txn->GetReadyCmds();
   Log_info("transaction (id %d) has %d ready pieces", txn->id_, cmds_by_par.size());
@@ -393,7 +395,7 @@ void CoordinatorOV::Dispatch() {
   for (auto &pair: cmds_by_par) {
 
     const parid_t &par_id = pair.first;
-    Log_info("piece: (id %d, pieces %d) has touch par_id = %d", txn->id_, index++, par_id);
+//    Log_info("piece: (id %d, pieces %d) has touch par_id = %d", txn->id_, index++, par_id);
     auto &cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
@@ -418,7 +420,7 @@ void CoordinatorOV::Dispatch() {
 
     commo()->SendDispatch(cc, req, callback);
   }
-  Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
+//  Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
 }
 
 //xs: callback for handling Dispatch ACK
@@ -445,8 +447,8 @@ void CoordinatorOV::DispatchAck(phase_t phase,
     verify(dispatch_acks_[pair.first] == false);
     dispatch_acks_[pair.first] = true;
     txn().Merge(pair.first, pair.second); //For those txn that need the read value for other command.
-    Log_info("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-             n_dispatch_ack_, n_dispatch_, txn().id_, pair.first);
+//    Log_info("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+//             n_dispatch_ack_, n_dispatch_, txn().id_, pair.first);
   }
 
 
@@ -503,21 +505,22 @@ void CoordinatorOV::GotoNextPhase() {
 
     case Phase::OV_STORED: //4
 
-      Commit();
-      verify(phase_ % n_phase == Phase::OV_INIT); //overflow
-      verify(committed_ != aborted_);
-      if (committed_) {
-        End();
-      } else if (aborted_) {
-        Restart();
-      } else {
-        verify(0);
-      }
+      Execute();
+
+
+//      verify(phase_ % n_phase == Phase::OV_INIT); //overflow
+//      verify(committed_ != aborted_);
+//      if (committed_) {
+//        End();
+//      } else if (aborted_) {
+//        Restart();
+//      } else {
+//        verify(0);
+//      }
       break;
 
     default:verify(0);
   }
-  Log_info("GotoNextPhase Returned %d --------------------------------------------------", current_phase);
 
 }
 

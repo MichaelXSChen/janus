@@ -75,7 +75,7 @@ class SchedulerOV : public BrqSched {
 
   std::map<txnid_t, TxOV*> stored_txns_by_id_;
 
-  int64_t vwatermark = 0;
-
+//  int64_t vwatermark = 0;
+  int64_t vwatermark = std::numeric_limits<int64_t>::max();
 };
 } // namespace janus

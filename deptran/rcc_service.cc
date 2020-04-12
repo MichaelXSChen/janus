@@ -351,7 +351,7 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
                                          TxnOutput *p_output,
                                          DeferredReply *p_defer) {
 
-  Log_info("%s called", __PRETTY_FUNCTION__);
+//  Log_info("%s called", __PRETTY_FUNCTION__);
 
   std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
   auto *sched = (SchedulerChronos *) dtxn_sched_;
@@ -365,7 +365,7 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
 
   p_defer->reply();
 
-  Log_info("%s returned", __PRETTY_FUNCTION__);
+//  Log_info("%s returned", __PRETTY_FUNCTION__);
 
 }
 

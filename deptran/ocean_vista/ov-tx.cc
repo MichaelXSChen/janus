@@ -34,7 +34,7 @@ void TxOV::DispatchExecute(const SimpleCommand &cmd,
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
 
-  Log_info("%s called, defer= %s, txn_id = %d, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
+//  Log_info("%s called, defer= %s, txn_id = %d, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
   int xxx, *yyy;
   if (pair.defer == DF_REAL) {
     yyy = &xxx;
@@ -75,7 +75,7 @@ void TxOV::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t, Val
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
 
-  Log_info("%s called, defer= %s, txn_id = %d, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
+//  Log_info("%s called, defer= %s, txn_id = %d, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
   int xxx, *yyy;
   if (pair.defer == DF_REAL) {
     yyy = &xxx;
@@ -156,17 +156,17 @@ bool TxOV::ReadColumn(mdb::Row *row,
       int64_t  t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("[txn %d] ReadColumn, Dispatch phase1: table = %s, col_id = %d,  hint_flag = %s, root_tyep = %d,  t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
-               this->id(),
-               row->get_table()->Name().c_str(),
-               col_id,
-               hint_str[hint_flag],
-               this->root_type,
-               t_pw,
-               t_cw,
-               t_low,
-               t_left,
-               received_dispatch_ts_right_);
+//      Log_info("[txn %d] ReadColumn, Dispatch phase1: table = %s, col_id = %d,  hint_flag = %s, root_tyep = %d,  t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+//               this->id(),
+//               row->get_table()->Name().c_str(),
+//               col_id,
+//               hint_str[hint_flag],
+//               this->root_type,
+//               t_pw,
+//               t_cw,
+//               t_low,
+//               t_left,
+//               received_dispatch_ts_right_);
 
       //xs notes 2, cont'd  no need to save prepared for this
       //prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
@@ -197,18 +197,18 @@ bool TxOV::ReadColumn(mdb::Row *row,
 
       int64_t t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
-      Log_info(
-          "[txn %d] ReadColumn, pre-accept phase1: table = %s, col_id = %d,  hint_flag = %s, tyep = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
-          this->id(),
-          row->get_table()->Name().c_str(),
-          col_id,
-          hint_str[hint_flag],
-          root_type,
-          t_pw,
-          t_cw,
-          t_low,
-          t_left,
-          received_prepared_ts_right_);
+//      Log_info(
+//          "[txn %d] ReadColumn, pre-accept phase1: table = %s, col_id = %d,  hint_flag = %s, tyep = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+//          this->id(),
+//          row->get_table()->Name().c_str(),
+//          col_id,
+//          hint_str[hint_flag],
+//          root_type,
+//          t_pw,
+//          t_cw,
+//          t_low,
+//          t_left,
+//          received_prepared_ts_right_);
       prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
 
       return true;
@@ -227,18 +227,18 @@ bool TxOV::ReadColumn(mdb::Row *row,
       int64_t t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info(
-          "[txn %d] ReadColumn, pre-accept phase2: table = %s, col_id = %d,  hint_flag = %s, tyep = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
-          this->id(),
-          row->get_table()->Name().c_str(),
-          col_id,
-          hint_str[hint_flag],
-          this->root_type,
-          t_pw,
-          t_cw,
-          t_low,
-          t_left,
-          received_prepared_ts_right_);
+//      Log_info(
+//          "[txn %d] ReadColumn, pre-accept phase2: table = %s, col_id = %d,  hint_flag = %s, tyep = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+//          this->id(),
+//          row->get_table()->Name().c_str(),
+//          col_id,
+//          hint_str[hint_flag],
+//          this->root_type,
+//          t_pw,
+//          t_cw,
+//          t_low,
+//          t_left,
+//          received_prepared_ts_right_);
       prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
       return true;
     }
@@ -249,12 +249,12 @@ bool TxOV::ReadColumn(mdb::Row *row,
     }
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
       //For fast path_, seems no need to read.
-      Log_info("[txn %d] ReadColumn, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
-               id(),
-               row->get_table()->Name().c_str(),
-               col_id,
-               hint_str[hint_flag],
-               commit_ts_);
+//      Log_info("[txn %d] ReadColumn, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
+//               id(),
+//               row->get_table()->Name().c_str(),
+//               col_id,
+//               hint_str[hint_flag],
+//               commit_ts_);
 
       auto c = r->get_column(col_id);
       *value = c;
@@ -288,16 +288,16 @@ bool TxOV::WriteColumn(Row *row,
       int64_t t_left = t_pr > t_cr ? t_pr : t_cr;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("[txn %d] Write Column, Prepare phase1: table = %s, col_id = %d,  hint_flag = %s, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
-               id(),
-               row->get_table()->Name().c_str(),
-               col_id,
-               hint_str[hint_flag],
-               t_pr,
-               t_cr,
-               t_low,
-               t_left,
-               received_prepared_ts_right_);
+//      Log_info("[txn %d] Write Column, Prepare phase1: table = %s, col_id = %d,  hint_flag = %s, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
+//               id(),
+//               row->get_table()->Name().c_str(),
+//               col_id,
+//               hint_str[hint_flag],
+//               t_pr,
+//               t_cr,
+//               t_low,
+//               t_left,
+//               received_prepared_ts_right_);
       prepared_read_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
       //xs notes: If readlly there ``are'' instant writes, then we should apply it here.
       mdb_txn()->write_column(row, col_id, value);
@@ -313,16 +313,16 @@ bool TxOV::WriteColumn(Row *row,
       int64_t t_left = t_pr > t_cr ? t_pr : t_cr;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("[txn %d] Write Column, Prepare phase2: table = %s, col_id = %d,  hint_flag = %s, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
-               id(),
-               row->get_table()->Name().c_str(),
-               col_id,
-               hint_str[hint_flag],
-               t_pr,
-               t_cr,
-               t_low,
-               t_left,
-               received_prepared_ts_right_);
+//      Log_info("[txn %d] Write Column, Prepare phase2: table = %s, col_id = %d,  hint_flag = %s, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
+//               id(),
+//               row->get_table()->Name().c_str(),
+//               col_id,
+//               hint_str[hint_flag],
+//               t_pr,
+//               t_cr,
+//               t_low,
+//               t_left,
+//               received_prepared_ts_right_);
       //xs: add to prepared_write_ranges
       prepared_write_ranges_[r][col_id] = pair<int64_t, int64_t>(t_left, received_prepared_ts_right_);
     }
@@ -331,12 +331,12 @@ bool TxOV::WriteColumn(Row *row,
       r->wver_[col_id] = commit_ts_;
     };
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
-      Log_info("[txn %d] Write Column, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
-               id(),
-               row->get_table()->Name().c_str(),
-               col_id,
-               hint_str[hint_flag],
-               commit_ts_);
+//      Log_info("[txn %d] Write Column, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
+//               id(),
+//               row->get_table()->Name().c_str(),
+//               col_id,
+//               hint_str[hint_flag],
+//               commit_ts_);
       //TODO: remove prepared ts for GC
       mdb_txn()->write_column(row, col_id, value);
     } else {
@@ -353,7 +353,7 @@ bool TxOV::WriteColumn(Row *row,
 void TxOV::CommitExecute() {
 //  verify(phase_ == PHASE_RCC_START);
   phase_ = PHASE_CHRONOS_COMMIT;
-  Log_info("%s called", __FUNCTION__);
+//  Log_info("%s called", __FUNCTION__);
   TxnWorkspace ws;
   for (auto &cmd: dreqs_) {
     auto pair = txn_reg_->get(cmd);
@@ -363,7 +363,7 @@ void TxOV::CommitExecute() {
     pair.txn_handler(nullptr, this, cmd, &tmp, m);
     ws.insert(m);
   }
-  Log_info("%s returned", __FUNCTION__);
+//  Log_info("%s returned", __FUNCTION__);
   committed_ = true;
 }
 
@@ -433,7 +433,7 @@ bool TxOV::StorePreparedVers() {
 }
 
 bool TxOV::RemovePreparedVers() {
-  Log_info("%s called", __FUNCTION__);
+//  Log_info("%s called", __FUNCTION__);
   for (auto &pair: prepared_read_ranges_){
     auto vrow = pair.first;
     auto col_ver_map = pair.second;
@@ -451,7 +451,7 @@ bool TxOV::RemovePreparedVers() {
     }
     vrow->unlock_row_by(this->tid_);
   }
-  Log_info("%s returned", __FUNCTION__);
+//  Log_info("%s returned", __FUNCTION__);
 }
 
 } // namespace janus

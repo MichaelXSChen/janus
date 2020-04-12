@@ -22,7 +22,6 @@ class TxOV : public RccDTxn {
   virtual mdb::Row *CreateRow(
       const mdb::Schema *schema,
       const std::vector<mdb::Value> &values) override {
-    Log_info("[[%s]] called", __PRETTY_FUNCTION__);
     return ChronosRow::create(schema, values);
   }
 

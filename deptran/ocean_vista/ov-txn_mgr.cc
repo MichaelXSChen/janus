@@ -20,14 +20,16 @@ ov_ts_t TidMgr::CreateTs(mdb::txn_id_t txn_id) {
 
   ov_ts_t ovts;
 
+
   ovts.timestamp = ts;
-  ovts.timestamp = site_id_;
+  ovts.site_id = site_id_;
+
 
 
   s_phase_txns_[ovts] = txn_id;
 
 
-  Log_info("TidMgr %d created Ts for txn %d, ts = %ld", this->site_id_, txn_id, ts);
+  Log_info("TidMgr %d created Ts for txn %d, ts = %ld, ovts.ts = %ld ", this->site_id_, txn_id, ts, ovts.timestamp);
 
   return ovts;
 }
