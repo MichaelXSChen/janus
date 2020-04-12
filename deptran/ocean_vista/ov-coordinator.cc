@@ -326,6 +326,7 @@ void CoordinatorOV::CreateTsAck(phase_t phase, int64_t ts_raw, siteid_t site_id)
 }
 
 void CoordinatorOV::Execute(){
+  Log_info("%s called", __FUNCTION__);
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   OVExecuteReq req;
   for (auto par_id : cmd_->GetPartitionIds()) {
@@ -369,10 +370,9 @@ void CoordinatorOV::ExecuteAck(uint32_t phase,
   // if there are still more results to collect.
   bool all_acked = txn().OutputReady();
   if (all_acked){
-   Log_info("[txn %d] all Acked, end", txn().txn_id_);
-   End();
-
-
+   //50, 30 OK
+   //10, 20, 40 fault
+   GotoNextPhase();
   }
 }
 
@@ -471,7 +471,7 @@ void CoordinatorOV::DispatchAck(phase_t phase,
 
 void CoordinatorOV::GotoNextPhase() {
 
-  int n_phase = 4;
+  int n_phase = 5;
   int current_phase = phase_++ % n_phase; // for debug
   Log_info("--------------------------------------------------");
   Log_info("%s: phase = %d", __FUNCTION__, current_phase);
@@ -506,12 +506,15 @@ void CoordinatorOV::GotoNextPhase() {
     case Phase::OV_STORED: //4
 
       Execute();
-
-
-//      verify(phase_ % n_phase == Phase::OV_INIT); //overflow
+      verify(phase_ % n_phase == Phase::OV_END);
+      break;
+  case Phase::OV_END:
+      verify(phase_ % n_phase == Phase::OV_INIT); //overflow
 //      verify(committed_ != aborted_);
 //      if (committed_) {
-//        End();
+
+      Log_info("[txn %d],type = %d all acked, end",  txn().txn_id_, txn().type_);
+      End();
 //      } else if (aborted_) {
 //        Restart();
 //      } else {

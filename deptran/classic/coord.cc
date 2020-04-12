@@ -58,7 +58,15 @@ void ClassicCoord::ForwardTxnRequestAck(const TxnReply& txn_reply) {
 }
 
 void ClassicCoord::do_one(TxnRequest &req) {
+    Log_info("hhh");
+    bool trylock = this->mtx_.try_lock();
+    Log_info("trylock %d", trylock);
+    if (trylock){
+      mtx_.unlock();
+    }
+
     std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+    Log_info("%s called", __FUNCTION__);
     TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
     verify(txn_reg_ != nullptr);
     cmd->root_id_ = this->next_txn_id();
@@ -68,7 +76,7 @@ void ClassicCoord::do_one(TxnRequest &req) {
     n_retry_ = 0;
     Reset(); // In case of reuse.
 
-    Log_debug("do one request txn_id: %d", cmd_->id_);
+    Log_info("do one request txn_id: %d", cmd_->id_);
     auto config = Config::GetConfig();
     bool not_forwarding = forward_status_ != PROCESS_FORWARD_REQUEST;
 
@@ -79,9 +87,10 @@ void ClassicCoord::do_one(TxnRequest &req) {
       Log_info("forward to leader: %d; cooid: %d", forward_status_, this->coo_id_);
       ForwardTxnRequest(req);
     } else {
-      //Log_info("start txn!!! : %d", forward_status_);
+      Log_info("start txn!!! : %d", forward_status_);
       GotoNextPhase();
     }
+   Log_info("%s returned", __FUNCTION__);
 }
 
 void ClassicCoord::GotoNextPhase() {
@@ -369,8 +378,9 @@ void ClassicCoord::End() {
   } else
     verify(0);
   txn->callback_(txn_reply_buf);
+  Log_info("here");
   delete txn;
-
+  Log_info("here2");
 }
 
 void ClassicCoord::report(TxnReply &txn_reply,

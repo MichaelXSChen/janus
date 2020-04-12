@@ -48,6 +48,7 @@ void ClientWorker::ForwardRequestDone(Coordinator* coo,TxnReply* output, rrr::De
 
 void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
   verify(coo != nullptr);
+  Log_info("%s Called", __FUNCTION__);
 
   if (txn_reply.res_ == SUCCESS)
     success++;
@@ -76,6 +77,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
     }
     finish_mutex.unlock();
   }
+  Log_info("%s returned", __FUNCTION__);
 }
 
 
@@ -219,14 +221,17 @@ void ClientWorker::AcceptForwardedRequest(TxnRequest &request, TxnReply* txn_rep
 }
 
 void ClientWorker::DispatchRequest(Coordinator *coo) {
+    Log_info("%s called", __FUNCTION__);
     const char* f = __FUNCTION__;
     std::function<void()> task = [=]() {
-      Log_debug("%s: %d", f, cli_id_);
+      Log_info("%s: %d", f, cli_id_);
       TxnRequest req;
       {
         std::lock_guard<std::mutex> lock(this->request_gen_mutex);
+        Log_info("before get");
         txn_generator_->GetTxnReq(&req, coo->coo_id_);
       }
+      Log_info("got");
       req.callback_ = std::bind(&rococo::ClientWorker::RequestDone,
                                 this,
                                 coo,

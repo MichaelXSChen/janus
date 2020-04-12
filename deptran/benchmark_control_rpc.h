@@ -275,6 +275,7 @@ class ClientControlServiceImpl: public ClientControlService {
                               double latency,
                               double attempt_latency,
                               int32_t tried) {
+    Log_info("%s called", __FUNCTION__ );
     std::lock_guard<std::recursive_mutex> guard(mtx_);
     pthread_rwlock_rdlock(&collect_lock_);
     latency_collection_status_t lcs = LCS_IGNORE;
@@ -284,6 +285,7 @@ class ClientControlServiceImpl: public ClientControlService {
       lcs = LCS_LAST_PERIOD;
     txn_info_[id][txn_type].succ(txn_info_switch_, lcs, latency, attempt_latency, tried);
     pthread_rwlock_unlock(&collect_lock_);
+    Log_info("%s returned", __FUNCTION__ );
   }
 
   inline void txn_reject_one(unsigned int id,

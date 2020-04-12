@@ -381,6 +381,7 @@ void BrqCoord::GotoNextPhase() {
 }
 
 void BrqCoord::Reset() {
+  Log_info("%s called", __FUNCTION__);
   RccCoord::Reset();
   fast_path_ = false;
   fast_commit_ = false;
