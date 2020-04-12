@@ -84,6 +84,8 @@ public:
     return false;
   };
 
+
+
 //  void launch(Command &cmd);
   void launch_recovery(cmdid_t cmd_id);
 

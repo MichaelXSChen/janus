@@ -49,11 +49,16 @@ class OVCommo : public BrqCommo {
 
   void BroadcastCommit(
       parid_t,
-      txnid_t cmd_id_,
+      txnid_t cmd_id,
       ChronosCommitReq &chr_req,
       const function<void(int32_t, ChronosCommitRes&, TxnOutput&)>& callback) ;
 
 
+  void BroadcastExecute(
+      parid_t par_id,
+      txnid_t cmd_id,
+      OVExecuteReq &chr_req,
+      const function<void(int32_t, OVExecuteRes&, TxnOutput&)>& callback) ;
 };
 
 } // namespace

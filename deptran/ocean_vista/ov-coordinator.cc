@@ -323,6 +323,59 @@ void CoordinatorOV::CreateTsAck(phase_t phase, int64_t ts_raw, siteid_t site_id)
   GotoNextPhase();
 }
 
+void CoordinatorOV::Execute(){
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  OVExecuteReq req;
+  for (auto par_id : cmd_->GetPartitionIds()) {
+    commo()->BroadcastExecute(par_id,
+                             cmd_->id_,
+                             req,
+                             std::bind(&CoordinatorOV::ExecuteAck,
+                                       this,
+                                       phase_,
+                                       par_id,
+                                       std::placeholders::_1,
+                                       std::placeholders::_2,
+                                       std::placeholders::_3));
+  }
+}
+
+
+void CoordinatorOV::ExecuteAck(uint32_t phase,
+                               uint32_t par_id,
+                               int32_t res,
+                               OVExecuteRes &chr_res,
+                               TxnOutput &output) {
+
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+
+  if (phase != phase_) return;
+  if (res == SUCCESS) {
+    committed_ = true;
+  } else if (res == REJECT) {
+    verify(0);
+  } else {
+    verify(0);
+  }
+  n_ov_execute_acks_[par_id]++;
+  if (n_commit_oks_[par_id] > 1) {
+    //Redundant
+    return;
+  }
+  txn().Merge(output);
+  // if collect enough results.
+  // if there are still more results to collect.
+  bool all_acked = txn().OutputReady();
+  if (all_acked){
+   Log_info("[txn %d] all Acked, end");
+   End();
+
+
+  }
+}
+
+
+
 void CoordinatorOV::Dispatch() {
 
 

@@ -91,6 +91,28 @@ void OVCommo::BroadcastStore(parid_t par_id,
   }
 }
 
+void OVCommo::BroadcastExecute(uint32_t par_id,
+                               uint64_t cmd_id,
+                               OVExecuteReq &chr_req,
+                               const function<void (int32_t, OVExecuteRes &, TxnOutput &)> &callback) {
+
+  verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
+  for (auto &p : rpc_par_proxies_[par_id]) {
+    auto proxy = (p.second);
+    verify(proxy != nullptr);
+    FutureAttr fuattr;
+    fuattr.callback = [callback](Future *fu) {
+      int32_t res;
+      TxnOutput output;
+      OVExecuteRes ov_res;
+      fu->get_reply() >> res >> ov_res >> output;
+      callback(res, ov_res, output);
+    };
+    Future::safe_release(proxy->async_OVExecute(cmd_id, chr_req, fuattr));
+  }
+}
+
+
 void OVCommo::BroadcastPreAccept(
     parid_t par_id,
     txnid_t txn_id,

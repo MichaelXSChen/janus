@@ -117,8 +117,16 @@ class CoordinatorOV : public BrqCoord {
                  ChronosCommitRes &chr_res,
                  TxnOutput &output);
 
+  void Execute();
+  void ExecuteAck(phase_t phase,
+                 parid_t par_id,
+                 int32_t res,
+                 OVExecuteRes &chr_res,
+                 TxnOutput &output);
+
   void GotoNextPhase() override;
 
+  map<parid_t, int> n_ov_execute_acks_ = {};
 
 
   map<parid_t, std::vector<std::shared_ptr<ChronosPreAcceptRes>>> pre_accept_acks_;
