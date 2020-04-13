@@ -20,6 +20,9 @@ class OVCommo : public BrqCommo {
   void SendCreateTs(txnid_t txn_id,
                      const function<void(int64_t ts_raw, siteid_t server_id)>&);
 
+  void SendStoredRemoveTs(txnid_t txn_id, int64_t timestamp, int16_t site_id,
+                      const function<void(int res)>&);
+
 
   void BroadcastStore(parid_t par_id,
                           txnid_t txn_id,
@@ -59,6 +62,7 @@ class OVCommo : public BrqCommo {
       txnid_t cmd_id,
       OVExecuteReq &chr_req,
       const function<void(int32_t, OVExecuteRes&, TxnOutput&)>& callback) ;
+
 };
 
 } // namespace

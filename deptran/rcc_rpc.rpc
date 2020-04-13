@@ -141,7 +141,12 @@ abstract service Classic {
 
   defer OVCreateTs(cmdid_t txn_id |
                     i64 timestamp,
-                    i16 server_id)
+                    i16 server_id);
+
+  defer OVStoredRemoveTs (cmdid_t txn_id,
+                  i64 timestamp,
+                  i16 server_id |
+                  int32_t res);
 
   defer OVExecute(cmdid_t id,
                     OVExecuteReq req |

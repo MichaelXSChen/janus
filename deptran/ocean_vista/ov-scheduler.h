@@ -42,6 +42,10 @@ class SchedulerOV : public BrqSched {
                   int64_t *timestamp,
                    int16_t *server_id);
 
+  void OnStoredRemoveTs(txnid_t txnid,
+                        int64_t timestamp,
+                        int16_t server_id,
+                        int32_t *res);
 
 
   void OnAccept(txnid_t txn_id,

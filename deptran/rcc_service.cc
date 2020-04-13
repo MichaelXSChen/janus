@@ -443,6 +443,19 @@ void ClassicServiceImpl::OVCreateTs(const cmdid_t &txn_id,
 
 }
 
+void ClassicServiceImpl::OVStoredRemoveTs(const cmdid_t &txn_id,
+                                          const rrr::i64 &timestamp,
+                                          const rrr::i16 &server_id,
+                                          int32_t *res,
+                                          rrr::DeferredReply *defer){
+
+  std::lock_guard<std::mutex> guard(mtx_);
+  SchedulerOV *sched = (SchedulerOV *) dtxn_sched_;
+
+  sched->OnStoredRemoveTs(txn_id, timestamp, server_id, res);
+
+  defer->reply();
+}
 void ClassicServiceImpl::OVExecute(const uint64_t &id,
                                    const OVExecuteReq &req,
                                    int32_t *res,
@@ -461,6 +474,8 @@ void ClassicServiceImpl::OVExecute(const uint64_t &id,
   sched->OnExecute(id, req, res, ov_res, output, callback);
 
 }
+
+
 
 
 } // namespace rcc

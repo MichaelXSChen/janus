@@ -94,8 +94,8 @@ void SchedulerOV::OnStore(const txnid_t txn_id,
 
   tinfo.fully_dispatched = true;
 
-  dtxn->ovts_.timestamp = ov_req.ts;
-  dtxn->ovts_.site_id = ov_req.site_id;
+  dtxn->ovts_.timestamp_ = ov_req.ts;
+  dtxn->ovts_.site_id_ = ov_req.site_id;
 
   TxOV* txovptr = dynamic_cast<TxOV*>(dtxn);
 
@@ -209,15 +209,27 @@ void SchedulerOV::OnCreateTs (txnid_t txnid,
                  int16_t *server_id){
 
 
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   ov_ts_t ovts = tid_mgr_->CreateTs(txnid);
 
 //  Log_info("Returned ts = %ld, id = %d", ovts.timestamp, ovts.site_id);
 
-  *timestamp = ovts.timestamp;
-  *server_id = siteid_t(ovts.site_id);
+  *timestamp = ovts.timestamp_;
+  *server_id = siteid_t(ovts.site_id_);
 
   return;
 }
+
+void SchedulerOV::OnStoredRemoveTs(uint64_t txnid, int64_t timestamp, int16_t server_id, int32_t *res) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+
+  tid_mgr_->StoredTs(txnid, timestamp, server_id);
+  *res = SUCCESS;
+
+  return;
+}
+
+
 
 void SchedulerOV::OnExecute(uint64_t txn_id,
                             const OVExecuteReq &req,
@@ -235,14 +247,14 @@ void SchedulerOV::OnExecute(uint64_t txn_id,
 
   verify(!dtxn->IsExecuted());
 
-  if (dtxn->ovts_.timestamp > vwatermark){
-    Log_info("[txn %d] vwatermark not ready, postpone execution, vwatermark = %ld, ts = %ld", txn_id, vwatermark, dtxn->ovts_.timestamp);
+  if (dtxn->ovts_.timestamp_ > vwatermark){
+    Log_info("[txn %d] vwatermark not ready, postpone execution, vwatermark = %ld, ts = %ld", txn_id, vwatermark, dtxn->ovts_.timestamp_);
     dtxn->executed_callback = callback;
   }
   else{
     dtxn->CommitExecute();
     stored_txns_by_id_.erase(txn_id);
-    Log_info("[txn %d] executed, vwatermark = %ld, ts = %ld", txn_id,  vwatermark, dtxn->ovts_.timestamp);
+    Log_info("[txn %d] executed, vwatermark = %ld, ts = %ld", txn_id,  vwatermark, dtxn->ovts_.timestamp_);
     callback();
   }
 

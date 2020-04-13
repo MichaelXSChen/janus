@@ -212,7 +212,15 @@ class ClassicServiceImpl: public ClassicService {
                  OVExecuteRes *chr_res,
                  TxnOutput *output,
                  rrr::DeferredReply *defer) override;
-  protected:
+
+  void OVStoredRemoveTs(const cmdid_t& txn_id,
+                        const rrr::i64& timestamp,
+                        const rrr::i16& server_id,
+                        int32_t* res,
+                        rrr::DeferredReply* defer) override ;
+
+
+protected:
     void RegisterStats();
   };
 

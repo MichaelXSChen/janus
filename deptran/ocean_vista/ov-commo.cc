@@ -58,6 +58,21 @@ void OVCommo::SendCreateTs(txnid_t txn_id,
   Future::safe_release(proxy->async_OVCreateTs(txn_id, fuattr));
 }
 
+void OVCommo::SendStoredRemoveTs(txnid_t txn_id, int64_t timestamp, int16_t site_id, const function<void(int res)> & callback) {
+  rrr::FutureAttr fuattr;
+  std::function<void(Future *)> cb =
+      [callback ](Future *fu) {
+        int res;
+        fu->get_reply() >> res;
+        callback(res);
+      };
+  fuattr.callback = cb;
+
+  auto proxy = rpc_proxies_[site_id];
+
+  Future::safe_release(proxy->async_OVStoredRemoveTs(txn_id, timestamp, site_id, fuattr));
+
+}
 
 void OVCommo::SendHandoutRo(SimpleCommand &cmd,
                                  const function<void(int res,

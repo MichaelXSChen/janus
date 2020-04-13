@@ -11,17 +11,17 @@
 
 namespace rococo{
 struct ov_ts_t{
-  int64_t timestamp;
-  int16_t site_id;
+  int64_t timestamp_;
+  int16_t site_id_;
   inline bool operator < (const ov_ts_t rhs) const{
-    if (this->timestamp < rhs.timestamp){
+    if (this->timestamp_ < rhs.timestamp_){
       return true;
     }
-    else if (this->timestamp > rhs.timestamp){
+    else if (this->timestamp_ > rhs.timestamp_){
       return false;
     }
     else {
-      return this->site_id < rhs.site_id;
+      return this->site_id_ < rhs.site_id_;
     }
   }
 };
@@ -34,10 +34,13 @@ class TidMgr {
 public:
   TidMgr(siteid_t site_id): site_id_(site_id) {};
   ov_ts_t CreateTs(mdb::txn_id_t txn_id);
+  void StoredTs(mdb::txn_id_t txn_id, int64_t timestamp, int16_t server_id);
 
+
+  ov_ts_t GetServerVWatermark();
 private:
-
-  std::mutex mu;
+  //Seems not needed, as the scheduler always holds a lock when calling OnXX
+//  std::mutex mu;
 
   //timestamp is made up of two parts, timestamp (clock) | server_id, to ensure uniqueness;
   siteid_t site_id_;
