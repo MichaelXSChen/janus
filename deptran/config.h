@@ -160,6 +160,7 @@ class Config {
   void LoadSiteYML(YAML::Node config);
   void LoadProcYML(YAML::Node config);
   void LoadHostYML(YAML::Node config);
+  void LoadDatacenterYML(YAML::Node config);
   void LoadModeYML(YAML::Node config);
   void LoadBenchYML(YAML::Node config);
   void LoadShardingYML(YAML::Node config);

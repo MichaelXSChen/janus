@@ -60,10 +60,19 @@ Executor *OVFrame::CreateExecutor(uint64_t, Scheduler *sched) {
 
 Scheduler *OVFrame::CreateScheduler() {
   if (site_info_ != nullptr){
-    Log_info("[site %d] created ov scheduler", site_info_->id);
+    Log_info("[site %d] created ov scheduler, locale_id = %u, name = %s, proc_name = %s host = %s, port = %u, parititon id = %u",
+        site_info_->id,
+        site_info_->locale_id,
+        site_info_->name.c_str(),
+        site_info_->proc_name.c_str(),
+        site_info_->host.c_str(),
+        site_info_->port,
+        site_info_->partition_id_);
   }else{
     Log_info("[site null] created ov scheduler");
+
   }
+
 
   Scheduler *sched = new SchedulerOV(this->site_info_->id);
   sched->frame_ = this;

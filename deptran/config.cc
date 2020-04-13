@@ -281,6 +281,9 @@ void Config::LoadYML(std::string &filename) {
   if (config["host"]) {
     LoadHostYML(config["host"]);
   }
+  if (config["datacenter"]){
+    LoadDatacenterYML(config["datacenter"]);
+  }
   if (config["mode"]) {
     LoadModeYML(config["mode"]);
   }
@@ -306,6 +309,7 @@ void Config::LoadYML(std::string &filename) {
 }
 
 void Config::LoadSiteYML(YAML::Node config) {
+  Log_info("%s called", __FUNCTION__);
   auto servers = config["server"];
   int partition_id = 0;
   int site_id = 0; // start from
@@ -322,6 +326,7 @@ void Config::LoadSiteYML(YAML::Node config) {
   for (auto server_it = servers.begin(); server_it != servers.end(); server_it++) {
     auto group = *server_it;
     locale_id=0;
+    Log_info("partition_id %d", partition_id);
     ReplicaGroup replica_group(partition_id);
     for (auto group_it = group.begin(); group_it != group.end(); group_it++) {
       auto site_addr = group_it->as<string>();
@@ -329,6 +334,7 @@ void Config::LoadSiteYML(YAML::Node config) {
       info.partition_id_ = replica_group.partition_id;
       info.locale_id = locale_id;
       info.type_ = SERVER;
+      Log_info("info: partition id %d, locale_id %d, site_id %d, site_addr %s", partition_id, locale_id, site_id, site_addr.c_str());
       sites_.push_back(info);
       replica_group.replicas.push_back(&sites_.back());
       locale_id++;
@@ -418,6 +424,19 @@ void Config::LoadHostYML(YAML::Node config) {
         }
     }
   }
+}
+
+void Config::LoadDatacenterYML(YAML::Node config) {
+ for (auto it = config.begin(); it != config.end(); it++){
+   auto dcname = it->first.as<string>();
+   auto seq = it->second;
+   Log_info("%s, dc %s, second type = %d", __FUNCTION__, dcname.c_str(), seq.Type());
+   for (auto item = it->second.begin(); item != it->second.end(); item ++){
+     auto servername = item->as<string>();
+     Log_info("dc [%s] has server [%s]", dcname.c_str(), servername.c_str());
+   }
+ }
+
 }
 
 void Config::InitMode(string &cc_name, string& ab_name) {
