@@ -10,7 +10,10 @@
 #include "memdb/txn.h"
 
 namespace rococo{
-struct ov_ts_t{
+class ov_ts_t{
+ public:
+  ov_ts_t(int64_t ts, int16_t site_id): timestamp_(ts), site_id_(site_id){}
+  ov_ts_t(): timestamp_(0), site_id_(0){}
   int64_t timestamp_;
   int16_t site_id_;
   inline bool operator < (const ov_ts_t rhs) const{
