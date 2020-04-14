@@ -427,17 +427,39 @@ void Config::LoadHostYML(YAML::Node config) {
 }
 
 void Config::LoadDatacenterYML(YAML::Node config) {
- for (auto it = config.begin(); it != config.end(); it++){
-   auto dcname = it->first.as<string>();
-   auto seq = it->second;
-   Log_info("%s, dc %s, second type = %d", __FUNCTION__, dcname.c_str(), seq.Type());
-   for (auto item = it->second.begin(); item != it->second.end(); item ++){
-     auto servername = item->as<string>();
-     Log_info("dc [%s] has server [%s]", dcname.c_str(), servername.c_str());
-   }
- }
+  for (auto it = config.begin(); it != config.end(); it++) {
+    auto hostname = it->first.as<string>();
+    auto dcname = it->second.as<string>();
+    Log_info("dc [%s] has server [%s]", dcname.c_str(), hostname.c_str());
+    host_dc_map_[hostname] = dcname;
+    for (auto &group: replica_groups_) {
+      for (auto &server: group.replicas) {
+//        Log_info("server host name = [%s], proc_name %s", server->host.c_str(), server->proc_name.c_str());
+        if (server->host == hostname) {
+          server->dcname = dcname;
+          Log_info("site [id %d, name %s]  on host [%s] at datacenter [%s]",
+                   server->id,
+                   server->name.c_str(),
+                   server->host.c_str(),
+                   server->dcname.c_str());
+        }
+      }
+    }
 
+    for (auto &client : par_clients_) {
+      Log_info("client host name = [%s], proc_name %s", client.host.c_str(), client.proc_name.c_str());
+      if (client.host == hostname) {
+        client.dcname = dcname;
+        Log_info("client [id %d, name %s]  on host [%s] at datacenter [%s]",
+                 client.id,
+                 client.name.c_str(),
+                 client.host.c_str(),
+                 client.dcname.c_str());
+      }
+    }
+  }
 }
+
 
 void Config::InitMode(string &cc_name, string& ab_name) {
   cc_mode_ = Frame::Name2Mode(cc_name);

@@ -81,6 +81,7 @@ class Config {
     string name;        // site name
     string proc_name;   // proc name
     string host;
+    string dcname;
     uint32_t port = 0;
     uint32_t n_thread;   // should be 1 for now
     SiteInfoType type_; 
@@ -127,6 +128,7 @@ class Config {
   vector<SiteInfo> par_clients_;
   map<string, string> proc_host_map_;
   map<string, string> site_proc_map_;
+  map<string, string> host_dc_map_;
 
   Sharding* sharding_;
 
