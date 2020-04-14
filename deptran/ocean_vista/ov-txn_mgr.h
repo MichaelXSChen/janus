@@ -27,6 +27,16 @@ class ov_ts_t{
       return this->site_id_ < rhs.site_id_;
     }
   }
+
+  inline bool operator == (const ov_ts_t rhs) const{
+    return (this->timestamp_ == rhs.timestamp_ && this->site_id_ == rhs.site_id_);
+  }
+
+  inline bool operator > (const ov_ts_t rhs) const{
+    return (!this->operator<(rhs) && !this->operator==(rhs));
+  }
+
+
 };
 
 

@@ -141,11 +141,11 @@ abstract service Classic {
 
   defer OVCreateTs(cmdid_t txn_id |
                     i64 timestamp,
-                    i16 server_id);
+                    i16 site_id);
 
   defer OVStoredRemoveTs (cmdid_t txn_id,
                   i64 timestamp,
-                  i16 server_id |
+                  i16 site_id |
                   int32_t res);
 
   defer OVExecute(cmdid_t id,
@@ -153,6 +153,17 @@ abstract service Classic {
                     int32_t res,
                     OVExecuteRes ov_res,
                     TxnOutput output);
+
+  defer OVPublish(i64 dc_timestamp,
+                  i16 dc_site_id |
+                  i64 ret_timestamp,
+                  i16 ret_site_id);
+
+  defer OVExchange (string dcname,
+                i64 dvw_timestamp,
+                i16 dvw_site_id |
+                i64 ret_timestamp,
+                i16 ret_site_id);
 }
 
 // Below is for statistics

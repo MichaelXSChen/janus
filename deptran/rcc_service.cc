@@ -431,13 +431,13 @@ void ClassicServiceImpl::OVStore(const cmdid_t &txn_id,
 
 void ClassicServiceImpl::OVCreateTs(const cmdid_t &txn_id,
                 rrr::i64 *timestamp,
-                rrr::i16 *server_id,
+                rrr::i16 *site_id,
                 rrr::DeferredReply *defer) {
 
   std::lock_guard<std::mutex> guard(mtx_);
   SchedulerOV *sched = (SchedulerOV *) dtxn_sched_;
 
-  sched->OnCreateTs(txn_id, timestamp, server_id);
+  sched->OnCreateTs(txn_id, timestamp, site_id);
 
   defer->reply();
 
@@ -445,14 +445,14 @@ void ClassicServiceImpl::OVCreateTs(const cmdid_t &txn_id,
 
 void ClassicServiceImpl::OVStoredRemoveTs(const cmdid_t &txn_id,
                                           const rrr::i64 &timestamp,
-                                          const rrr::i16 &server_id,
+                                          const rrr::i16 &site_id,
                                           int32_t *res,
                                           rrr::DeferredReply *defer){
 
   std::lock_guard<std::mutex> guard(mtx_);
   SchedulerOV *sched = (SchedulerOV *) dtxn_sched_;
 
-  sched->OnStoredRemoveTs(txn_id, timestamp, server_id, res);
+  sched->OnStoredRemoveTs(txn_id, timestamp, site_id, res);
 
   defer->reply();
 }
@@ -465,7 +465,7 @@ void ClassicServiceImpl::OVExecute(const uint64_t &id,
 
   std::unique_lock<std::mutex> lk(mtx_);
   SchedulerOV *sched = (SchedulerOV *) dtxn_sched_;
-  lk.unlock();
+//  lk.unlock();
 
   auto callback = [defer](){
    defer->reply();
@@ -475,6 +475,18 @@ void ClassicServiceImpl::OVExecute(const uint64_t &id,
 
 }
 
+void ClassicServiceImpl::OVPublish(const rrr::i64 &dc_timestamp,
+                                   const rrr::i16 &dc_site_id,
+                                   rrr::i64 *ret_timestamp,
+                                   rrr::i16 *ret_site_id,
+                                   rrr::DeferredReply *defer) {
+
+  std::unique_lock<std::mutex> lk(mtx_);
+  SchedulerOV *sched = (SchedulerOV *) dtxn_sched_;
+  sched->OnPublish(dc_timestamp, dc_site_id, ret_timestamp, ret_site_id);
+
+  defer->reply();
+}
 
 
 

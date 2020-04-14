@@ -202,7 +202,7 @@ class ClassicServiceImpl: public ClassicService {
 
   void OVCreateTs(const cmdid_t &txn_id,
                  rrr::i64 *timestamp,
-                 rrr::i16 *server_id,
+                 rrr::i16 *site_id,
                  rrr::DeferredReply *defer) override ;
 
 
@@ -215,12 +215,18 @@ class ClassicServiceImpl: public ClassicService {
 
   void OVStoredRemoveTs(const cmdid_t& txn_id,
                         const rrr::i64& timestamp,
-                        const rrr::i16& server_id,
+                        const rrr::i16& site_id,
                         int32_t* res,
-                        rrr::DeferredReply* defer) override ;
+                        rrr::DeferredReply* defer) override;
+
+  void OVPublish(const rrr::i64 &dc_timestamp,
+                 const rrr::i16 &dc_site_id,
+                 rrr::i64 *ret_timestamp,
+                 rrr::i16 *ret_site_id,
+                 rrr::DeferredReply *defer) override;
 
 
-protected:
+ protected:
     void RegisterStats();
   };
 

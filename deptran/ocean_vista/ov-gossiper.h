@@ -24,6 +24,9 @@ class OVGossiper {
 
   std::map<std::string, ov_ts_t> dc_watermarks_; //watermark of each dc.
   std::map<siteid_t, ov_ts_t> site_watermarks_;  //sitewater mark of sites in my dc.
+
+  ov_ts_t my_vwatermark;
+
 };
 }
 #endif //ROCOCO_DEPTRAN_OCEAN_VISTA_OV_GOSSIPER_H_
