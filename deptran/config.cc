@@ -400,8 +400,10 @@ void Config::LoadProcYML(YAML::Node config) {
   for (auto it = config.begin(); it != config.end(); it++) {
     auto site_name = it->first.as<string>();
     auto proc_name = it->second.as<string>();
+    Log_info("site name = %s", site_name.c_str());
     auto info = SiteByName(site_name);
     verify(info != nullptr);
+    Log_info("info->name %s", info->name.c_str());
     info->proc_name = proc_name;
   }
 }
@@ -447,7 +449,7 @@ void Config::LoadDatacenterYML(YAML::Node config) {
     }
 
     for (auto &client : par_clients_) {
-      Log_info("client host name = [%s], proc_name %s", client.host.c_str(), client.proc_name.c_str());
+//      Log_info("client host name = [%s], proc_name %s", client.host.c_str(), client.proc_name.c_str());
       if (client.host == hostname) {
         client.dcname = dcname;
         Log_info("client [id %d, name %s]  on host [%s] at datacenter [%s]",

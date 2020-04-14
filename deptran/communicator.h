@@ -25,9 +25,13 @@ class Communicator {
   const int CONNECT_SLEEP_MS = 1000;
   rrr::PollMgr *rpc_poll_ = nullptr;
   locid_t loc_id_ = -1;
+  std::string dcname_;
+
+
   map<siteid_t, rrr::Client *> rpc_clients_ = {};
   map<siteid_t, ClassicProxy *> rpc_proxies_ = {};
   map<parid_t, vector<SiteProxyPair>> rpc_par_proxies_ = {};
+  map<std::string, vector<SiteProxyPair>> rpc_dc_proxies_ = {};
   map<parid_t, SiteProxyPair> leader_cache_ = {};
   vector<ClientSiteProxyPair> client_leaders_;
   std::atomic_bool client_leaders_connected_;

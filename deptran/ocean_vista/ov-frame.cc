@@ -87,13 +87,17 @@ DTxn* OVFrame::CreateDTxn(uint32_t epoch, uint64_t tid, bool ro, Scheduler *mgr)
 
 
 Communicator *OVFrame::CreateCommo(PollMgr *poll) {
+  Communicator* commo_ = new OVCommo(poll);
+
+
   if (site_info_ != NULL){
-    Log_info("[site %d] Creating OV communicator", site_info_->id);
+    commo_->dcname_ = site_info_->dcname;
+    Log_info("[site %d] Creating OV communicator, at dc [%s]", site_info_->id, commo_->dcname_.c_str());
   }
   else{
     Log_info("[site null] Creating OV communicator, I think it should be the client");
   }
-  return new OVCommo(poll);
+  return commo_;
 }
 
 

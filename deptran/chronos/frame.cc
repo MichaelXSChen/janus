@@ -111,13 +111,15 @@ DTxn* ChronosFrame::CreateDTxn(uint32_t epoch, uint64_t tid, bool ro, Scheduler 
 
 
 Communicator *ChronosFrame::CreateCommo(PollMgr *poll) {
+  Communicator* commo_ = new ChronosCommo(poll);
   if (site_info_ != NULL){
-    Log_info("[site %d] Creating chronos communicator", site_info_->id);
+    commo_ ->dcname_ = site_info_->dcname;
+    Log_info("[site %d] Creating chronos communicator, at dc [%s]", site_info_->id, commo_->dcname_.c_str());
   }
   else{
     Log_info("[site null] Creating chronos communicator, I think it should be the client");
   }
-  return new ChronosCommo(poll);
+  return commo_;
 }
 
 

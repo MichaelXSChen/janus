@@ -263,8 +263,9 @@ ClientWorker::ClientWorker(
   num_try.store(0);
   commo_ = frame_->CreateCommo();
   commo_->loc_id_ = my_site_.locale_id;
+  commo_->dcname_ = my_site_.dcname;
   forward_requests_to_leader_ = (config->ab_mode_ == MODE_MULTI_PAXOS && site_info.locale_id != 0) ? true : false;
-  Log_debug("client %d created; forward %d", cli_id_, forward_requests_to_leader_);
+  Log_info("client %d created at dc [%s]; forward %d", cli_id_, commo_->dcname_.c_str(), forward_requests_to_leader_);
 }
 
 } // namespace rococo

@@ -27,6 +27,14 @@ Communicator::Communicator(PollMgr* poll_mgr) {
       auto result = ConnectToSite(si, milliseconds(CONNECT_TIMEOUT_MS));
       verify(result.first == SUCCESS);
       proxies.push_back(std::make_pair(si.id, result.second));
+      //save the according to dc
+      if (rpc_dc_proxies_.count(si.dcname) == 0){
+        vector<std::pair<siteid_t, ClassicProxy*>> dcproxies;
+        dcproxies.push_back(std::make_pair(si.id, result.second));
+        rpc_dc_proxies_.insert(std::make_pair(si.dcname, dcproxies));
+      }else{
+        rpc_dc_proxies_[si.dcname].push_back(std::make_pair(si.id, result.second));
+      }
     }
     rpc_par_proxies_.insert(std::make_pair(par_id, proxies));
   }
@@ -37,7 +45,6 @@ Communicator::Communicator(PollMgr* poll_mgr) {
       Log_info("rpc_par_proxies: par_id = %d, site = %d", par_item.first, pair.first);
     }
   }
-
 
 
 
@@ -217,12 +224,21 @@ Communicator::NearestRandomProxy() {
   // TODO Fix me.
   //xs todo, currently, the code assumes full partition.
   //The way it find nearest proxy is to find the partition of the same location
-  parid_t rand_par = parid_t (rand() % rpc_par_proxies_.size());
-  verify(rpc_par_proxies_.count(rand_par) != 0);
+  if (rpc_dc_proxies_.count(this->dcname_) != 0){
+    auto& dc_proxies = rpc_dc_proxies_[this->dcname_];
+    int rand_proxy = rand() % dc_proxies.size();
+    Log_info("my dc [%s] has %d proxies, using the %d-th as the nearest rand proxy", dcname_.c_str(), dc_proxies.size(), rand_proxy);
+    return dc_proxies[rand_proxy];
+  }
+  else{
+    int rand_dc = rand() % rpc_dc_proxies_.size();
+    auto dc_itr = rpc_par_proxies_.begin();
+    std::advance(dc_itr, rand_dc);
 
-  auto& partition_proxies = rpc_par_proxies_[rand_par];
-  verify(partition_proxies.size() > loc_id_);
-  int index = loc_id_;
-  return partition_proxies[index];
+    auto& dc_proxies = dc_itr->second;
+    int rand_proxy = rand() % dc_proxies.size();
+    Log_info("my dc has no proxy, using dc [%s] has %d proxies, using the %d-th as the nearest rand proxy", dc_itr->first, dc_proxies.size(), rand_proxy);
+    return dc_proxies[rand_proxy];
+  }
 };
 } // namespace rococo
