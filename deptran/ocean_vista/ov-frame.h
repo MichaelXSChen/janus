@@ -16,6 +16,7 @@ class OVFrame : public BrqFrame {
   //xs: always null ptr, whats that for?
   Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;
 
+
   //xs: transaction coordinator,
   //broadcastAccept to communicators.
   //call acceptrACK to do after receive ACK.

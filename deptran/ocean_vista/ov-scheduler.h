@@ -10,7 +10,7 @@
 #include <memory>
 #include "ov-frame.h"
 #include "ov-tx.h"
-
+#include "ov-gossiper.h"
 namespace rococo {
 
 class OVCommo;
@@ -19,9 +19,36 @@ class OVFrame;
 
 class SchedulerOV : public BrqSched {
  public:
+  Config::SiteInfo* site_info_;
+  Config* config_;
+  OVGossiper* gossiper_;
 
-  SchedulerOV(siteid_t site_id): BrqSched() {
-    tid_mgr_ = std::make_unique<TidMgr>(site_id);
+
+  SchedulerOV(Config::SiteInfo* site_info): BrqSched() {
+    tid_mgr_ = std::make_unique<TidMgr>(site_info->id);
+    site_info_ = site_info;
+    config_ = Config::GetConfig();
+    verify(site_info_ != nullptr);
+    verify(config_ != nullptr);
+
+    std::set<std::string> sites_in_my_dc;
+
+    for (auto &s: config_->sites_){
+      std::string site = s.name;
+      std::string proc = config_->site_proc_map_[site];
+      std::string host = config_->proc_host_map_[proc];
+      std::string dc = config_->host_dc_map_[host];
+      if (dc == site_info_->dcname){
+        Log_info("stte [%s] is in the same dc [%s] as me (%s)", site.c_str(), dc.c_str(), site_info->name.c_str());
+        sites_in_my_dc.insert(site);
+      }
+    }
+
+    if (site_info_->name == *(sites_in_my_dc.begin())){
+      Log_info("I [%s] am the first proc in my dc [%s], creating gossiper", site_info->name.c_str(), site_info->dcname.c_str());
+      gossiper_ = new OVGossiper(config_, site_info);
+    }
+
   }
 
 
