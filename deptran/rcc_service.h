@@ -12,8 +12,7 @@ class Scheduler;
 class SimpleCommand;
 class ClassicSched;
 
-
-class ClassicServiceImpl: public ClassicService {
+class ClassicServiceImpl : public ClassicService {
 
  public:
   AvgStat stat_sz_gra_start_;
@@ -29,15 +28,15 @@ class ClassicServiceImpl: public ClassicService {
   ServerControlServiceImpl *scsi_; // for statistics;
   Scheduler *dtxn_sched_;
 
-  ClassicSched* dtxn_sched() {
-    return (ClassicSched*)dtxn_sched_;
+  ClassicSched *dtxn_sched() {
+    return (ClassicSched *) dtxn_sched_;
   }
 
   void rpc_null(DeferredReply *defer);
 
   void Dispatch(const vector<SimpleCommand> &cmd,
                 int32_t *res,
-                TxnOutput* output,
+                TxnOutput *output,
                 DeferredReply *defer_reply) override;
 
   void Prepare(const i64 &tid,
@@ -53,24 +52,24 @@ class ClassicServiceImpl: public ClassicService {
              i32 *res,
              DeferredReply *defer) override;
 
-  void UpgradeEpoch(const uint32_t& curr_epoch,
+  void UpgradeEpoch(const uint32_t &curr_epoch,
                     int32_t *res,
-                    DeferredReply* defer) override;
+                    DeferredReply *defer) override;
 
-  void TruncateEpoch(const uint32_t& old_epoch,
-                     DeferredReply* defer) override;
+  void TruncateEpoch(const uint32_t &old_epoch,
+                     DeferredReply *defer) override;
 
-  void TapirAccept(const cmdid_t& cmd_id,
-                   const ballot_t& ballot,
-                   const int32_t& decision,
-                   rrr::DeferredReply* defer) override;
-  void TapirFastAccept(const cmdid_t& cmd_id,
-                       const vector<SimpleCommand>& txn_cmds,
-                       rrr::i32* res,
-                       rrr::DeferredReply* defer) override;
-  void TapirDecide(const cmdid_t& cmd_id,
-                   const rrr::i32& decision,
-                   rrr::DeferredReply* defer) override;
+  void TapirAccept(const cmdid_t &cmd_id,
+                   const ballot_t &ballot,
+                   const int32_t &decision,
+                   rrr::DeferredReply *defer) override;
+  void TapirFastAccept(const cmdid_t &cmd_id,
+                       const vector<SimpleCommand> &txn_cmds,
+                       rrr::i32 *res,
+                       rrr::DeferredReply *defer) override;
+  void TapirDecide(const cmdid_t &cmd_id,
+                   const rrr::i32 &decision,
+                   rrr::DeferredReply *defer) override;
 
 #ifdef PIECE_COUNT
   typedef struct piece_count_key_t{
@@ -99,70 +98,69 @@ class ClassicServiceImpl: public ClassicService {
   ClassicServiceImpl() = delete;
 
   ClassicServiceImpl(Scheduler *sched,
-                     rrr::PollMgr* poll_mgr,
+                     rrr::PollMgr *poll_mgr,
                      ServerControlServiceImpl *scsi = NULL);
 
-  void RccDispatch(const vector<SimpleCommand>& cmd,
-                  int32_t* res,
-                  TxnOutput* output,
-                  RccGraph* graph,
-                  DeferredReply* defer) override;
+  void RccDispatch(const vector<SimpleCommand> &cmd,
+                   int32_t *res,
+                   TxnOutput *output,
+                   RccGraph *graph,
+                   DeferredReply *defer) override;
 
-  void RccFinish(const cmdid_t& cmd_id,
-                const RccGraph& graph,
-                TxnOutput* output,
-                DeferredReply* defer) override;
+  void RccFinish(const cmdid_t &cmd_id,
+                 const RccGraph &graph,
+                 TxnOutput *output,
+                 DeferredReply *defer) override;
 
-
-  void RccInquire(const epoch_t& epoch,
+  void RccInquire(const epoch_t &epoch,
                   const cmdid_t &tid,
-                  RccGraph* graph,
+                  RccGraph *graph,
                   DeferredReply *) override;
 
-  void RccDispatchRo(const SimpleCommand& cmd,
+  void RccDispatchRo(const SimpleCommand &cmd,
                      map<int32_t, Value> *output,
                      DeferredReply *reply);
 
-  void BrqDispatch(const vector<SimpleCommand>& cmd,
-                   int32_t* res,
-                   TxnOutput* output,
-                   Marshallable* res_graph,
-                   DeferredReply* defer) override;
+  void BrqDispatch(const vector<SimpleCommand> &cmd,
+                   int32_t *res,
+                   TxnOutput *output,
+                   Marshallable *res_graph,
+                   DeferredReply *defer) override;
 
-  void BrqCommit(const cmdid_t& cmd_id,
-                 const Marshallable& graph,
+  void BrqCommit(const cmdid_t &cmd_id,
+                 const Marshallable &graph,
                  int32_t *res,
-                 TxnOutput* output,
-                 DeferredReply* defer) override;
+                 TxnOutput *output,
+                 DeferredReply *defer) override;
 
-  void BrqCommitWoGraph(const cmdid_t& cmd_id,
+  void BrqCommitWoGraph(const cmdid_t &cmd_id,
                         int32_t *res,
-                        TxnOutput* output,
-                        DeferredReply* defer) override;
+                        TxnOutput *output,
+                        DeferredReply *defer) override;
 
-  void BrqInquire(const epoch_t& epoch,
+  void BrqInquire(const epoch_t &epoch,
                   const cmdid_t &tid,
-                  Marshallable* graph,
+                  Marshallable *graph,
                   DeferredReply *) override;
 
   void BrqPreAccept(const cmdid_t &txnid,
-                    const vector<SimpleCommand>& cmd,
-                    const Marshallable& graph,
-                    int32_t* res,
-                    Marshallable* res_graph,
-                    DeferredReply* defer) override;
+                    const vector<SimpleCommand> &cmd,
+                    const Marshallable &graph,
+                    int32_t *res,
+                    Marshallable *res_graph,
+                    DeferredReply *defer) override;
 
-  void BrqPreAcceptWoGraph(const cmdid_t& txnid,
-                           const vector<SimpleCommand>& cmd,
-                           int32_t* res,
-                           Marshallable* res_graph,
-                           DeferredReply* defer) override;
+  void BrqPreAcceptWoGraph(const cmdid_t &txnid,
+                           const vector<SimpleCommand> &cmd,
+                           int32_t *res,
+                           Marshallable *res_graph,
+                           DeferredReply *defer) override;
 
   void BrqAccept(const cmdid_t &txnid,
-                 const ballot_t& ballot,
-                 const Marshallable& graph,
-                 int32_t* res,
-                 DeferredReply* defer) override;
+                 const ballot_t &ballot,
+                 const Marshallable &graph,
+                 int32_t *res,
+                 DeferredReply *defer) override;
   void ChronosPreAccept(const cmdid_t &txn_id,
                         const std::vector<SimpleCommand> &cmd,
                         const ChronosPreAcceptReq &req,
@@ -175,7 +173,7 @@ class ClassicServiceImpl: public ClassicService {
                      const ChronosAcceptReq &req,
                      rrr::i32 *res,
                      ChronosAcceptRes *chr_res,
-                     rrr::DeferredReply *defer) override ;
+                     rrr::DeferredReply *defer) override;
 
   void ChronosCommit(const cmdid_t &id,
                      const ChronosCommitReq &req,
@@ -184,13 +182,12 @@ class ClassicServiceImpl: public ClassicService {
                      TxnOutput *output,
                      rrr::DeferredReply *defer) override;
 
-  void ChronosDispatch(const vector<SimpleCommand>& cmd,
-                       const ChronosDispatchReq& req,
-                       int32_t* p_res,
+  void ChronosDispatch(const vector<SimpleCommand> &cmd,
+                       const ChronosDispatchReq &req,
+                       int32_t *p_res,
                        ChronosDispatchRes *chr_res,
-                       TxnOutput* p_output,
-                       DeferredReply* p_defer) override;
-
+                       TxnOutput *p_output,
+                       DeferredReply *p_defer) override;
 
   void OVStore(const cmdid_t &txn_id,
                const std::vector<SimpleCommand> &cmd,
@@ -199,12 +196,10 @@ class ClassicServiceImpl: public ClassicService {
                OVStoreRes *ov_res,
                rrr::DeferredReply *defer) override;
 
-
   void OVCreateTs(const cmdid_t &txn_id,
-                 rrr::i64 *timestamp,
-                 rrr::i16 *site_id,
-                 rrr::DeferredReply *defer) override ;
-
+                  rrr::i64 *timestamp,
+                  rrr::i16 *site_id,
+                  rrr::DeferredReply *defer) override;
 
   void OVExecute(const cmdid_t &id,
                  const OVExecuteReq &req,
@@ -213,11 +208,11 @@ class ClassicServiceImpl: public ClassicService {
                  TxnOutput *output,
                  rrr::DeferredReply *defer) override;
 
-  void OVStoredRemoveTs(const cmdid_t& txn_id,
-                        const rrr::i64& timestamp,
-                        const rrr::i16& site_id,
-                        int32_t* res,
-                        rrr::DeferredReply* defer) override;
+  void OVStoredRemoveTs(const cmdid_t &txn_id,
+                        const rrr::i64 &timestamp,
+                        const rrr::i16 &site_id,
+                        int32_t *res,
+                        rrr::DeferredReply *defer) override;
 
   void OVPublish(const rrr::i64 &dc_timestamp,
                  const rrr::i16 &dc_site_id,
@@ -225,11 +220,16 @@ class ClassicServiceImpl: public ClassicService {
                  rrr::i16 *ret_site_id,
                  rrr::DeferredReply *defer) override;
 
+  virtual void OVExchange(const std::string &dcname,
+                          const rrr::i64 &dvw_timestamp,
+                          const rrr::i16 &dvw_site_id,
+                          rrr::i64 *ret_timestamp,
+                          rrr::i16 *ret_site_id,
+                          rrr::DeferredReply *defer);
 
  protected:
-    void RegisterStats();
-  };
-
+  void RegisterStats();
+};
 
 } // namespace rcc
 

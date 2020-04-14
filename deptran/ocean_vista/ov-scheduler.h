@@ -101,6 +101,8 @@ class SchedulerOV : public BrqSched {
 
   void OnPublish(int64_t dc_ts, int16_t dc_id, int64_t *ret_ts, int16_t *ret_id);
 
+  void OnExchange(const std::string& dcname, int64_t dvw_ts, int16_t dvw_id, int64_t *ret_ts, int16_t *ret_id);
+
   OVCommo *commo();
 
   std::unique_ptr<TidMgr> tid_mgr_;

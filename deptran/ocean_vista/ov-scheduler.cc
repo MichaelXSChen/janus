@@ -229,12 +229,15 @@ void SchedulerOV::OnStoredRemoveTs(uint64_t txnid, int64_t timestamp, int16_t se
   return;
 }
 
-void SchedulerOV::OnPublish(int64_t dc_ts, int16_t dc_id, int64_t *ret_ts, int16_t *ret_id) {
+void SchedulerOV::OnPublish(int64_t dc_ts,
+                            int16_t dc_id,
+                            int64_t *ret_ts,
+                            int16_t *ret_id) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
-  ov_ts_t dc_ovts (dc_ts, dc_id);
+  ov_ts_t dc_ovts(dc_ts, dc_id);
 
-  if (dc_ovts > this->vwatermark_){
+  if (dc_ovts > this->vwatermark_) {
     this->vwatermark_ = dc_ovts;
     //TODO: trigger execute
   }
@@ -244,6 +247,14 @@ void SchedulerOV::OnPublish(int64_t dc_ts, int16_t dc_id, int64_t *ret_ts, int16
   *ret_id = svw.site_id_;
 
   return;
+}
+
+void SchedulerOV::OnExchange(const std::string &dcname,
+                             int64_t dvw_ts,
+                             int16_t dvw_id,
+                             int64_t *ret_ts,
+                             int16_t *ret_id) {
+  verify(this->gossiper_ != nullptr);
 }
 
 void SchedulerOV::OnExecute(uint64_t txn_id,
