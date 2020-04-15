@@ -24,7 +24,6 @@ void CoordinatorOV::OVStore() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   for (auto par_id : cmd_->GetPartitionIds()) {
     auto cmds = txn().GetCmdsByPartition(par_id);
-
     OVStoreReq req;
     req.ts = my_ovts_.timestamp_;
     req.site_id = my_ovts_.site_id_;

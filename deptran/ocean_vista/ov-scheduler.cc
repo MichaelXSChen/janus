@@ -249,12 +249,21 @@ void SchedulerOV::OnPublish(int64_t dc_ts,
   return;
 }
 
-void SchedulerOV::OnExchange(const std::string &dcname,
+void SchedulerOV::OnExchange(const std::string &source_dcname,
                              int64_t dvw_ts,
                              int16_t dvw_id,
                              int64_t *ret_ts,
                              int16_t *ret_id) {
   verify(this->gossiper_ != nullptr);
+
+  ov_ts_t dvw_ovts(dvw_ts,  dvw_id);
+
+  ov_ts_t ret_ovts;
+  gossiper_->OnExchange(source_dcname, dvw_ovts, ret_ovts);
+  *ret_ts = ret_ovts.timestamp_;
+  *ret_id = ret_ovts.site_id_;
+  return;
+
 }
 
 void SchedulerOV::OnExecute(uint64_t txn_id,

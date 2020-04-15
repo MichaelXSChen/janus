@@ -488,7 +488,7 @@ void ClassicServiceImpl::OVPublish(const rrr::i64 &dc_timestamp,
   defer->reply();
 }
 
-void ClassicServiceImpl::OVExchange(const std::string &dcname,
+void ClassicServiceImpl::OVExchange(const std::string &source_dcname,
                                     const rrr::i64 &dvw_timestamp,
                                     const rrr::i16 &dvw_site_id,
                                     rrr::i64 *ret_timestamp,
@@ -497,10 +497,9 @@ void ClassicServiceImpl::OVExchange(const std::string &dcname,
 
   std::unique_lock<std::mutex> lk(mtx_);
   SchedulerOV *sched = (SchedulerOV *) dtxn_sched_;
-  sched->OnExchange(dcname, dvw_timestamp, dvw_site_id, ret_timestamp, ret_site_id);
+  sched->OnExchange(source_dcname, dvw_timestamp, dvw_site_id, ret_timestamp, ret_site_id);
 
   defer->reply();
-
 }
 
 

@@ -3,6 +3,8 @@
 //
 
 #include "ov-gossiper.h"
+#include "ov-commo.h"
+#include "unistd.h"
 
 namespace rococo{
 
@@ -36,7 +38,7 @@ OVGossiper::OVGossiper(rococo::Config *config, rococo::Config::SiteInfo *info) {
     ov_ts_t ovts;
     dc_watermarks_[dc_s.first] = ovts;
     Log_info("Init dc watermark for dc [%s] to zero", dc_s.first.c_str());
-
+    my_dcname_ = info->dcname;
 
     if (dc_s.first != info->dcname){
       std::string gossiper_site_name = *(dc_s.second.begin());
@@ -66,7 +68,128 @@ OVGossiper::OVGossiper(rococo::Config *config, rococo::Config::SiteInfo *info) {
       }
     }
   }
+
+  gossip_thread_ = std::thread(&OVGossiper::GossipLoop, this);
+  gossip_thread_.detach();
+
+  aggregrate_thread_ = std::thread(&OVGossiper::AggregateLoop, this);
+  aggregrate_thread_.detach();
 }
 
+
+void OVGossiper::OnExchange(const std::string dcname, const ov_ts_t &dvw_ovts, ov_ts_t &ret_ovts) {
+  std::lock_guard<std::recursive_mutex> lk(mu_);
+  if (dvw_ovts > dc_watermarks_[dcname]){
+    dc_watermarks_[dcname] = dvw_ovts;
+  }
+  ret_ovts = dc_watermarks_[my_dcname_];
+  return;
+}
+
+void OVGossiper::Aggregate(){
+  std::lock_guard<std::recursive_mutex> lk(mu_);
+  publish_ack_received_.clear();
+  for (auto &pair: site_watermarks_){
+    siteid_t siteid = pair.first;
+    auto callback = std::bind(&OVGossiper::PublishAck,
+                            this,
+                            siteid,
+                            std::placeholders::_1);
+    verify(commo_ != nullptr);
+    commo_->SendPublish(siteid, my_vwatermark_, callback);
+  }
+}
+
+void OVGossiper::PublishAck(uint16_t site_id, const ov_ts_t &ret_ovts) {
+  std::lock_guard<std::recursive_mutex> lk(mu_);
+  //Note: this does not handle failure or straggler, as in the paper
+  publish_ack_received_.insert(site_id); //for checking each round
+  verify(site_watermarks_.count(site_id) != 0);
+  if(ret_ovts > site_watermarks_[site_id]){
+    site_watermarks_[site_id] = ret_ovts;
+  }
+  Log_info("Received Publish result from site %d, timestamp = %ld", site_id, ret_ovts.timestamp_);
+  if (publish_ack_received_.size() == site_watermarks_.size()){
+     ov_ts_t min_ovts = site_watermarks_.begin()->second;
+     for (auto &r: site_watermarks_){
+       if (r.second < min_ovts){
+           min_ovts = r.second;
+       }
+     }
+     this->dc_watermarks_[my_dcname_] = min_ovts;
+     Log_info("my dc_watermark (dw[%s]) has been set to %ld.%d", my_dcname_.c_str(), min_ovts.timestamp_, min_ovts.site_id_);
+     std::unique_lock<std::mutex> lk(aggregate_cond_mu_);
+     aggregate_flag_ = true;
+     aggregate_cond_.notify_all();
+     lk.unlock();
+  }
+}
+
+void OVGossiper::Gossip() {
+  std::lock_guard<std::recursive_mutex> lk(mu_);
+  Log_info("%s called", __FUNCTION__);
+  exchange_ack_received_.clear();
+  for (auto &pair: peer_gossiper_dc_siteid_map_){
+    std::string dcname = pair.first;
+    siteid_t siteid = pair.second;
+    auto callback = std::bind(&OVGossiper::ExchangeAck,
+                              this,
+                              siteid,
+                              dcname,
+                              std::placeholders::_1);
+    verify(commo_ != nullptr);
+    commo_->SendExchange(siteid, my_dcname_, dc_watermarks_[my_dcname_], callback);
+  }
+}
+
+void OVGossiper::ExchangeAck(uint16_t site_id, const std::string &dcname, const ov_ts_t &ret_ovts) {
+  std::lock_guard<std::recursive_mutex> lk(mu_);
+  //Note: this does not handle failure or straggler, as in the paper
+  exchange_ack_received_.insert(site_id);
+  verify(dc_watermarks_.count(dcname) != 0);
+  if (ret_ovts > dc_watermarks_[dcname]){
+    dc_watermarks_[dcname] = ret_ovts;
+  }
+  Log_info("Received Exchange result from site [id = %d] at dc [%s], timestamp = %ld", site_id, dcname, ret_ovts.timestamp_);
+  if (exchange_ack_received_.size() == peer_gossiper_dc_siteid_map_.size()){
+    ov_ts_t min_ovts = dc_watermarks_.begin()->second;
+    for (auto &r: dc_watermarks_){
+      if (r.second < min_ovts){
+        min_ovts = r.second;
+      }
+    }
+    this->my_vwatermark_ = min_ovts;
+    Log_info("My vwatermark has been set to %ld.%d", min_ovts.timestamp_, min_ovts.site_id_);
+    std::unique_lock<std::mutex> lk(gossip_cond_mu_);
+    gossip_flag_ = true;
+    gossip_cond_.notify_all();
+    lk.unlock();
+  }
+}
+
+void OVGossiper::GossipLoop() {
+  Gossip(); // The first call
+  while(true){
+    std::unique_lock<std::mutex> lk(gossip_cond_mu_);
+    gossip_cond_.wait(lk, [this]{return gossip_flag_;});
+    gossip_flag_ = false;
+    lk.unlock();
+    std::this_thread::sleep_for(std::chrono::milliseconds{gossip_interval_ms_});
+    Gossip();
+  }
+}
+
+void OVGossiper::AggregateLoop() {
+  Aggregate();
+  while(true){
+    std::unique_lock<std::mutex> lk(aggregate_cond_mu_);
+    aggregate_cond_.wait(lk, [this]{return aggregate_flag_;});
+    aggregate_flag_ = false;
+    lk.unlock();
+    std::this_thread::sleep_for(std::chrono::milliseconds{aggregate_interval_ms_});
+    Gossip();
+  }
+
+}
 
 }//namespace rococo

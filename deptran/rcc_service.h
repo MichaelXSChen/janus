@@ -220,12 +220,12 @@ class ClassicServiceImpl : public ClassicService {
                  rrr::i16 *ret_site_id,
                  rrr::DeferredReply *defer) override;
 
-  virtual void OVExchange(const std::string &dcname,
-                          const rrr::i64 &dvw_timestamp,
-                          const rrr::i16 &dvw_site_id,
-                          rrr::i64 *ret_timestamp,
-                          rrr::i16 *ret_site_id,
-                          rrr::DeferredReply *defer);
+  void OVExchange(const std::string &source_dcname,
+                  const rrr::i64 &dvw_timestamp,
+                  const rrr::i16 &dvw_site_id,
+                  rrr::i64 *ret_timestamp,
+                  rrr::i16 *ret_site_id,
+                  rrr::DeferredReply *defer) override;
 
  protected:
   void RegisterStats();

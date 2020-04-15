@@ -53,6 +53,15 @@ class SchedulerOV : public BrqSched {
 
   }
 
+  void SetFrame(Frame* frame){
+    verify(frame != nullptr);
+    this->frame_ = frame;
+    if (gossiper_ != nullptr){
+      gossiper_->frame_ = frame;
+      gossiper_->commo_ = commo();
+    }
+  }
+
   int OnDispatch(const vector<SimpleCommand> &cmd,
                  const ChronosDispatchReq &chr_req,
                  rrr::i32 *res,
@@ -109,7 +118,6 @@ class SchedulerOV : public BrqSched {
 
   std::map<txnid_t, TxOV *> stored_txns_by_id_;
 
-//  int64_t vwatermark = 0;
   ov_ts_t vwatermark_;
 };
 } // namespace janus

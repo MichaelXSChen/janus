@@ -4,7 +4,7 @@
 #include "brq/commo.h"
 
 namespace rococo {
-
+class ov_ts_t;
 class OVCommo : public BrqCommo {
  public:
   using BrqCommo::BrqCommo;
@@ -62,6 +62,16 @@ class OVCommo : public BrqCommo {
       txnid_t cmd_id,
       OVExecuteReq &chr_req,
       const function<void(int32_t, OVExecuteRes&, TxnOutput&)>& callback) ;
+
+  void SendPublish(siteid_t siteid,
+                   const ov_ts_t& dc_vwm,
+                   const function<void(const ov_ts_t&)>&);
+
+  void SendExchange(siteid_t target_siteid,
+                    const std::string& my_dcname,
+                    const ov_ts_t& my_dvw,
+                    const function<void(const ov_ts_t&)>&);
+
 
 };
 

@@ -7,6 +7,7 @@
 #include "ov-commo.h"
 #include "marshallable.h"
 #include "txn_chopper.h"
+#include "ov-txn_mgr.h"
 
 namespace rococo {
 
@@ -73,6 +74,44 @@ void OVCommo::SendStoredRemoveTs(txnid_t txn_id, int64_t timestamp, int16_t site
   Future::safe_release(proxy->async_OVStoredRemoveTs(txn_id, timestamp, site_id, fuattr));
 
 }
+
+void OVCommo::SendPublish(uint16_t siteid, const ov_ts_t &dc_vwm, const function<void(const ov_ts_t &)>& callback) {
+
+  rrr::FutureAttr fuattr;
+  std::function<void(Future *)> cb =
+      [callback ](Future *fu) {
+        ov_ts_t ret_ovts;
+        fu->get_reply() >> ret_ovts.timestamp_ >> ret_ovts.site_id_;
+        callback(ret_ovts);
+      };
+  fuattr.callback = cb;
+
+  auto proxy = rpc_proxies_[siteid];
+
+  Future::safe_release(proxy->async_OVPublish(dc_vwm.timestamp_, dc_vwm.site_id_, fuattr));
+
+}
+
+void OVCommo::SendExchange(siteid_t target_siteid,
+                           const std::string &my_dcname,
+                           const rococo::ov_ts_t &my_dvw,
+                           const function<void(const ov_ts_t&)>& callback) {
+  rrr::FutureAttr fuattr;
+  std::function<void(Future *)> cb =
+      [callback ](Future *fu) {
+        ov_ts_t ret_ovts;
+        fu->get_reply() >> ret_ovts.timestamp_ >> ret_ovts.site_id_;
+        callback(ret_ovts);
+      };
+  fuattr.callback = cb;
+
+  auto proxy = rpc_proxies_[target_siteid];
+
+  Future::safe_release(proxy->async_OVExchange(my_dcname, my_dvw.timestamp_, my_dvw.site_id_, fuattr));
+
+}
+
+
 
 void OVCommo::SendHandoutRo(SimpleCommand &cmd,
                                  const function<void(int res,

@@ -74,9 +74,9 @@ Scheduler *OVFrame::CreateScheduler() {
   }
 
 
-  Scheduler *sched = new SchedulerOV(this->site_info_);
-  sched->frame_ = this;
-  return sched;
+  SchedulerOV *sched = new SchedulerOV(this->site_info_);
+  sched->SetFrame(this);
+  return (Scheduler*) sched;
 }
 
 DTxn* OVFrame::CreateDTxn(uint32_t epoch, uint64_t tid, bool ro, Scheduler *mgr) {
