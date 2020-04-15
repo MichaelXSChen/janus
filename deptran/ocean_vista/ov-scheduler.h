@@ -22,6 +22,8 @@ class SchedulerOV : public BrqSched {
   Config *config_;
   OVGossiper *gossiper_;
 
+  bool gossiper_inited_= false;
+
   SchedulerOV(Config::SiteInfo *site_info) : BrqSched() {
     tid_mgr_ = std::make_unique<TidMgr>(site_info->id);
     site_info_ = site_info;
@@ -50,16 +52,13 @@ class SchedulerOV : public BrqSched {
                site_info->dcname.c_str());
       gossiper_ = new OVGossiper(config_, site_info);
     }
-
+    Log_info("scheduler OV created");
   }
 
   void SetFrame(Frame* frame){
+    Log_info("%s called for %s", __FUNCTION__ , frame_->site_info_->name.c_str());
     verify(frame != nullptr);
     this->frame_ = frame;
-    if (gossiper_ != nullptr){
-      gossiper_->frame_ = frame;
-      gossiper_->commo_ = commo();
-    }
   }
 
   int OnDispatch(const vector<SimpleCommand> &cmd,

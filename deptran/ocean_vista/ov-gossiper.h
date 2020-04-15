@@ -62,6 +62,7 @@ class OVGossiper {
   std::mutex aggregate_cond_mu_;
   bool aggregate_flag_;
 
+  void StartLoop();
 };
 }
 #endif //ROCOCO_DEPTRAN_OCEAN_VISTA_OV_GOSSIPER_H_

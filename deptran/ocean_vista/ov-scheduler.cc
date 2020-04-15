@@ -22,6 +22,18 @@ int SchedulerOV::OnDispatch(const vector<SimpleCommand>& cmd,
   //Provide the local timestamp as a basic.
 
   std::lock_guard<std::recursive_mutex> guard(mtx_);
+
+  if (gossiper_inited_ == false){
+    Log_info("hereherehereh");
+    gossiper_inited_ = true;
+    if (gossiper_ != nullptr){
+      Log_info("setting frame and commo for %s", __FUNCTION__ , frame_->site_info_->name.c_str());
+      gossiper_->frame_ = frame_;
+      gossiper_->commo_ = commo();
+      gossiper_->StartLoop();
+    }
+  }
+
   txnid_t txn_id = cmd[0].root_id_; //should have the same root_id
   auto dtxn = (TxOV* )(GetOrCreateDTxn(txn_id)); //type is shared_pointer
   verify(dtxn->id() == txn_id);

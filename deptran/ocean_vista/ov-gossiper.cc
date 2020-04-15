@@ -68,12 +68,6 @@ OVGossiper::OVGossiper(rococo::Config *config, rococo::Config::SiteInfo *info) {
       }
     }
   }
-
-  gossip_thread_ = std::thread(&OVGossiper::GossipLoop, this);
-  gossip_thread_.detach();
-
-  aggregrate_thread_ = std::thread(&OVGossiper::AggregateLoop, this);
-  aggregrate_thread_.detach();
 }
 
 
@@ -189,7 +183,13 @@ void OVGossiper::AggregateLoop() {
     std::this_thread::sleep_for(std::chrono::milliseconds{aggregate_interval_ms_});
     Gossip();
   }
-
 }
 
+void OVGossiper::StartLoop() {
+  gossip_thread_ = std::thread(&OVGossiper::GossipLoop, this);
+  gossip_thread_.detach();
+
+  aggregrate_thread_ = std::thread(&OVGossiper::AggregateLoop, this);
+  aggregrate_thread_.detach();
+}
 }//namespace rococo
