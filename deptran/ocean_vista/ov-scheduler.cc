@@ -260,9 +260,9 @@ void SchedulerOV::OnPublish(int64_t dc_ts,
              this->site_id_,
              vwatermark_.timestamp_,
              vwatermark_.site_id_);
-    for (auto &pair: stored_txns_by_id_) {
-      TxOV *dtxn = pair.second;
-      txnid_t txn_id = pair.first;
+    for (auto it = stored_txns_by_id_.cbegin(); it != stored_txns_by_id_.cend(); ) {
+      TxOV *dtxn = it->second;
+      txnid_t txn_id = it->first;
       if (dtxn->ovts_ < this->vwatermark_) {
         Log_info("Executing txn %d with timestamp %ld.%d < vwatermark %ld.%d",
                  txn_id,
@@ -272,8 +272,10 @@ void SchedulerOV::OnPublish(int64_t dc_ts,
                  vwatermark_.site_id_);
         verify(!dtxn->IsExecuted());
         dtxn->CommitExecute();
-        stored_txns_by_id_.erase(txn_id);
+        it = stored_txns_by_id_.erase(it);
         dtxn->executed_callback();
+      }else{
+        ++it;
       }
     }
   }
