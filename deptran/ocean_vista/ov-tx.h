@@ -78,8 +78,8 @@ class TxOV : public RccDTxn {
    */
 
   ov_ts_t ovts_;
-  std::function<void()> executed_callback = [](){
-    Log_fatal("call back not assigned");
+  std::function<void()> executed_callback = [this](){
+    Log_fatal("call back not assigned, id = %lu", this->tid_);
     verify(0);
   };
 

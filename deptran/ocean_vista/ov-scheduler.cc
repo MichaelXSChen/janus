@@ -263,8 +263,9 @@ void SchedulerOV::OnPublish(int64_t dc_ts,
     for (auto it = stored_txns_by_id_.cbegin(); it != stored_txns_by_id_.cend(); ) {
       TxOV *dtxn = it->second;
       txnid_t txn_id = it->first;
-      if (dtxn->ovts_ < this->vwatermark_) {
-        Log_info("Executing txn %d with timestamp %ld.%d < vwatermark %ld.%d",
+      if (dtxn->ovts_ < this->vwatermark_ && dtxn->ov_status_ == TxOV::OV_txn_status::CAN_EXECUTE){
+        Log_info("[Scheduler %hu] Executing txn %lu with timestamp %ld.%d < vwatermark %ld.%d",
+                 this->site_id_,
                  txn_id,
                  dtxn->ovts_.timestamp_,
                  dtxn->ovts_.site_id_,
@@ -317,17 +318,18 @@ void SchedulerOV::OnExecute(uint64_t txn_id,
   auto dtxn = (TxOV *) (GetOrCreateDTxn(txn_id));
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
-
+  dtxn->ov_status_ = TxOV::OV_txn_status::CAN_EXECUTE;
 
   if (dtxn->ovts_> vwatermark_){
-    Log_info("[txn %d] vwatermark not ready, postpone execution, vwatermark = %ld, ts = %ld", txn_id, vwatermark_.timestamp_, dtxn->ovts_.timestamp_);
+    Log_info("scheduler %hu,  txn %lu vwatermark not ready, postpone execution, vwatermark = %ld, ts = %ld", site_id_, txn_id, vwatermark_.timestamp_, dtxn->ovts_.timestamp_);
     dtxn->executed_callback = callback;
   }
   else{
     verify(!dtxn->IsExecuted());
     dtxn->CommitExecute();
     stored_txns_by_id_.erase(txn_id);
-    Log_info("[txn %d] executed, vwatermark = %ld, ts = %ld", txn_id,  vwatermark_.timestamp_, dtxn->ovts_.timestamp_);
+    Log_info("scheuler %hu, txn %lu executed, vwatermark = %ld, ts = %ld", site_id_, txn_id,  vwatermark_.timestamp_, dtxn->ovts_.timestamp_);
+    dtxn->ov_status_ = TxOV::OV_txn_status::EXECUTED;
     callback();
   }
 
