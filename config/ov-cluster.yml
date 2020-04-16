@@ -1,0 +1,46 @@
+
+site:
+  server: # each line is a partition, the first is the master site_name:port
+    - ["s101:8000", "s201:8001", "s301:8002"]
+    - ["s102:8100", "s202:8101", "s302:8102"]
+    - ["s103:8200", "s203:8201", "s303:8202"]
+    - ["s104:8300", "s204:8301", "s304:8302"]
+  client: # each line is a partition
+    - ["c01"]
+    - ["c02"]
+    - ["c03"]
+# site_name - process_name map
+process:
+  s101: processA
+  s102: processB
+  s103: processC
+  s104: processD
+  s201: processA
+  s202: processB
+  s203: processC
+  s204: processD
+  s301: processA
+  s302: processB
+  s303: processC
+  s304: processD
+  c01: processA
+  c02: processB
+  c03: processC
+
+host:
+  processA: 10.22.1.7
+  processB: 10.22.1.17
+  processC: 10.22.1.18
+  processD: 10.22.1.7
+
+datacenter:
+  10.22.1.7: dc1
+  10.22.1.17: dc2
+  10.22.1.18: dc2
+
+#ocean-vista paramaters
+
+ovparams:
+  aggregate_interval_ms: 25
+  gossip_interval_ms: 26
+  clock_drift_ms: 20 # to differentiate processes on the same host, they will drifted by [0, x]

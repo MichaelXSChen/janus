@@ -23,8 +23,8 @@ class OVGossiper {
   Frame *frame_;
   OVCommo *commo_;
 
-  int gossip_interval_ms_ = 1000;
-  int aggregate_interval_ms_ = 500;
+  int gossip_interval_ms_;
+  int aggregate_interval_ms_;
 
   std::thread gossip_thread_;
   std::thread aggregrate_thread_;

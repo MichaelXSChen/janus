@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <map>
 #include <deptran/constants.h>
+#include <deptran/config.h>
 #include "memdb/txn.h"
 
 namespace rococo{
@@ -45,7 +46,12 @@ class TidMgr {
 
 
 public:
-  TidMgr(siteid_t site_id): site_id_(site_id) {};
+  TidMgr(siteid_t site_id): site_id_(site_id) {
+    auto config = Config::GetConfig();
+    int bound = config->ov_clock_drift_ms_;
+    this->time_drift_ms_ = rand() % (2 * bound) % bound;
+    Log_info("TidMgr created for site %hu, time_drift = %d",  site_id_, time_drift_ms_);
+  };
   ov_ts_t CreateTs(mdb::txn_id_t txn_id);
   void GetMonotTimestamp(ov_ts_t &ovts);
   void StoredTs(mdb::txn_id_t txn_id, int64_t timestamp, int16_t server_id);
@@ -61,6 +67,8 @@ private:
   int64_t last_clock_; //This is for ensuring the monotonicity of the clock.
 
   std::map<ov_ts_t, mdb::txn_id_t> s_phase_txns_ = {};  //i.e., ts_set in the paper.
+
+  int time_drift_ms_;
 };
 
 

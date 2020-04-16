@@ -11,7 +11,11 @@ namespace rococo{
 OVGossiper::OVGossiper(rococo::Config *config, rococo::Config::SiteInfo *info) {
   config_ = config;
   site_info_ = info;
-  Log_info("OVGossiper Created");
+
+  this->aggregate_interval_ms_ = config_->ov_aggregate_interval_ms_;
+  this->gossip_interval_ms_ = config_->ov_gossip_interval_ms_;
+
+  Log_info("OVGossiper Created, aggregate_interval_ms = %d, gossip_interval_ms = %d", this->aggregate_interval_ms_, this->gossip_interval_ms_);
 
 
   //Get the proxy to peers;

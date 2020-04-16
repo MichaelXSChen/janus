@@ -132,6 +132,10 @@ class Config {
 
   Sharding* sharding_;
 
+  int ov_aggregate_interval_ms_;
+  int ov_gossip_interval_ms_;
+  int ov_clock_drift_ms_;
+
  protected:
 
   Config() = default;
@@ -170,6 +174,7 @@ class Config {
   void LoadSchemaYML(YAML::Node config);
   void LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,
                                 YAML::Node column);
+  void LoadOVParams(YAML::Node ov);
 
 
   void InitMode(std::string&cc_name, string&ab_name);

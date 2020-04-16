@@ -306,7 +306,31 @@ void Config::LoadYML(std::string &filename) {
   if (config["n_parallel_dispatch"]) {
     n_parallel_dispatch_ = config["n_parallel_dispatch"].as<int32_t>();
   }
+  if (config["ovparams"]){
+    LoadOVParams(config["ovparams"]);
+  }
 }
+
+void Config::LoadOVParams(YAML::Node ov){
+  Log_info("%s called", __FUNCTION__);
+  if (ov["aggregate_interval_ms"]){
+    ov_aggregate_interval_ms_ = ov["aggregate_interval_ms"].as<int>();
+  }else{
+    ov_aggregate_interval_ms_ = 100;
+  }
+  if (ov["gossip_interval_ms"]){
+    ov_gossip_interval_ms_ = ov["gossip_interval_ms"].as<int>();
+  }else{
+    ov_gossip_interval_ms_ = 200;
+  }
+
+  if (ov["clock_drift_ms"]){
+    ov_clock_drift_ms_ = ov["clock_drift_ms"].as<int>();
+  }else{
+    ov_clock_drift_ms_ = 50;
+  }
+}
+
 
 void Config::LoadSiteYML(YAML::Node config) {
   Log_info("%s called", __FUNCTION__);
