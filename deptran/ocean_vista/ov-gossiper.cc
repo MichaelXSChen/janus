@@ -77,12 +77,19 @@ void OVGossiper::OnExchange(const std::string dcname, const ov_ts_t &dvw_ovts, o
     dc_watermarks_[dcname] = dvw_ovts;
   }
   ret_ovts = dc_watermarks_[my_dcname_];
+  Log_info("Received Exchange Request from %s, his ovts is set to %ld.%d, returning my ovts %ld.%d",
+           dcname.c_str(),
+           dc_watermarks_[dcname].timestamp_,
+           dc_watermarks_[dcname].site_id_,
+           dc_watermarks_[my_dcname_].timestamp_,
+           dc_watermarks_[my_dcname_].site_id_);
   return;
 }
 
 void OVGossiper::Aggregate(){
   std::lock_guard<std::recursive_mutex> lk(mu_);
   publish_ack_received_.clear();
+  Log_info("%s called", __FUNCTION__);
   for (auto &pair: site_watermarks_){
     siteid_t siteid = pair.first;
     auto callback = std::bind(&OVGossiper::PublishAck,
@@ -102,7 +109,7 @@ void OVGossiper::PublishAck(uint16_t site_id, const ov_ts_t &ret_ovts) {
   if(ret_ovts > site_watermarks_[site_id]){
     site_watermarks_[site_id] = ret_ovts;
   }
-  Log_info("Received Publish result from site %d, timestamp = %ld", site_id, ret_ovts.timestamp_);
+  Log_info("Received Publish result from site %d, timestamp = %ld.%d, total_size = %d, received size = %d", site_id, ret_ovts.timestamp_, ret_ovts.site_id_, site_watermarks_.size(), publish_ack_received_.size());
   if (publish_ack_received_.size() == site_watermarks_.size()){
      ov_ts_t min_ovts = site_watermarks_.begin()->second;
      for (auto &r: site_watermarks_){
@@ -144,7 +151,7 @@ void OVGossiper::ExchangeAck(uint16_t site_id, const std::string &dcname, const 
   if (ret_ovts > dc_watermarks_[dcname]){
     dc_watermarks_[dcname] = ret_ovts;
   }
-  Log_info("Received Exchange result from site [id = %d] at dc [%s], timestamp = %ld", site_id, dcname, ret_ovts.timestamp_);
+  Log_info("Received Exchange result from site [id = %d] at dc [%s], timestamp = %ld.%d", site_id, dcname.c_str(), ret_ovts.timestamp_, ret_ovts.site_id_);
   if (exchange_ack_received_.size() == peer_gossiper_dc_siteid_map_.size()){
     ov_ts_t min_ovts = dc_watermarks_.begin()->second;
     for (auto &r: dc_watermarks_){
@@ -181,7 +188,7 @@ void OVGossiper::AggregateLoop() {
     aggregate_flag_ = false;
     lk.unlock();
     std::this_thread::sleep_for(std::chrono::milliseconds{aggregate_interval_ms_});
-    Gossip();
+    Aggregate();
   }
 }
 

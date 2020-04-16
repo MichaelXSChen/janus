@@ -14,7 +14,7 @@ public:
   enum Phase {INIT_END=0, DISPATCH=1, PREPARE=2,
     PRE_ACCEPT=3, ACCEPT=4, COMMIT=5};
 
-  cooid_t  coo_id_;
+//  cooid_t  coo_id_;
 //  phase_t  phase_; // a phase identifier
   uint32_t thread_id_;
   uint32_t cmdid_prefix_c_;

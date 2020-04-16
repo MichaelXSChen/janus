@@ -32,9 +32,9 @@ Coordinator *OVFrame::CreateCoord(cooid_t coo_id,
                                              TxnRegistry *txn_reg) {
 
   if (site_info_ != nullptr){
-    Log_info("[site %d] created ov coordinator", site_info_->id);
+    Log_info("[site %d] creating ov coordinator", site_info_->id);
   }else{
-    Log_info("[site null] created ov coordinator");
+    Log_info("[site null] creating ov coordinator, coo_id = %u", coo_id);
   }
 
 
@@ -43,6 +43,8 @@ Coordinator *OVFrame::CreateCoord(cooid_t coo_id,
                                                      benchmark,
                                                      ccsi,
                                                      id);
+
+//  Log_info("Created coord, coo_id = %u", coord->coo_id_);
   coord->txn_reg_ = txn_reg;
   coord->frame_ = this;
   return coord;

@@ -47,6 +47,7 @@ class TidMgr {
 public:
   TidMgr(siteid_t site_id): site_id_(site_id) {};
   ov_ts_t CreateTs(mdb::txn_id_t txn_id);
+  void GetMonotTimestamp(ov_ts_t &ovts);
   void StoredTs(mdb::txn_id_t txn_id, int64_t timestamp, int16_t server_id);
 
 

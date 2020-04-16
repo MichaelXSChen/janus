@@ -22,7 +22,7 @@ class SchedulerOV : public BrqSched {
   Config *config_;
   OVGossiper *gossiper_;
 
-  bool gossiper_inited_= false;
+  bool gossiper_inited_;
 
   SchedulerOV(Config::SiteInfo *site_info) : BrqSched() {
     tid_mgr_ = std::make_unique<TidMgr>(site_info->id);
@@ -30,9 +30,10 @@ class SchedulerOV : public BrqSched {
     config_ = Config::GetConfig();
     verify(site_info_ != nullptr);
     verify(config_ != nullptr);
+    gossiper_inited_ = false;
 
-    vwatermark_ = ov_ts_t(std::numeric_limits<int64_t>::max(), 0);
-
+//    vwatermark_ = ov_ts_t(std::numeric_limits<int64_t>::max(), 0);
+    vwatermark_ = ov_ts_t(0, 0);
     std::set<std::string> sites_in_my_dc;
 
     for (auto &s: config_->sites_) {
@@ -56,7 +57,7 @@ class SchedulerOV : public BrqSched {
   }
 
   void SetFrame(Frame* frame){
-    Log_info("%s called for %s", __FUNCTION__ , frame_->site_info_->name.c_str());
+    Log_info("%s called for", __FUNCTION__);
     verify(frame != nullptr);
     this->frame_ = frame;
   }
@@ -109,7 +110,8 @@ class SchedulerOV : public BrqSched {
 
   void OnPublish(int64_t dc_ts, int16_t dc_id, int64_t *ret_ts, int16_t *ret_id);
 
-  void OnExchange(const std::string& dcname, int64_t dvw_ts, int16_t dvw_id, int64_t *ret_ts, int16_t *ret_id);
+  void OnExchange(const std::string &dcname, int64_t dvw_ts, int16_t dvw_id,
+                  int64_t *ret_ts, int16_t *ret_id);
 
   OVCommo *commo();
 

@@ -23,18 +23,9 @@ int SchedulerOV::OnDispatch(const vector<SimpleCommand>& cmd,
 
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 
-  if (gossiper_inited_ == false){
-    Log_info("hereherehereh");
-    gossiper_inited_ = true;
-    if (gossiper_ != nullptr){
-      Log_info("setting frame and commo for %s", __FUNCTION__ , frame_->site_info_->name.c_str());
-      gossiper_->frame_ = frame_;
-      gossiper_->commo_ = commo();
-      gossiper_->StartLoop();
-    }
-  }
-
   txnid_t txn_id = cmd[0].root_id_; //should have the same root_id
+  Log_info("[Scheduler %d] On Dispatch, txn_id = %d, gossiper_inited_", this->frame_->site_info_->id, txn_id, gossiper_inited_);
+
   auto dtxn = (TxOV* )(GetOrCreateDTxn(txn_id)); //type is shared_pointer
   verify(dtxn->id() == txn_id);
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
@@ -42,7 +33,6 @@ int SchedulerOV::OnDispatch(const vector<SimpleCommand>& cmd,
   dtxn->received_dispatch_ts_right_ = chr_req.ts_max;
 
 
-  Log_info("[Scheduler %d] On Dispatch, txn_id = %d, ts_range = [%d, %d]", this->frame_->site_info_->id, txn_id, chr_req.ts_min, chr_req.ts_max);
 
   for (auto& c : cmd) {
     dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
@@ -76,9 +66,23 @@ void SchedulerOV::OnStore(const txnid_t txn_id,
 
 
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  Log_info("%s called", __FUNCTION__);
+  Log_info("asdfgh %s called on site %hu, txnid = %lu", __FUNCTION__, this->site_id_, txn_id);
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
+
+  if (gossiper_inited_ == false){
+    Log_info("hereherehereh");
+    gossiper_inited_ = true;
+    if (gossiper_ != nullptr){
+      Log_info("setting frame and commo for %s", __FUNCTION__ , frame_->site_info_->name.c_str());
+      gossiper_->frame_ = frame_;
+      gossiper_->commo_ = commo();
+      gossiper_->StartLoop();
+    }
+  }
+
+
+
   auto dtxn = (TxOV*)(GetOrCreateDTxn(txn_id));
 
   dtxn->UpdateStatus(TXN_PAC);
@@ -235,6 +239,7 @@ void SchedulerOV::OnCreateTs (txnid_t txnid,
 void SchedulerOV::OnStoredRemoveTs(uint64_t txnid, int64_t timestamp, int16_t server_id, int32_t *res) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
+  Log_info("asdfgh %s called on site %hu, txnid = %lu", __FUNCTION__, this->site_id_, txnid);
   tid_mgr_->StoredTs(txnid, timestamp, server_id);
   *res = SUCCESS;
 
@@ -251,7 +256,26 @@ void SchedulerOV::OnPublish(int64_t dc_ts,
 
   if (dc_ovts > this->vwatermark_) {
     this->vwatermark_ = dc_ovts;
-    //TODO: trigger execute
+    Log_info("Scheduler [%d]'s vwatermark has been set to %ld.%d, will execute pending reqs",
+             this->site_id_,
+             vwatermark_.timestamp_,
+             vwatermark_.site_id_);
+    for (auto &pair: stored_txns_by_id_) {
+      TxOV *dtxn = pair.second;
+      txnid_t txn_id = pair.first;
+      if (dtxn->ovts_ < this->vwatermark_) {
+        Log_info("Executing txn %d with timestamp %ld.%d < vwatermark %ld.%d",
+                 txn_id,
+                 dtxn->ovts_.timestamp_,
+                 dtxn->ovts_.site_id_,
+                 vwatermark_.timestamp_,
+                 vwatermark_.site_id_);
+        verify(!dtxn->IsExecuted());
+        dtxn->CommitExecute();
+        stored_txns_by_id_.erase(txn_id);
+        dtxn->executed_callback();
+      }
+    }
   }
 
   ov_ts_t svw = tid_mgr_->GetServerVWatermark();
@@ -292,13 +316,13 @@ void SchedulerOV::OnExecute(uint64_t txn_id,
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
 
-  verify(!dtxn->IsExecuted());
 
   if (dtxn->ovts_> vwatermark_){
     Log_info("[txn %d] vwatermark not ready, postpone execution, vwatermark = %ld, ts = %ld", txn_id, vwatermark_.timestamp_, dtxn->ovts_.timestamp_);
     dtxn->executed_callback = callback;
   }
   else{
+    verify(!dtxn->IsExecuted());
     dtxn->CommitExecute();
     stored_txns_by_id_.erase(txn_id);
     Log_info("[txn %d] executed, vwatermark = %ld, ts = %ld", txn_id,  vwatermark_.timestamp_, dtxn->ovts_.timestamp_);

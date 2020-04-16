@@ -5,32 +5,30 @@
 namespace rococo {
 
 
-ov_ts_t TidMgr::CreateTs(mdb::txn_id_t txn_id) {
-//  std::unique_lock<std::mutex> lk(mu);
-
+void TidMgr::GetMonotTimestamp(ov_ts_t &ovts) {
   auto now = std::chrono::system_clock::now();
 
   int64_t ts = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 
-  if (ts < last_clock_){
+  if (ts <= last_clock_){
     ts = ++last_clock_;
   }else{
     last_clock_ = ts;
   }
 
-  ov_ts_t ovts;
-
-
   ovts.timestamp_ = ts;
   ovts.site_id_ = site_id_;
+  return;
+}
 
+ov_ts_t TidMgr::CreateTs(mdb::txn_id_t txn_id) {
+//  std::unique_lock<std::mutex> lk(mu);
+  ov_ts_t ovts;
 
-
+  GetMonotTimestamp(ovts);
   s_phase_txns_[ovts] = txn_id;
 
-
-  Log_info("TidMgr %d created Ts for txn %d, ts = %ld, ovts.ts = %ld ", this->site_id_, txn_id, ts, ovts.timestamp_);
-
+  Log_info("TidMgr %hu created Ts for txn %lu, ovts = %ld.%d ", this->site_id_, txn_id, ovts.timestamp_, ovts.site_id_);
   return ovts;
 }
 
@@ -39,27 +37,29 @@ void TidMgr::StoredTs(mdb::txn_id_t txn_id, int64_t timestamp, int16_t server_id
  ovts.timestamp_ = timestamp;
  ovts.site_id_ = server_id;
 
+ Log_info("TidMgr %hu stored (to remove) Ts for txn %lu, ts = %ld, ovts.ts = %ld ", this->site_id_, txn_id, timestamp, ovts.timestamp_);
+
  verify(s_phase_txns_.count(ovts) != 0);
+
+ if (s_phase_txns_[ovts] != txn_id){
+   Log_info("asdf looking for txn_id %lu, but foun %lu", txn_id, s_phase_txns_[ovts]);
+ }
+
  verify(s_phase_txns_[ovts] == txn_id);
 
  s_phase_txns_.erase(ovts);
-
-
- Log_info("TidMgr %d stored (removed) Ts for txn %d, ts = %ld, ovts.ts = %ld ", this->site_id_, txn_id, timestamp, ovts.timestamp_);
-
 }
 
 
 ov_ts_t TidMgr::GetServerVWatermark() {
+  ov_ts_t ovts;
+
   if (s_phase_txns_.size() == 0){
-    ov_ts_t ovts;
-    ovts.timestamp_ =  last_clock_;
-    ovts.site_id_ = this->site_id_;
-    return ovts;
+    GetMonotTimestamp(ovts);
   }else{
-    ov_ts_t ovts = s_phase_txns_.begin()->first;
-    return ovts;
+    ovts = s_phase_txns_.begin()->first;
   }
+  return ovts;
 }
 
 

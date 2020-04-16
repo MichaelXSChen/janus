@@ -53,8 +53,11 @@ void OVCommo::SendCreateTs(txnid_t txn_id,
       };
   fuattr.callback = cb;
 
-  auto proxy = NearestRandomProxy().second;
+  auto rand_id_proxy_pair = NearestRandomProxy();
+  auto site_id = rand_id_proxy_pair.first;
+  auto proxy = rand_id_proxy_pair.second;
 
+  Log_info("xsxs Sending CreateTs for txn %lu to site %hd", txn_id, site_id);
 
   Future::safe_release(proxy->async_OVCreateTs(txn_id, fuattr));
 }
@@ -70,6 +73,7 @@ void OVCommo::SendStoredRemoveTs(txnid_t txn_id, int64_t timestamp, int16_t site
   fuattr.callback = cb;
 
   auto proxy = rpc_proxies_[site_id];
+  Log_info("xsxs Sending StoredRemove for txn %lu to site %hd", txn_id, site_id);
 
   Future::safe_release(proxy->async_OVStoredRemoveTs(txn_id, timestamp, site_id, fuattr));
 
@@ -140,6 +144,7 @@ void OVCommo::BroadcastStore(parid_t par_id,
     };
     verify(txn_id > 0);
     Future *f = nullptr;
+    Log_info("Sending txn %lu to par %u to site %u", txn_id, par_id,  p.first);
     f = proxy->async_OVStore(txn_id, cmds, req, fuattr);
     Future::safe_release(f);
   }

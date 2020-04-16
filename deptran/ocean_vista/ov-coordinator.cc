@@ -7,6 +7,7 @@
 #include "ov-frame.h"
 #include "ov-commo.h"
 #include "ov-coordinator.h"
+#include <inttypes.h>
 
 namespace rococo {
 
@@ -27,8 +28,7 @@ void CoordinatorOV::OVStore() {
     OVStoreReq req;
     req.ts = my_ovts_.timestamp_;
     req.site_id = my_ovts_.site_id_;
-
-    Log_info("%s called, ts = %ld, site_id = %d", __FUNCTION__, req.ts, req.site_id);
+    Log_info("[coord %u], %s called, txn_id = %lu, ts = %ld.%d, par_id = %u", this->coo_id_, __FUNCTION__, cmd_->id_, req.ts, req.site_id, par_id);
 
     commo()->BroadcastStore(par_id,
                             cmd_->id_,
