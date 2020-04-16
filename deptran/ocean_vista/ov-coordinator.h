@@ -58,8 +58,7 @@ class CoordinatorOV : public BrqCoord {
   void Dispatch();
   void DispatchAck(phase_t phase,
                    int res,
-                   TxnOutput& cmd,
-                   ChronosDispatchRes &chr_res);
+                   TxnOutput& cmd);
 
 
 

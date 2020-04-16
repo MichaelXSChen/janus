@@ -358,10 +358,6 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
 
   sched->OnDispatch(cmd, req, p_res, chr_res, p_output);
 
-  //xs step 1: get the dep of cmd.
-  //xs step 2: get the max timestamp.
-  //xs step 3: return
-
 
   p_defer->reply();
 
@@ -502,5 +498,23 @@ void ClassicServiceImpl::OVExchange(const std::string &source_dcname,
   defer->reply();
 }
 
+void ClassicServiceImpl::OVDispatch(const vector<SimpleCommand> &cmd,
+                                         int32_t *p_res,
+                                         TxnOutput *p_output,
+                                         DeferredReply *p_defer) {
+
+//  Log_info("%s called", __PRETTY_FUNCTION__);
+
+  std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
+  auto *sched = (SchedulerOV *) dtxn_sched_;
+
+  sched->OnDispatch(cmd, p_res, p_output);
+
+
+  p_defer->reply();
+
+//  Log_info("%s returned", __PRETTY_FUNCTION__);
+
+}
 
 } // namespace rcc

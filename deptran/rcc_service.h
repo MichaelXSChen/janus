@@ -227,6 +227,10 @@ class ClassicServiceImpl : public ClassicService {
                   rrr::i16 *ret_site_id,
                   rrr::DeferredReply *defer) override;
 
+  void OVDispatch(const vector<SimpleCommand> &cmd,
+                       int32_t *p_res,
+                       TxnOutput *p_output,
+                       DeferredReply *p_defer) override;
  protected:
   void RegisterStats();
 };

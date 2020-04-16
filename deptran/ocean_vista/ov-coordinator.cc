@@ -237,11 +237,9 @@ void CoordinatorOV::Dispatch() {
                               this,
                               phase_,
                               std::placeholders::_1,
-                              std::placeholders::_2,
-                              std::placeholders::_3);
-    ChronosDispatchReq req;
+                              std::placeholders::_2);
 
-    commo()->SendDispatch(cc, req, callback);
+    commo()->SendDispatch(cc, callback);
   }
 }
 
@@ -249,8 +247,7 @@ void CoordinatorOV::Dispatch() {
 //xs: What is the meaning of this function.
 void CoordinatorOV::DispatchAck(phase_t phase,
                                      int res,
-                                     TxnOutput &output,
-                                     ChronosDispatchRes &chr_res) {
+                                     TxnOutput &output) {
 
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.

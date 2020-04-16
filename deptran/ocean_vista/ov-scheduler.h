@@ -61,9 +61,7 @@ class SchedulerOV : public BrqSched {
   }
 
   int OnDispatch(const vector<SimpleCommand> &cmd,
-                 const ChronosDispatchReq &chr_req,
                  rrr::i32 *res,
-                 ChronosDispatchRes *chr_res,
                  TxnOutput *output);
 
   void OnStore(txnid_t txnid,

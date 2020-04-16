@@ -14,9 +14,7 @@ using namespace rococo;
 class Frame;
 
 int SchedulerOV::OnDispatch(const vector<SimpleCommand>& cmd,
-                                 const ChronosDispatchReq &chr_req,
                                  int32_t* res,
-                                 ChronosDispatchRes *chr_res,
                                  TxnOutput* output) {
   //Pre-execute the tranasction.
   //Provide the local timestamp as a basic.
@@ -29,8 +27,6 @@ int SchedulerOV::OnDispatch(const vector<SimpleCommand>& cmd,
   auto dtxn = (TxOV* )(GetOrCreateDTxn(txn_id)); //type is shared_pointer
   verify(dtxn->id() == txn_id);
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
-  dtxn->received_dispatch_ts_left_ = chr_req.ts_min;
-  dtxn->received_dispatch_ts_right_ = chr_req.ts_max;
 
 
 
@@ -44,15 +40,6 @@ int SchedulerOV::OnDispatch(const vector<SimpleCommand>& cmd,
   verify(cmd[0].root_id_ == txn_id);
 
 
-  int64_t reply_ts_left = 0;
-  int64_t reply_ts_right = std::numeric_limits<long long>::max();
-  dtxn->GetDispatchTsHint(reply_ts_left, reply_ts_right);
-
-  chr_res->ts_left = reply_ts_left;
-  chr_res->ts_right = reply_ts_right;
-
-
-  Log_debug("[Scheduler %d] DispatchReturn, txn_id = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, chr_res->ts_left, chr_res->ts_right);
   return 0;
 }
 

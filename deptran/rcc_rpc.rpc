@@ -164,6 +164,10 @@ abstract service Classic {
                 i16 dvw_site_id |
                 i64 ret_timestamp,
                 i16 ret_site_id);
+
+  defer OVDispatch(vector<SimpleCommand> cmd |
+                        i32 res,
+                        TxnOutput output);
 }
 
 // Below is for statistics

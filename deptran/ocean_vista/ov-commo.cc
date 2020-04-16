@@ -12,10 +12,8 @@
 namespace rococo {
 
 void OVCommo::SendDispatch(vector<TxPieceData> &cmd,
-                                const ChronosDispatchReq& chr_req,
                                 const function<void(int res,
-                                                    TxnOutput &cmd,
-                                                    ChronosDispatchRes &chr_res)> &callback) {
+                                                    TxnOutput &cmd)>&callback) {
 
   rrr::FutureAttr fuattr;
   auto tid = cmd[0].root_id_;
@@ -24,9 +22,8 @@ void OVCommo::SendDispatch(vector<TxPieceData> &cmd,
       [callback, tid, par_id](Future *fu) {
         int res;
         TxnOutput output;
-        ChronosDispatchRes chr_res;
-        fu->get_reply() >> res >> chr_res >> output;
-        callback(res, output, chr_res);
+        fu->get_reply() >> res >> output;
+        callback(res, output);
       };
   fuattr.callback = cb;
   auto proxy_info = NearestProxyForPartition(cmd[0].PartitionId());
@@ -37,7 +34,7 @@ void OVCommo::SendDispatch(vector<TxPieceData> &cmd,
   //XS: proxy is the rpc client side handler.
   Log_debug("dispatch to %ld, proxy (site) = %d", cmd[0].PartitionId(), proxy_info.first);
 
-  Future::safe_release(proxy->async_ChronosDispatch(cmd, chr_req, fuattr));
+  Future::safe_release(proxy->async_OVDispatch(cmd, fuattr));
 }
 
 void OVCommo::SendCreateTs(txnid_t txn_id,
