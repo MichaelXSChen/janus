@@ -22,10 +22,6 @@ class CoordinatorOV : public BrqCoord {
   using BrqCoord::BrqCoord;
 
 
-
-
-
-
   virtual ~CoordinatorOV() {}
 
   OVCommo *commo();
@@ -34,7 +30,6 @@ class CoordinatorOV : public BrqCoord {
 
 
   bool TxnStored();
-
 
   void Reset() override;
 
@@ -77,7 +72,6 @@ class CoordinatorOV : public BrqCoord {
   map<parid_t, int> n_store_acks_{};
 
   ov_ts_t my_ovts_;
-
 
 };
 } // namespace janus
