@@ -49,7 +49,13 @@ public:
   TidMgr(siteid_t site_id): site_id_(site_id) {
     auto config = Config::GetConfig();
     int bound = config->ov_clock_drift_ms_;
-    this->time_drift_ms_ = rand() % (2 * bound) % bound;
+    if (bound == 0){
+      time_drift_ms_ = 0;
+    }
+    else{
+      this->time_drift_ms_ = rand() % (2 * bound) % bound;
+    }
+
     Log_info("TidMgr created for site %hu, time_drift = %d",  site_id_, time_drift_ms_);
   };
   ov_ts_t CreateTs(mdb::txn_id_t txn_id);

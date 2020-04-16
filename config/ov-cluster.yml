@@ -9,6 +9,7 @@ site:
     - ["c01"]
     - ["c02"]
     - ["c03"]
+    - ["c04"]
 # site_name - process_name map
 process:
   s101: processA
@@ -26,6 +27,7 @@ process:
   c01: processA
   c02: processB
   c03: processC
+  c04: processD
 
 host:
   processA: 10.22.1.7
@@ -41,6 +43,6 @@ datacenter:
 #ocean-vista paramaters
 
 ovparams:
-  aggregate_interval_ms: 25
-  gossip_interval_ms: 26
-  clock_drift_ms: 20 # to differentiate processes on the same host, they will drifted by [-x, x], set to 0 if site on different servers
+  aggregate_interval_ms: 5
+  gossip_interval_ms: 10
+  clock_drift_ms: 5  # to differentiate processes on the same host, they will drifted by (-x, x), set to 0 if site on different servers
