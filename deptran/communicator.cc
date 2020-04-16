@@ -40,11 +40,11 @@ Communicator::Communicator(PollMgr* poll_mgr) {
   }
   //xs print for understanding.
 
-  for (auto &par_item: rpc_par_proxies_){
-    for (auto &pair : par_item.second) {
-      Log_info("rpc_par_proxies: par_id = %d, site = %d", par_item.first, pair.first);
-    }
-  }
+////  for (auto &par_item: rpc_par_proxies_){
+////    for (auto &pair : par_item.second) {
+////      Log_info("rpc_par_proxies: par_id = %d, site = %d", par_item.first, pair.first);
+////    }
+//  }
 
 
 
@@ -59,16 +59,16 @@ Communicator::Communicator(PollMgr* poll_mgr) {
 void Communicator::ConnectClientLeaders() {
   auto config = Config::GetConfig();
   if (config->forwarding_enabled_) {
-    Log_info("%s: connect to client sites", __FUNCTION__);
+    Log_debug("%s: connect to client sites", __FUNCTION__);
     auto client_leaders = config->SitesByLocaleId(0, Config::CLIENT);
     for (Config::SiteInfo leader_site_info : client_leaders) {
       verify(leader_site_info.locale_id == 0);
-      Log_info("client @ leader %d", leader_site_info.id);
+      Log_debug("client @ leader %d", leader_site_info.id);
       auto result = ConnectToClientSite(leader_site_info,
                                         milliseconds(CONNECT_TIMEOUT_MS));
       verify(result.first == SUCCESS);
       verify(result.second != nullptr);
-      Log_info("connected to client leader site: %d, %d, %p",
+      Log_debug("connected to client leader site: %d, %d, %p",
                leader_site_info.id,
                leader_site_info.locale_id,
                result.second);
@@ -144,7 +144,7 @@ Communicator::ConnectToClientSite(Config::SiteInfo &site,
   double elapsed;
   int attempt = 0;
   do {
-    Log_info("connect to client site: %s (attempt %d)", addr, attempt++);
+    Log_debug("connect to client site: %s (attempt %d)", addr, attempt++);
     auto connect_result = rpc_cli->connect(addr);
     if (connect_result == SUCCESS) {
       ClientControlProxy* rpc_proxy = new ClientControlProxy(rpc_cli);
@@ -157,7 +157,7 @@ Communicator::ConnectToClientSite(Config::SiteInfo &site,
     auto end = steady_clock::now();
     elapsed = duration_cast<milliseconds>(end - start).count();
   } while(elapsed < timeout.count());
-  Log_info("timeout connecting to client %s", addr);
+  Log_debug("timeout connecting to client %s", addr);
   rpc_cli->close_and_release();
   return std::make_pair(FAILURE, nullptr);
 }
@@ -172,7 +172,7 @@ Communicator::ConnectToSite(Config::SiteInfo &site,
   double elapsed;
   int attempt = 0;
   do {
-    Log_info("connect to site: %s (attempt %d)", addr.c_str(), attempt++);
+    Log_debug("connect to site: %s (attempt %d)", addr.c_str(), attempt++);
     auto connect_result = rpc_cli->connect(addr.c_str());
     if (connect_result == SUCCESS) {
       ClassicProxy *rpc_proxy = new ClassicProxy(rpc_cli);
@@ -186,7 +186,7 @@ Communicator::ConnectToSite(Config::SiteInfo &site,
     auto end = steady_clock::now();
     elapsed = duration_cast<milliseconds>(end - start).count();
   } while(elapsed < timeout.count());
-  Log_info("timeout connecting to %s", addr.c_str());
+  Log_debug("timeout connecting to %s", addr.c_str());
   rpc_cli->close_and_release();
   return std::make_pair(FAILURE, nullptr);
 }
@@ -227,7 +227,7 @@ Communicator::NearestRandomProxy() {
   if (rpc_dc_proxies_.count(this->dcname_) != 0){
     auto& dc_proxies = rpc_dc_proxies_[this->dcname_];
     int rand_proxy = rand() % dc_proxies.size();
-    Log_info("my dc [%s] has %d proxies, using the %d-th as the nearest rand proxy", dcname_.c_str(), dc_proxies.size(), rand_proxy);
+    Log_debug("my dc [%s] has %d proxies, using the %d-th as the nearest rand proxy", dcname_.c_str(), dc_proxies.size(), rand_proxy);
     return dc_proxies[rand_proxy];
   }
   else{
@@ -237,7 +237,7 @@ Communicator::NearestRandomProxy() {
 
     auto& dc_proxies = dc_itr->second;
     int rand_proxy = rand() % dc_proxies.size();
-    Log_info("my dc has no proxy, using dc [%s] has %d proxies, using the %d-th as the nearest rand proxy", dc_itr->first, dc_proxies.size(), rand_proxy);
+    Log_debug("my dc has no proxy, using dc [%s] has %d proxies, using the %d-th as the nearest rand proxy", dc_itr->first, dc_proxies.size(), rand_proxy);
     return dc_proxies[rand_proxy];
   }
 };

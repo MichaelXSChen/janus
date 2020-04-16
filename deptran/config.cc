@@ -266,7 +266,7 @@ void Config::Load() {
 }
 
 void Config::LoadYML(std::string &filename) {
-  Log_info("%s: %s", __FUNCTION__, filename.c_str());
+  Log_debug("%s: %s", __FUNCTION__, filename.c_str());
   YAML::Node config = YAML::LoadFile(filename);
 
   if (config["process"]) {
@@ -301,7 +301,7 @@ void Config::LoadYML(std::string &filename) {
   }
   if (config["n_concurrent"]) {
     n_concurrent_ = config["n_concurrent"].as<uint16_t>();
-    Log_info("# of concurrent requests: %d", n_concurrent_);
+    Log_debug("# of concurrent requests: %d", n_concurrent_);
   }
   if (config["n_parallel_dispatch"]) {
     n_parallel_dispatch_ = config["n_parallel_dispatch"].as<int32_t>();
@@ -312,7 +312,7 @@ void Config::LoadYML(std::string &filename) {
 }
 
 void Config::LoadOVParams(YAML::Node ov){
-  Log_info("%s called", __FUNCTION__);
+  Log_debug("%s called", __FUNCTION__);
   if (ov["aggregate_interval_ms"]){
     ov_aggregate_interval_ms_ = ov["aggregate_interval_ms"].as<int>();
   }else{
@@ -333,7 +333,7 @@ void Config::LoadOVParams(YAML::Node ov){
 
 
 void Config::LoadSiteYML(YAML::Node config) {
-  Log_info("%s called", __FUNCTION__);
+  Log_debug("%s called", __FUNCTION__);
   auto servers = config["server"];
   int partition_id = 0;
   int site_id = 0; // start from
@@ -350,7 +350,7 @@ void Config::LoadSiteYML(YAML::Node config) {
   for (auto server_it = servers.begin(); server_it != servers.end(); server_it++) {
     auto group = *server_it;
     locale_id=0;
-    Log_info("partition_id %d", partition_id);
+    Log_debug("partition_id %d", partition_id);
     ReplicaGroup replica_group(partition_id);
     for (auto group_it = group.begin(); group_it != group.end(); group_it++) {
       auto site_addr = group_it->as<string>();
@@ -358,7 +358,7 @@ void Config::LoadSiteYML(YAML::Node config) {
       info.partition_id_ = replica_group.partition_id;
       info.locale_id = locale_id;
       info.type_ = SERVER;
-      Log_info("info: partition id %d, locale_id %d, site_id %d, site_addr %s", partition_id, locale_id, site_id, site_addr.c_str());
+      Log_debug("info: partition id %d, locale_id %d, site_id %d, site_addr %s", partition_id, locale_id, site_id, site_addr.c_str());
       sites_.push_back(info);
       replica_group.replicas.push_back(&sites_.back());
       locale_id++;
@@ -389,7 +389,7 @@ void Config::LoadSiteYML(YAML::Node config) {
 int Config::GetClientPort(std::string site_name) {
   auto config = Config::GetConfig();
   std::vector<std::string> sites;
-  Log_info("%s: site_proc_map_.size = %d, site_name = %s", __FUNCTION__ , site_proc_map_.size(), site_name.c_str());
+  Log_debug("%s: site_proc_map_.size = %d, site_name = %s", __FUNCTION__ , site_proc_map_.size(), site_name.c_str());
   for (auto site_host_pair : site_proc_map_) {
     sites.push_back(site_host_pair.first);
   }
@@ -397,7 +397,7 @@ int Config::GetClientPort(std::string site_name) {
   std::sort(sites.begin(), sites.end());
   std::vector<std::string> hosts;
   for (auto s : sites) {
-    Log_info("Adding %s", site_proc_map_[s].c_str());
+    Log_debug("Adding %s", site_proc_map_[s].c_str());
     if (std::find(hosts.begin(), hosts.end(), site_proc_map_[s]) == hosts.end()) {
       if (s == site_name) {
         return Config::BASE_CLIENT_CTRL_PORT + hosts.size();
@@ -411,11 +411,11 @@ int Config::GetClientPort(std::string site_name) {
 }
 
 void Config::BuildSiteProcMap(YAML::Node process) {
-  Log_info("%s", __FUNCTION__);
+  Log_debug("%s", __FUNCTION__);
   for (auto it = process.begin(); it != process.end(); it++) {
     auto site_name = it->first.as<string>();
     auto proc_name = it->second.as<string>();
-    Log_info("site_proc_map [%s] = %s", site_name.c_str(), proc_name.c_str());
+    Log_debug("site_proc_map [%s] = %s", site_name.c_str(), proc_name.c_str());
     site_proc_map_[site_name] = proc_name;
   }
 }
@@ -424,10 +424,10 @@ void Config::LoadProcYML(YAML::Node config) {
   for (auto it = config.begin(); it != config.end(); it++) {
     auto site_name = it->first.as<string>();
     auto proc_name = it->second.as<string>();
-    Log_info("site name = %s", site_name.c_str());
+    Log_debug("site name = %s", site_name.c_str());
     auto info = SiteByName(site_name);
     verify(info != nullptr);
-    Log_info("info->name %s", info->name.c_str());
+    Log_debug("info->name %s", info->name.c_str());
     info->proc_name = proc_name;
   }
 }
@@ -456,14 +456,14 @@ void Config::LoadDatacenterYML(YAML::Node config) {
   for (auto it = config.begin(); it != config.end(); it++) {
     auto hostname = it->first.as<string>();
     auto dcname = it->second.as<string>();
-    Log_info("dc [%s] has server [%s]", dcname.c_str(), hostname.c_str());
+    Log_debug("dc [%s] has server [%s]", dcname.c_str(), hostname.c_str());
     host_dc_map_[hostname] = dcname;
     for (auto &group: replica_groups_) {
       for (auto &server: group.replicas) {
 //        Log_info("server host name = [%s], proc_name %s", server->host.c_str(), server->proc_name.c_str());
         if (server->host == hostname) {
           server->dcname = dcname;
-          Log_info("site [id %d, name %s]  on host [%s] at datacenter [%s]",
+          Log_debug("site [id %d, name %s]  on host [%s] at datacenter [%s]",
                    server->id,
                    server->name.c_str(),
                    server->host.c_str(),
@@ -476,7 +476,7 @@ void Config::LoadDatacenterYML(YAML::Node config) {
 //      Log_info("client host name = [%s], proc_name %s", client.host.c_str(), client.proc_name.c_str());
       if (client.host == hostname) {
         client.dcname = dcname;
-        Log_info("client [id %d, name %s]  on host [%s] at datacenter [%s]",
+        Log_debug("client [id %d, name %s]  on host [%s] at datacenter [%s]",
                  client.id,
                  client.name.c_str(),
                  client.host.c_str(),
@@ -509,7 +509,7 @@ void Config::InitMode(string &cc_name, string& ab_name) {
 }
 
 void Config::InitBench(std::string &bench_str) {
-  Log_info("Benmark_str= %s", bench_str.c_str());
+  Log_debug("Benmark_str= %s", bench_str.c_str());
   if (bench_str == "tpca") {
     benchmark_ = TPCA;
   } else if (bench_str == "tpcc") {
@@ -686,7 +686,7 @@ void Config::LoadShardingYML(YAML::Node config) {
     auto &tbl_info = info_it->second;
     string method = it->second.as<string>();
 
-    Log_info("group size: %d", replica_groups_.size());
+    Log_debug("group size: %d", replica_groups_.size());
     for (auto replica_group_it = this->replica_groups_.begin();
          replica_group_it != this->replica_groups_.end();
          replica_group_it++) {
@@ -710,7 +710,7 @@ void Config::LoadClientYML(YAML::Node client) {
     client_rate_ = -1;
   }
   forwarding_enabled_ = client["forwarding"].as<bool>(false);
-  Log_info("client forwarding: %d", forwarding_enabled_);
+  Log_debug("client forwarding: %d", forwarding_enabled_);
 }
 
 void Config::InitTPCCD() {

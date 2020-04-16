@@ -409,7 +409,7 @@ bool TxOV::GetDispatchTsHint(int64_t &left, int64_t &right) {
       }
     }
   }
-  Log_info("%s: left = %d, right =%d", __FUNCTION__, left, right);
+//  Log_info("%s: left = %d, right =%d", __FUNCTION__, left, right);
 }
 
 bool TxOV::StorePreparedVers() {

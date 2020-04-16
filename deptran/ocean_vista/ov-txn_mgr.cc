@@ -28,7 +28,7 @@ ov_ts_t TidMgr::CreateTs(mdb::txn_id_t txn_id) {
   GetMonotTimestamp(ovts);
   s_phase_txns_[ovts] = txn_id;
 
-  Log_info("TidMgr %hu created Ts for txn %lu, ovts = %ld.%d ", this->site_id_, txn_id, ovts.timestamp_, ovts.site_id_);
+  Log_debug("TidMgr %hu created Ts for txn %lu, ovts = %ld.%d ", this->site_id_, txn_id, ovts.timestamp_, ovts.site_id_);
   return ovts;
 }
 
@@ -37,12 +37,12 @@ void TidMgr::StoredTs(mdb::txn_id_t txn_id, int64_t timestamp, int16_t server_id
  ovts.timestamp_ = timestamp;
  ovts.site_id_ = server_id;
 
- Log_info("TidMgr %hu stored (to remove) Ts for txn %lu, ts = %ld, ovts.ts = %ld ", this->site_id_, txn_id, timestamp, ovts.timestamp_);
+ Log_debug("TidMgr %hu stored (to remove) Ts for txn %lu, ts = %ld, ovts.ts = %ld ", this->site_id_, txn_id, timestamp, ovts.timestamp_);
 
  verify(s_phase_txns_.count(ovts) != 0);
 
  if (s_phase_txns_[ovts] != txn_id){
-   Log_info("asdf looking for txn_id %lu, but foun %lu", txn_id, s_phase_txns_[ovts]);
+   Log_debug("asdf looking for txn_id %lu, but foun %lu", txn_id, s_phase_txns_[ovts]);
  }
 
  verify(s_phase_txns_[ovts] == txn_id);

@@ -42,7 +42,7 @@ class SchedulerOV : public BrqSched {
       std::string host = config_->proc_host_map_[proc];
       std::string dc = config_->host_dc_map_[host];
       if (dc == site_info_->dcname) {
-        Log_info("stte [%s] is in the same dc [%s] as me (%s)", site.c_str(), dc.c_str(), site_info->name.c_str());
+        Log_debug("stte [%s] is in the same dc [%s] as me (%s)", site.c_str(), dc.c_str(), site_info->name.c_str());
         sites_in_my_dc.insert(site);
       }
     }
@@ -53,11 +53,9 @@ class SchedulerOV : public BrqSched {
                site_info->dcname.c_str());
       gossiper_ = new OVGossiper(config_, site_info);
     }
-    Log_info("scheduler OV created");
   }
 
   void SetFrame(Frame* frame){
-    Log_info("%s called for", __FUNCTION__);
     verify(frame != nullptr);
     this->frame_ = frame;
   }

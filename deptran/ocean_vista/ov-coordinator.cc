@@ -28,7 +28,7 @@ void CoordinatorOV::OVStore() {
     OVStoreReq req;
     req.ts = my_ovts_.timestamp_;
     req.site_id = my_ovts_.site_id_;
-    Log_info("[coord %u], %s called, txn_id = %lu, ts = %ld.%d, par_id = %u", this->coo_id_, __FUNCTION__, cmd_->id_, req.ts, req.site_id, par_id);
+    Log_debug("[coord %u], %s called, txn_id = %lu, ts = %ld.%d, par_id = %u", this->coo_id_, __FUNCTION__, cmd_->id_, req.ts, req.site_id, par_id);
 
     commo()->BroadcastStore(par_id,
                             cmd_->id_,
@@ -54,9 +54,9 @@ void CoordinatorOV::OVStoreACK(phase_t phase, parid_t par_id, int res, OVStoreRe
 
   if (res == SUCCESS) {
     n_store_acks_[par_id]++;
-    Log_info("Received store ok for par_id: %d", par_id);
+    Log_debug("Received store ok for par_id: %d", par_id);
   } else if (res == REJECT) {
-    Log_info("Reject not handled yet");
+    Log_debug("Reject not handled yet");
     verify(0);
   } else {
     verify(0);
@@ -64,7 +64,7 @@ void CoordinatorOV::OVStoreACK(phase_t phase, parid_t par_id, int res, OVStoreRe
 
   if(TxnStored()){
     //Received quorum ACK from all participating partitions.
-      Log_info("[Txn id = %d] store ok", this->txn().id_);
+      Log_debug("[Txn id = %d] store ok", this->txn().id_);
       GotoNextPhase();
   }
 }
@@ -103,7 +103,7 @@ void CoordinatorOV::StoredRemoveTsAck(phase_t phase, int res) {
   verify(phase == phase_); // cannot proceed without all acks.
   verify(txn().root_id_ == txn().id_);
   verify(res == SUCCESS);
-  Log_info("[txn %d] stored, removed ts from manager", cmd_->id_);
+  Log_debug("[txn %d] stored, removed ts from manager", cmd_->id_);
   GotoNextPhase();
 }
 
@@ -146,7 +146,7 @@ void CoordinatorOV::CreateTsAck(phase_t phase, int64_t ts_raw, siteid_t site_id)
   verify(phase == phase_); // cannot proceed without all acks.
   verify(txn().root_id_ == txn().id_);
 
-  Log_info("%s called, ts_raw = %ld, site_id = %d", __FUNCTION__, ts_raw, site_id);
+  Log_debug("%s called, ts_raw = %ld, site_id = %d", __FUNCTION__, ts_raw, site_id);
 
   my_ovts_.timestamp_ = ts_raw;
   my_ovts_.site_id_ = site_id;
@@ -154,7 +154,7 @@ void CoordinatorOV::CreateTsAck(phase_t phase, int64_t ts_raw, siteid_t site_id)
 }
 
 void CoordinatorOV::Execute(){
-  Log_info("%s called", __FUNCTION__);
+  Log_debug("%s called", __FUNCTION__);
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   OVExecuteReq req;
   for (auto par_id : cmd_->GetPartitionIds()) {
@@ -217,13 +217,12 @@ void CoordinatorOV::Dispatch() {
 //  Log_info("%s called", __PRETTY_FUNCTION__);
 
   map<parid_t, vector<SimpleCommand*>> cmds_by_par = txn->GetReadyCmds();
-  Log_info("transaction (id %d) has %d ready pieces", txn->id_, cmds_by_par.size());
+  Log_debug("transaction (id %d) has %d ready pieces", txn->id_, cmds_by_par.size());
 
   int index = 0;
   for (auto &pair: cmds_by_par) {
 
     const parid_t &par_id = pair.first;
-//    Log_info("piece: (id %d, pieces %d) has touch par_id = %d", txn->id_, index++, par_id);
     auto &cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
@@ -244,7 +243,6 @@ void CoordinatorOV::Dispatch() {
 
     commo()->SendDispatch(cc, req, callback);
   }
-//  Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
 }
 
 //xs: callback for handling Dispatch ACK
@@ -277,7 +275,7 @@ void CoordinatorOV::DispatchAck(phase_t phase,
 
 
   if (txn().HasMoreSubCmdReadyNotOut()) {
-    Log_info("command has more sub-cmd, cmd_id: %lx,"
+    Log_debug("command has more sub-cmd, cmd_id: %lx,"
              " n_started_: %d, n_pieces: %d",
              txn().id_,
              txn().n_pieces_dispatched_, txn().GetNPieceAll());
@@ -285,7 +283,7 @@ void CoordinatorOV::DispatchAck(phase_t phase,
   } else if (AllDispatchAcked()) {
     //xs: this is for OCC + Paxos based method.
 
-    Log_info("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
+    Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     verify(!txn().do_early_return());
     GotoNextPhase();
   }
@@ -297,8 +295,8 @@ void CoordinatorOV::GotoNextPhase() {
 
   int n_phase = 6;
   int current_phase = phase_++ % n_phase; // for debug
-  Log_info("--------------------------------------------------");
-  Log_info("%s: phase = %d", __FUNCTION__, current_phase);
+  Log_debug("--------------------------------------------------");
+  Log_debug("%s: phase = %d", __FUNCTION__, current_phase);
 
   switch (current_phase) {
     case Phase::OV_INIT:
@@ -341,7 +339,7 @@ void CoordinatorOV::GotoNextPhase() {
 //      verify(committed_ != aborted_);
 //      if (committed_) {
 
-      Log_info("[txn %d],type = %d all acked, end",  txn().txn_id_, txn().type_);
+      Log_debug("[txn %d],type = %d all acked, end",  txn().txn_id_, txn().type_);
       End();
 //      } else if (aborted_) {
 //        Restart();

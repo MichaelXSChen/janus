@@ -48,7 +48,6 @@ void ClientWorker::ForwardRequestDone(Coordinator* coo,TxnReply* output, rrr::De
 
 void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
   verify(coo != nullptr);
-  Log_info("%s Called", __FUNCTION__);
 
   if (txn_reply.res_ == SUCCESS)
     success++;
@@ -77,7 +76,6 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
     }
     finish_mutex.unlock();
   }
-  Log_info("%s returned", __FUNCTION__);
 }
 
 
@@ -114,13 +112,12 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
   coo->loc_id_ = my_site_.locale_id;
   coo->commo_ = commo_;
   coo->forward_status_ = forward_requests_to_leader_ ? FORWARD_TO_LEADER : NONE;
-  Log_info("coordinator %u created at site %d: forward %d", coo->coo_id_, this->my_site_.id, coo->forward_status_);
+  Log_debug("coordinator %u created at site %d: forward %d", coo->coo_id_, this->my_site_.id, coo->forward_status_);
   created_coordinators_.push_back(coo);
   return coo;
 }
 
 void ClientWorker::work() {
-  Log_info("%s: %d", __FUNCTION__, this->cli_id_);
   txn_reg_ = new TxnRegistry();
   Piece *piece = Piece::get_piece(benchmark);
   piece->txn_reg_ = txn_reg_;
@@ -130,9 +127,6 @@ void ClientWorker::work() {
   if (ccsi) {
     ccsi->wait_for_start(id);
   }
-  Log_info("after wait for start");
-
-//  usleep(1000 * 1000);
 
   timer_ = new Timer();
   timer_->start();
@@ -223,17 +217,13 @@ void ClientWorker::AcceptForwardedRequest(TxnRequest &request, TxnReply* txn_rep
 }
 
 void ClientWorker::DispatchRequest(Coordinator *coo) {
-    Log_info("%s called", __FUNCTION__);
     const char* f = __FUNCTION__;
     std::function<void()> task = [=]() {
-      Log_info("%s: %d", f, cli_id_);
       TxnRequest req;
       {
         std::lock_guard<std::mutex> lock(this->request_gen_mutex);
-        Log_info("before get");
         txn_generator_->GetTxnReq(&req, coo->coo_id_);
       }
-      Log_info("got");
       req.callback_ = std::bind(&rococo::ClientWorker::RequestDone,
                                 this,
                                 coo,
@@ -267,9 +257,7 @@ ClientWorker::ClientWorker(
   commo_->loc_id_ = my_site_.locale_id;
   commo_->dcname_ = my_site_.dcname;
   forward_requests_to_leader_ = (config->ab_mode_ == MODE_MULTI_PAXOS && site_info.locale_id != 0) ? true : false;
-  Log_info("here");
-  Log_info("client %d created at dc [%s]; forward %d", cli_id_, commo_->dcname_.c_str(), forward_requests_to_leader_);
-  Log_info("hereher");
+  Log_debug("client %d created at dc [%s]; forward %d", cli_id_, commo_->dcname_.c_str(), forward_requests_to_leader_);
 }
 
 } // namespace rococo

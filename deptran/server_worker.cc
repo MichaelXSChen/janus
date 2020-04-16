@@ -101,9 +101,8 @@ void ServerWorker::PopTable() {
     dtxn_sched_->reg_table(table_name, tb);
   }
   verify(sharding_);
-  Log_info("here");
   sharding_->PopulateTables(site_info_->partition_id_);
-  Log_info("data populated for site: %x, partition: %x",
+  Log_debug("data populated for site: %x, partition: %x",
            site_info_->id, site_info_->partition_id_);
   verify(ret > 0);
 }

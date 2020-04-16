@@ -34,7 +34,7 @@ Coordinator *OVFrame::CreateCoord(cooid_t coo_id,
   if (site_info_ != nullptr){
     Log_info("[site %d] creating ov coordinator", site_info_->id);
   }else{
-    Log_info("[site null] creating ov coordinator, coo_id = %u", coo_id);
+    Log_debug("[site null] creating ov coordinator, coo_id = %u", coo_id);
   }
 
 

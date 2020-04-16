@@ -30,7 +30,7 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
   dtxn->received_dispatch_ts_right_ = chr_req.ts_max;
 
 
-  Log_info("[Scheduler %d] On Dispatch, txn_id = %d, ts_range = [%d, %d]", this->frame_->site_info_->id, txn_id, chr_req.ts_min, chr_req.ts_max);
+  Log_debug("[Scheduler %d] On Dispatch, txn_id = %d, ts_range = [%d, %d]", this->frame_->site_info_->id, txn_id, chr_req.ts_min, chr_req.ts_max);
 
   for (auto& c : cmd) {
     dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
@@ -50,7 +50,7 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
   chr_res->ts_right = reply_ts_right;
 
 
-  Log_info("[Scheduler %d] DispatchReturn, txn_id = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, chr_res->ts_left, chr_res->ts_right);
+  Log_debug("[Scheduler %d] DispatchReturn, txn_id = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, chr_res->ts_left, chr_res->ts_right);
   return 0;
 }
 
