@@ -8,7 +8,7 @@ namespace rococo {
 void TidMgr::GetMonotTimestamp(ov_ts_t &ovts) {
   auto now = std::chrono::system_clock::now();
 
-  int64_t ts = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+  int64_t ts = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() + this->time_drift_ms_;
 
   if (ts <= last_clock_){
     ts = ++last_clock_;

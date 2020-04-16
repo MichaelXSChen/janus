@@ -43,4 +43,4 @@ datacenter:
 ovparams:
   aggregate_interval_ms: 25
   gossip_interval_ms: 26
-  clock_drift_ms: 20 # to differentiate processes on the same host, they will drifted by [0, x]
+  clock_drift_ms: 20 # to differentiate processes on the same host, they will drifted by [-x, x], set to 0 if site on different servers

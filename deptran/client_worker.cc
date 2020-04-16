@@ -120,7 +120,7 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
 }
 
 void ClientWorker::work() {
-  Log_debug("%s: %d", __FUNCTION__, this->cli_id_);
+  Log_info("%s: %d", __FUNCTION__, this->cli_id_);
   txn_reg_ = new TxnRegistry();
   Piece *piece = Piece::get_piece(benchmark);
   piece->txn_reg_ = txn_reg_;
@@ -130,7 +130,9 @@ void ClientWorker::work() {
   if (ccsi) {
     ccsi->wait_for_start(id);
   }
-  Log_debug("after wait for start");
+  Log_info("after wait for start");
+
+//  usleep(1000 * 1000);
 
   timer_ = new Timer();
   timer_->start();
@@ -265,7 +267,9 @@ ClientWorker::ClientWorker(
   commo_->loc_id_ = my_site_.locale_id;
   commo_->dcname_ = my_site_.dcname;
   forward_requests_to_leader_ = (config->ab_mode_ == MODE_MULTI_PAXOS && site_info.locale_id != 0) ? true : false;
+  Log_info("here");
   Log_info("client %d created at dc [%s]; forward %d", cli_id_, commo_->dcname_.c_str(), forward_requests_to_leader_);
+  Log_info("hereher");
 }
 
 } // namespace rococo
