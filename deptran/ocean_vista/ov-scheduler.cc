@@ -13,12 +13,40 @@
 using namespace rococo;
 class Frame;
 
+SchedulerOV::SchedulerOV(Config::SiteInfo *site_info) : BrqSched() {
+  tid_mgr_ = std::make_unique<TidMgr>(site_info->id);
+  site_info_ = site_info;
+  config_ = Config::GetConfig();
+  verify(site_info_ != nullptr);
+  verify(config_ != nullptr);
+  gossiper_inited_ = false;
+
+//    vwatermark_ = ov_ts_t(std::numeric_limits<int64_t>::max(), 0);
+  vwatermark_ = ov_ts_t(0, 0);
+  std::set<std::string> sites_in_my_dc;
+
+  for (auto &s: config_->sites_) {
+    std::string site = s.name;
+    std::string proc = config_->site_proc_map_[site];
+    std::string host = config_->proc_host_map_[proc];
+    std::string dc = config_->host_dc_map_[host];
+    if (dc == site_info_->dcname) {
+      Log_debug("stte [%s] is in the same dc [%s] as me (%s)", site.c_str(), dc.c_str(), site_info->name.c_str());
+      sites_in_my_dc.insert(site);
+    }
+  }
+
+  if (site_info_->name == *(sites_in_my_dc.begin())) {
+    Log_info("I [%s] am the first proc in my dc [%s], creating gossiper",
+             site_info->name.c_str(),
+             site_info->dcname.c_str());
+    gossiper_ = new OVGossiper(config_, site_info);
+  }
+}
+
 int SchedulerOV::OnDispatch(const vector<SimpleCommand>& cmd,
                                  int32_t* res,
                                  TxnOutput* output) {
-  //Pre-execute the tranasction.
-  //Provide the local timestamp as a basic.
-
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 
   txnid_t txn_id = cmd[0].root_id_; //should have the same root_id
@@ -51,7 +79,6 @@ void SchedulerOV::OnStore(const txnid_t txn_id,
                                    int32_t *res,
                                    OVStoreRes *ov_res) {
 
-
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("asdfgh %s called on site %hu, txnid = %lu", __FUNCTION__, this->site_id_, txn_id);
   verify(txn_id > 0);
@@ -81,7 +108,6 @@ void SchedulerOV::OnStore(const txnid_t txn_id,
     if (dtxn->phase_ < PHASE_CHRONOS_PRE_ACCEPT && tinfo.status() < TXN_CMT) {
       for (auto &c: cmds) {
         map<int32_t, Value> output;
-        //this will lock the rows
         dtxn->PreAcceptExecute(const_cast<SimpleCommand &>(c), res, &output);
       }
     }
@@ -107,102 +133,6 @@ void SchedulerOV::OnStore(const txnid_t txn_id,
 
   *res = SUCCESS;
 }
-
-void SchedulerOV::OnAccept(const txnid_t txn_id,
-                                const ballot_t &ballot,
-                                const ChronosAcceptReq &chr_req,
-                                int32_t *res,
-                                ChronosAcceptRes *chr_res) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto dtxn = (TxOV*)(GetOrCreateDTxn(txn_id));
-  if (dtxn->max_seen_ballot_ > ballot) {
-    *res = REJECT;
-    verify(0); // do not support failure recovery so far.
-  } else {
-    dtxn->max_accepted_ballot_ = ballot;
-    *res = SUCCESS;
-  }
-}
-
-
-void SchedulerOV::OnCommit(const txnid_t cmd_id,
-                                const ChronosCommitReq &chr_req,
-                                int32_t *res,
-                                TxnOutput *output,
-                                ChronosCommitRes *chr_res,
-                                const function<void()> &callback) {
-  // TODO to support cascade abort
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-  *res = SUCCESS;
-  //union the graph into dep graph
-  auto dtxn = (TxOV *)(GetOrCreateDTxn(cmd_id));
-  verify(dtxn->ptr_output_repy_ == nullptr);
-  dtxn->ptr_output_repy_ = output;
-  dtxn->commit_ts_ = chr_req.commit_ts;
-
-  if (dtxn->IsExecuted()) {
-    *res = SUCCESS;
-    Log_debug("%s, Is executed", __FUNCTION__);
-    callback();
-  } else if (dtxn->IsAborted()) {
-    verify(0); //this should not hanppen
-    *res = REJECT;
-    callback();
-  } else {
-    Log_debug("%s, will execute", __FUNCTION__);
-    //Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
-    dtxn->commit_request_received_ = true;
-    dtxn->finish_reply_callback_ = [callback, res](int r) {
-      *res = r;
-      callback();
-    };
-    verify(dtxn->fully_dispatched); //cannot handle non-dispatched now.
-    UpgradeStatus(dtxn, TXN_DCD);
-//    Execute(*dtxn);
-    dtxn->CommitExecute();
-    dtxn->RemovePreparedVers();
-    if (dtxn->to_checks_.size() > 0) {
-      for (auto child : dtxn->to_checks_) {
-        waitlist_.insert(child);
-      }
-      CheckWaitlist();
-    }
-    dtxn->ReplyFinishOk();
-  }
-}
-
-
-int SchedulerOV::OnInquire(epoch_t epoch,
-                                cmdid_t cmd_id,
-                                RccGraph* graph,
-                                const function<void()> &callback) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-  // TODO check epoch, cannot be a too old one.
-  auto dtxn = (TxOV *)(GetOrCreateDTxn(cmd_id));
-  RccDTxn &info = *dtxn;
-//  TxRococo &info = *dtxn;
-  //register an event, triggered when the status >= COMMITTING;
-  verify (info.Involve(Scheduler::partition_id_));
-
-  auto cb_wrapper = [callback, graph]() {
-    callback();
-  };
-
-  if (info.status() >= TXN_CMT) {
-    InquiredGraph(info, graph);
-    cb_wrapper();
-  } else {
-    info.graphs_for_inquire_.push_back(graph);
-    info.callbacks_for_inquire_.push_back(cb_wrapper);
-    verify(info.graphs_for_inquire_.size() ==
-        info.callbacks_for_inquire_.size());
-    waitlist_.insert(dtxn);
-    verify(dtxn->epoch_ > 0);
-  }
-  return 0;
-
-}
-
 
 
 void SchedulerOV::OnCreateTs (txnid_t txnid,

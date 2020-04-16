@@ -45,38 +45,6 @@ class TxOV : public RccDTxn {
                    const Value &value,
                    int hint_flag = TXN_INSTANT) override;
 
-
-  bool GetTsBound();
-  bool StorePreparedVers();
-  bool RemovePreparedVers();
-  bool GetDispatchTsHint(int64_t &ts_left, int64_t &ts_right);
-
-  std::set<ChronosRow *> locked_rows_ = {};
-
-  /**
-   * Should deprecated
-   */
-  int64_t received_prepared_ts_left_ = 0;
-  int64_t received_prepared_ts_right_ = 0;
-
-  map<ChronosRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_read_ranges_ = {};
-  map<ChronosRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> prepared_write_ranges_ = {};
-
-
-
-  int64_t received_dispatch_ts_left_ = 0;
-  int64_t received_dispatch_ts_right_ = 0;
-  map<ChronosRow*, map<column_id_t, pair<mdb::version_t, mdb::version_t>>> dispatch_ranges_ = {};
-
-  int64_t local_prepared_ts_left_;
-  int64_t local_prepared_ts_right_;
-
-  int64_t commit_ts_;
-
-  /**
-   * Should deprecated end here
-   */
-
   ov_ts_t ovts_;
   std::function<void()> executed_callback = [this](){
     Log_fatal("call back not assigned, id = %lu", this->tid_);

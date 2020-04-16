@@ -24,36 +24,7 @@ class SchedulerOV : public BrqSched {
 
   bool gossiper_inited_;
 
-  SchedulerOV(Config::SiteInfo *site_info) : BrqSched() {
-    tid_mgr_ = std::make_unique<TidMgr>(site_info->id);
-    site_info_ = site_info;
-    config_ = Config::GetConfig();
-    verify(site_info_ != nullptr);
-    verify(config_ != nullptr);
-    gossiper_inited_ = false;
-
-//    vwatermark_ = ov_ts_t(std::numeric_limits<int64_t>::max(), 0);
-    vwatermark_ = ov_ts_t(0, 0);
-    std::set<std::string> sites_in_my_dc;
-
-    for (auto &s: config_->sites_) {
-      std::string site = s.name;
-      std::string proc = config_->site_proc_map_[site];
-      std::string host = config_->proc_host_map_[proc];
-      std::string dc = config_->host_dc_map_[host];
-      if (dc == site_info_->dcname) {
-        Log_debug("stte [%s] is in the same dc [%s] as me (%s)", site.c_str(), dc.c_str(), site_info->name.c_str());
-        sites_in_my_dc.insert(site);
-      }
-    }
-
-    if (site_info_->name == *(sites_in_my_dc.begin())) {
-      Log_info("I [%s] am the first proc in my dc [%s], creating gossiper",
-               site_info->name.c_str(),
-               site_info->dcname.c_str());
-      gossiper_ = new OVGossiper(config_, site_info);
-    }
-  }
+  SchedulerOV(Config::SiteInfo *site_info);
 
   void SetFrame(Frame* frame){
     verify(frame != nullptr);
@@ -78,24 +49,6 @@ class SchedulerOV : public BrqSched {
                         int64_t timestamp,
                         int16_t server_id,
                         int32_t *res);
-
-  void OnAccept(txnid_t txn_id,
-                const ballot_t &ballot,
-                const ChronosAcceptReq &chr_req,
-                int32_t *res,
-                ChronosAcceptRes *chr_res);
-
-  void OnCommit(txnid_t txn_id,
-                const ChronosCommitReq &chr_req,
-                int32_t *res,
-                TxnOutput *output,
-                ChronosCommitRes *chr_res,
-                const function<void()> &callback);
-
-  int OnInquire(epoch_t epoch,
-                cmdid_t cmd_id,
-                RccGraph *graph,
-                const function<void()> &callback) override;
 
   void OnExecute(txnid_t txn_id,
                  const OVExecuteReq &req,
