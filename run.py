@@ -1095,7 +1095,9 @@ def get_process_info(config):
 
     # deterministically give the processes their id -- base client ctrl port assignment on this
     sorted_processes = OrderedDict(sorted(processes.items(), key=lambda t: t[0]))
-
+    logging.info("here")
+    print(sites)
+    print(sorted_processes)
 
     process_infos = {}
     for (_, process_name) in sorted_processes.iteritems():

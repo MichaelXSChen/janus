@@ -51,6 +51,15 @@ void BrqCoord::PreAccept() {
   // broadcast
   RccDTxn* dtxn = graph_.FindV(cmd_->id_);
   verify(txn().partition_ids_.size() == dtxn->partition_.size());
+
+  /*
+   * remove it xs
+   */
+  std::string touched = "";
+  uint64_t  type;
+  /*
+   * ends here
+   */
   for (auto par_id : cmd_->GetPartitionIds()) {
     auto cmds = txn().GetCmdsByPartition(par_id);
     commo()->BroadcastPreAccept(par_id,
@@ -64,7 +73,16 @@ void BrqCoord::PreAccept() {
                                           par_id,
                                           std::placeholders::_1,
                                           std::placeholders::_2));
+    /*
+     * remove it xs
+     */
+    type = cmds[0].root_type_;
+    touched+=std::to_string(par_id);
+    /*
+     * ends here
+     */
   }
+  Log_info("coord [name = %s], txn_id = %lu, txn_type = %lu, dc = %s, touches par id = %s", this->client_siteinfo_->name.c_str(), dtxn->id(), type , this->client_siteinfo_->dcname.c_str(), touched.c_str());
 }
 
 void BrqCoord::PreAcceptAck(phase_t phase,
@@ -381,7 +399,7 @@ void BrqCoord::GotoNextPhase() {
 }
 
 void BrqCoord::Reset() {
-  Log_info("%s called", __FUNCTION__);
+//  Log_info("%s called", __FUNCTION__);
   RccCoord::Reset();
   fast_path_ = false;
   fast_commit_ = false;

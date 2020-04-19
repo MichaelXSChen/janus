@@ -50,8 +50,8 @@ class Coordinator : public CoordinatorBase {
   TxnRegistry *txn_reg_ = nullptr;
   Communicator* commo_ = nullptr;
   Frame* frame_ = nullptr;
-
   ForwardRequestState forward_status_ = NONE;
+  Config::SiteInfo *client_siteinfo_ = nullptr;
 
   // should be reset on issuing a new request
   uint32_t n_retry_ = 0;

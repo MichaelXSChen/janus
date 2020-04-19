@@ -1,33 +1,38 @@
 
 site:
   server: # each line is a partition, the first is the master site_name:port
-    - ["s101:8000", "s201:8001", "s301:8002"]
-    - ["s102:8100", "s202:8101", "s302:8102"]
-    - ["s103:8200", "s203:8201", "s303:8202"]
-    - ["s104:8300", "s204:8301", "s304:8302"]
+    - ["s0:8000", "s1:8001", "s2:8002"]
+    - ["s3:8100", "s4:8101", "s5:8102"]
+    - ["s6:8200", "s7:8201", "s8:8202"]
+    - ["s9:8300", "s10:8301", "s11:8302"]
   client: # each line is a partition
-    - ["c01"]
-    - ["c02"]
-    - ["c03"]
-    - ["c04"]
+    - ["c1", "c5", "c9"]
+    - ["c2", "c6"]
+    - ["c3", "c7"]
+    - ["c4", "c8"]
 # site_name - process_name map
 process:
-  s101: processA
-  s102: processB
-  s103: processC
-  s104: processD
-  s201: processA
-  s202: processB
-  s203: processC
-  s204: processD
-  s301: processA
-  s302: processB
-  s303: processC
-  s304: processD
-  c01: processA
-  c02: processB
-  c03: processC
-  c04: processD
+  s0: processD
+  s1: processA
+  s2: processB
+  s3: processC
+  s4: processD
+  s5: processA
+  s6: processB
+  s7: processC
+  s8: processD
+  s9: processA
+  s10: processB
+  s11: processC
+  c1: processA
+  c2: processB
+  c3: processC
+  c4: processD
+  c5: processA # two ciient site in one process will cause assert failed, only testing python scritp
+  c6: processB
+  c7: processC
+  c8: processD
+  
 
 host:
   processA: 10.22.1.7

@@ -39,8 +39,11 @@ APPEND_DEFAULTS = {
 }
 TMP_DIR='./tmp'
 
-logger = logging.getLogger('')
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%Y-%m-%d:%H:%M:%S',
+    level=logging.DEBUG)
 
+logger = logging.getLogger('')
 
 
 def create_parser():
@@ -135,7 +138,9 @@ def get_range(r):
 
 
 def gen_process_and_site(args, experiment_name, num_c, num_s, num_replicas, hosts_config, mode):
+    logger.info("gen_process_and_site")
     hosts = hosts_config['host']
+    logger.debug("hosts", hosts)
 
     layout_strategies = {
         ClientPlacement.BALANCED: BalancedPlacementStrategy(),

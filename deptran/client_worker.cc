@@ -81,7 +81,6 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
 
 Coordinator* ClientWorker::FindOrCreateCoordinator() {
   std::lock_guard<std::mutex> lock(coordinator_mutex);
-
   Coordinator* coo = nullptr;
 
   if (free_coordinators_.size() > 0) {
@@ -103,6 +102,8 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
 
   cooid_t coo_id = cli_id_;
   coo_id = (coo_id << 16) + offset_id; //xs: don't know why, interesting
+//  verify(my_site_ != nullptr);
+
   auto coo = frame_->CreateCoord(coo_id,
                                  config_,
                                  benchmark,
@@ -111,8 +112,9 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
                                  txn_reg_);
   coo->loc_id_ = my_site_.locale_id;
   coo->commo_ = commo_;
+  coo->client_siteinfo_ = &my_site_;
   coo->forward_status_ = forward_requests_to_leader_ ? FORWARD_TO_LEADER : NONE;
-  Log_debug("coordinator %u created at site %d: forward %d", coo->coo_id_, this->my_site_.id, coo->forward_status_);
+  Log_info("coordinator %u created at site %d: par_id = %u, forward %d", coo->coo_id_, this->my_site_.id, this->my_site_.partition_id_, coo->forward_status_);
   created_coordinators_.push_back(coo);
   return coo;
 }

@@ -358,7 +358,7 @@ void Config::LoadSiteYML(YAML::Node config) {
       info.partition_id_ = replica_group.partition_id;
       info.locale_id = locale_id;
       info.type_ = SERVER;
-      Log_debug("info: partition id %d, locale_id %d, site_id %d, site_addr %s", partition_id, locale_id, site_id, site_addr.c_str());
+      Log_info("server: name = %s, partition id %d, locale_id %d, site_id %d, site_addr %s", info.name.c_str(), partition_id, locale_id, site_id, site_addr.c_str());
       sites_.push_back(info);
       replica_group.replicas.push_back(&sites_.back());
       locale_id++;
@@ -368,6 +368,7 @@ void Config::LoadSiteYML(YAML::Node config) {
   }
 
   auto clients = config["client"];
+  partition_id = 0;
   for (auto client_it = clients.begin(); client_it != clients.end(); client_it++) {
     auto group = *client_it;
     int locale_id = 0;
@@ -377,10 +378,13 @@ void Config::LoadSiteYML(YAML::Node config) {
       info.name = site_name;
       info.type_ = CLIENT;
       info.locale_id = locale_id;
+      info.partition_id_ = partition_id;
+      Log_info("client %s's local_id is %u, partition_id = %d", site_name.c_str(), locale_id, partition_id);
       info.port = GetClientPort(site_name);
       par_clients_.push_back(info);
       locale_id++;
     }
+    partition_id++;
   }
 }
 
@@ -424,10 +428,10 @@ void Config::LoadProcYML(YAML::Node config) {
   for (auto it = config.begin(); it != config.end(); it++) {
     auto site_name = it->first.as<string>();
     auto proc_name = it->second.as<string>();
-    Log_debug("site name = %s", site_name.c_str());
+    Log_info("site name = %s", site_name.c_str());
     auto info = SiteByName(site_name);
     verify(info != nullptr);
-    Log_debug("info->name %s", info->name.c_str());
+    Log_info("info->name %s", info->name.c_str());
     info->proc_name = proc_name;
   }
 }
@@ -883,6 +887,7 @@ Config::SitesByLocaleId(uint32_t locale_id, SiteInfoType type) {
 
 vector<Config::SiteInfo>
 Config::SitesByProcessName(string proc_name, Config::SiteInfoType type) {
+  //Get the client by my name
   std::vector<SiteInfo> result;
   std::vector<SiteInfo>* searching;
   if (type==SERVER) {
