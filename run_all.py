@@ -142,17 +142,8 @@ def gen_process_and_site(args, experiment_name, num_c, num_s, num_replicas, host
     hosts = hosts_config['host']
     logger.debug("hosts", hosts)
 
-    layout_strategies = {
-        ClientPlacement.BALANCED: BalancedPlacementStrategy(),
-        ClientPlacement.WITH_LEADER: LeaderPlacementStrategy(),
-    }
     
-    if False and mode.find('multi_paxos') >= 0:
-        strategy = layout_strategies[ClientPlacement.WITH_LEADER]
-    else:
-        strategy = layout_strategies[ClientPlacement.BALANCED]
-    
-    layout = strategy.generate_layout(args, num_c, num_s, num_replicas, hosts_config)
+    layout = generate_layout(args, num_c, num_s, num_replicas, hosts_config)
 
     if not os.path.isdir(TMP_DIR):
         os.makedirs(TMP_DIR)
@@ -232,6 +223,84 @@ def aggregate_configs(*args):
         config.update(load_config(fn))
     return config
 
+def generate_layout(args, num_c, num_s, num_replicas, hosts_config):
+        logger.debug("generate layout called")
+        data_centers = args.data_centers
+        logger.debug(data_centers)
+
+
+        proc_names = hosts_config['host'].keys()
+        # hosts = self.hosts_by_datacenter(hosts_config['host'].keys(), data_centers)
+        print("procs", proc_names)
+        server_sites_all = hosts_config['site']['server']
+        server_sites = []
+        # truncate to number of shards and number of replicas
+        # This will 
+        for partition in range(num_s):
+            par = []
+            for replica in range(num_replicas):
+                if len(server_sites_all) < num_s: 
+                    logging.fatal("not enough server sites (number of partitions) in config file")
+                    exit(1)
+                if len(server_sites_all[partition]) < num_replicas: 
+                    logging.fatal("not enough server sites (number of replicas) in config file")
+                    exit(1)
+                par.append(server_sites_all[partition][replica])
+            server_sites.append(par)
+
+        print(server_sites)
+
+        client_sites_all = hosts_config['site']['client']
+        client_sites = []
+        n_par = len(server_sites)
+        if num_c > n_par:
+            # reserve the positions
+            for partition in range(n_par):
+                client_sites.append([])
+            # fill in num_c clients vertically
+            col_itr = 0
+            count = 0
+            while col_itr < len(client_sites_all[0]):
+                for partition in range(n_par):
+                    if col_itr >= len(client_sites_all[partition]):
+                        logging.fatal("not enough client sites (number of replicas) in config file")
+                        exit(1)
+                    client_sites[partition].append(client_sites_all[partition][col_itr])
+                    count += 1
+                    if count == num_c:
+                       break
+                col_itr += 1
+                if count == num_c:
+                    break
+        else:
+            # num_c < n_par    
+            for i in range(num_c):
+                par = []
+                par.append(client_sites_all[i][0])
+                client_sites.append(par)
+        print(client_sites) 
+
+        site = {'client': client_sites, 'server': server_sites}
+        process_all = hosts_config['process']
+        process = {}
+        for s in process_all.keys():
+            exist = False
+            for row in client_sites:
+                for c in row: 
+                    if s == c:
+                        exist = True 
+            for row in server_sites:
+                for c in row: 
+                    if s == c.split(":")[0]:
+                        exist = True
+            if exist:
+                process[s] = process_all[s]
+        # process = hosts_config['process']
+
+        print(process)
+        result = {'site': site, 'process': process}
+        print("result", result)
+        return result
 
 def generate_config(args, experiment_name, benchmark, mode, zipf, client_load, num_client,
                     num_server, num_replicas):
