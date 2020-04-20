@@ -29,3 +29,4 @@ deptran/mdcc/mdcc_rpc.h
 *rpc.h
 *.res
 *.prof
+.DS_STORE
