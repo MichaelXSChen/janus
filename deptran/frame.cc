@@ -1,4 +1,5 @@
 #include <bench/rw_benchmark/generator.h>
+#include <bench/retwis/generator.h>
 #include "__dep__.h"
 #include "frame.h"
 #include "config.h"
@@ -51,6 +52,11 @@
 // micro bench
 #include "bench/micro/piece.h"
 #include "bench/micro/chopper.h"
+
+//retwis bench 
+#include "bench/retwis/piece.h"
+#include "bench/retwis/chopper.h"
+#include "bench/retwis/sharding.h"
 
 #include "tpl/sched.h"
 #include "occ/sched.h"
@@ -127,6 +133,9 @@ Sharding* Frame::CreateSharding() {
       break;
     case TPCA:
       ret = new TpcaSharding();
+      break;
+    case RETWIS:
+      ret = new RetwisBenchmarkSharding();
       break;
     default:
       verify(0);
@@ -246,6 +255,12 @@ void Frame::GetTxnTypes(std::map<int32_t, std::string> &txn_types) {
       txn_types[MICRO_BENCH_R] = std::string(MICRO_BENCH_R_NAME);
       txn_types[MICRO_BENCH_W] = std::string(MICRO_BENCH_W_NAME);
       break;
+    case RETWIS:
+      txn_types[RETWIS_ADD_USERS] = std::string(RETWIS_ADD_USERS_NAME);
+      txn_types[RETWIS_FOLLOW] = std::string(RETWIS_FOLLOW_NAME);
+      txn_types[RETWIS_POST_TWEET] = std::string(RETWIS_POST_TWEET_NAME);
+      txn_types[RETWIS_GET_TIMELINE] = std::string(RETWIS_GET_TIMELINE_NAME);
+      break;
     default:
       Log_fatal("benchmark not implemented");
       verify(0);
@@ -274,6 +289,9 @@ TxnCommand* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
       break;
     case MICRO_BENCH:
       cmd = new MicroTxnCmd();
+      break;
+    case RETWIS:
+      cmd = new RetwisTxn();
       break;
     default:
       verify(0);
@@ -392,6 +410,9 @@ TxnGenerator * Frame::CreateTxnGenerator() {
       break;
     case RW_BENCHMARK:
       gen = new RWTxnGenerator(Config::GetConfig());
+      break;
+    case RETWIS:
+      gen = new RetwisTxnGenerator(Config::GetConfig());
       break;
     case MICRO_BENCH:
     default:
