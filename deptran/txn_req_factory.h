@@ -27,8 +27,13 @@ class TxnGenerator {
     int n_table_c_;
     int n_table_d_;
   } micro_bench_para_t;
+  
+typedef struct {
+    int n_table_;
+  } retwis_para_t;
 
   union {
+    retwis_para_t retwis_para_;
     tpca_para_t tpca_para_;
     rw_benchmark_para_t rw_benchmark_para_;
     micro_bench_para_t micro_bench_para_;
