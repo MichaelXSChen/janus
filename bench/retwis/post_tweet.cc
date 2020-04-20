@@ -1,7 +1,7 @@
 #include "chopper.h"
 #include "piece.h"
 #include "generator.h"
-
+#include "../tpcc/piece.h"
 namespace rococo {
 
 static uint32_t TXN_TYPE = RETWIS_POST_TWEET;
@@ -20,8 +20,6 @@ void RetwisTxn::PostTweetRetry() {
   n_pieces_dispatchable_ =  5;
   n_pieces_dispatch_acked_ = 0;
   n_pieces_dispatched_ = 0;
-
-  CheckReady();
 }
 
 void RetwisPiece::RegPostTweet(){

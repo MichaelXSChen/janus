@@ -1,7 +1,7 @@
 #include "chopper.h"
 #include "piece.h"
 #include "generator.h"
-
+#include "../tpcc/piece.h"
 namespace rococo {
 
 static uint32_t TXN_TYPE = RETWIS_GET_TIMELINE;
@@ -22,7 +22,7 @@ void RetwisTxn::GetTimelineRetry(){
     n_pieces_dispatched_ = 0;
 }
 
-void RetwisPiece::RegPostTweet(){
+void RetwisPiece::RegGetTimeline(){
 for (int i = (0); i < (10); i++) {
     // 10 is a magical number?
     SHARD_PIE(RETWIS_GET_TIMELINE, RETWIS_GET_TIMELINE_P(i),

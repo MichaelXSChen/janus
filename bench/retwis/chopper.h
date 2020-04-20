@@ -16,7 +16,7 @@ private:
     void AddUsersRetry();
     void FollowRetry();
     void PostTweetRetry();
-    void GetTimelineRetry(;
+    void GetTimelineRetry();
 
 public:
     RetwisTxn();

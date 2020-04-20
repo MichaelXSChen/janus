@@ -1,7 +1,7 @@
 #include "chopper.h"
 #include "piece.h"
 #include "generator.h"
-
+#include "../tpcc/piece.h"
 namespace rococo {
 
 static uint32_t TXN_TYPE = RETWIS_FOLLOW;

@@ -1,7 +1,7 @@
 #include "chopper.h"
 #include "piece.h"
 #include "generator.h"
-
+#include "../tpcc/piece.h"
 namespace rococo {
 
 static uint32_t TXN_TYPE = RETWIS_ADD_USERS;
@@ -11,9 +11,9 @@ void RetwisTxn::AddUsersInit(TxnRequest &req) {
 }
 
 void RetwisTxn::AddUsersRetry() {
-  status_[RETWIS_ADDUSERS_0] = DISPATCHABLE;
-  status_[RETWIS_ADDUSERS_1] = DISPATCHABLE;
-  status_[RETWIS_ADDUSERS_2] = DISPATCHABLE;
+  status_[RETWIS_ADD_USERS_0] = DISPATCHABLE;
+  status_[RETWIS_ADD_USERS_1] = DISPATCHABLE;
+  status_[RETWIS_ADD_USERS_2] = DISPATCHABLE;
   n_pieces_all_ = 3;
   n_pieces_dispatchable_ =  3;
   n_pieces_dispatch_acked_ = 0;
@@ -74,5 +74,5 @@ void RetwisPiece::RegAddUsers() {
 
   }
 
-}
+
 } // namespace rococo

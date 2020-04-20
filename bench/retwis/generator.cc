@@ -17,7 +17,7 @@ void RetwisTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
         verify(0);
     }
     else {
-        switch (RandomGenerator::weighted_select(weights)) {
+        switch (RandomGenerator::weighted_select(txn_weight_)) {
             case 0:
                 GenerateAddUsersRequest(req,cid);
                 break;

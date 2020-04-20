@@ -7,6 +7,8 @@
 
 namespace deptran {
 
+RetwisTxn::RetwisTxn() {
+    }
 void RetwisTxn::Init(TxnRequest &req) {
   ws_init_ = req.input_;
   ws_ = req.input_;
@@ -32,8 +34,8 @@ void RetwisTxn::Init(TxnRequest &req) {
       verify(0);
   }
 }
-    :
-bool RetwisTxn::start_callback(const std:vector<int> &pi,
+  
+bool RetwisTxn::start_callback(const std::vector<int> &pi,
                                int res, BatchStartArgsHelper &bsah) {
   return false;
 }

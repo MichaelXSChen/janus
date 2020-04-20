@@ -1,6 +1,7 @@
 #include "piece.h"
 #include <limits>
-
+#include "deptran/__dep__.h"
+#include "../tpcc/piece.h"
 namespace rococo {
 
 using rococo::RccDTxn;
