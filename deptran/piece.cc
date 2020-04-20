@@ -1,5 +1,6 @@
 #include "piece.h"
 #include "bench/rw_benchmark/piece.h"
+#include "bench/retwis/piece.h"
 #include "bench/micro/piece.h"
 #include "bench/tpca/piece.h"
 #include "bench/tpcc/piece.h"
@@ -22,6 +23,8 @@ Piece *Piece::get_piece(int benchmark) {
       return new RWPiece();
     case MICRO_BENCH:
       return new MicroBenchPiece();
+    case RETWIS:
+      return new RetwisPiece();
     default:
       verify(0);
       return NULL;
