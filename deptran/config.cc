@@ -37,6 +37,9 @@
 #include "bench/micro/piece.h"
 #include "bench/micro/chopper.h"
 
+//retwis bench
+#include "bench/retwis/piece.h"
+#include "bench/retwis/chopper.h"
 
 namespace rococo {
 Config *Config::config_s = nullptr;
@@ -455,7 +458,10 @@ void Config::InitBench(std::string &bench_str) {
     benchmark_ = RW_BENCHMARK;
   } else if (bench_str == "micro_bench") {
     benchmark_ = MICRO_BENCH;
-  } else {
+  } else if (bench_str == "retwis"){
+    benchmark_ = RETWIS;
+  }
+    else {
     Log_error("No implementation for benchmark: %s", bench_str.c_str());
     verify(0);
   }

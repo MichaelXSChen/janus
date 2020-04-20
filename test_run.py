@@ -30,7 +30,8 @@ benchmarks_ =  [
     "tpcc_dl",
     "tpcc_os",
     "tpcc_sl",
-    "tpccd"
+    "tpccd",
+    "retwis"
 ]
 
 concurrent_ = [
