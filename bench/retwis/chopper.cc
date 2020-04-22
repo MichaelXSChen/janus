@@ -86,28 +86,6 @@ void RetwisTxn::Reset() {
     }
 }
 
-
-parid_t RetwisTxn::GetPiecePartitionId(innid_t inn_id) {
-    parid_t partition_id = 0;
-    auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
-    if (it != txn_reg_->sharding_input_.end()) {
-        auto &pair = it->second;
-        auto tb = pair.first;
-        auto& var_ids = pair.second;
-        vector<Value> vars;
-        for (auto var_id : var_ids) {
-            verify(ws_.count(var_id) != 0);
-            vars.push_back(ws_.at(var_id));
-        }
-        MultiValue mv = MultiValue(vars);
-        sss_->GetPartition(tb, mv, partition_id);
-    } else {
-        verify(0);
-        partition_id = sharding_[inn_id];
-    }
-    return partition_id;
-}
-
 int RetwisTxn::GetNPieceAll() {
     return n_pieces_all_;
 }

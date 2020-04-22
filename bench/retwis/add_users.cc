@@ -7,10 +7,26 @@ namespace rococo {
 static uint32_t TXN_TYPE = RETWIS_ADD_USERS;
 
 void RetwisTxn::AddUsersInit(TxnRequest &req) {
+ sss_->GetPartition(RETWIS_TB, req.input_[RETWIS_VAR_ADD_USERS_1],
+                       sharding_[RETWIS_ADD_USERS_0]);
+ sss_->GetPartition(RETWIS_TB, req.input_[RETWIS_VAR_ADD_USERS_2],
+                       sharding_[RETWIS_ADD_USERS_1]);
+ sss_->GetPartition(RETWIS_TB, req.input_[RETWIS_VAR_ADD_USERS_3],
+                       sharding_[RETWIS_ADD_USERS_2]);
   AddUsersRetry();
 }
 
 void RetwisTxn::AddUsersRetry() {
+  GetWorkspace(RETWIS_ADD_USERS_0).keys_ = {
+      RETWIS_VAR_ADD_USERS_1
+  };
+  GetWorkspace(RETWIS_ADD_USERS_1).keys_ = {
+      RETWIS_VAR_ADD_USERS_2
+  };
+  GetWorkspace(RETWIS_ADD_USERS_2).keys_ = {
+    RETWIS_VAR_ADD_USERS_3
+  };
+  output_size_ = {{0,3}};
   status_[RETWIS_ADD_USERS_0] = DISPATCHABLE;
   status_[RETWIS_ADD_USERS_1] = DISPATCHABLE;
   status_[RETWIS_ADD_USERS_2] = DISPATCHABLE;
@@ -26,6 +42,7 @@ void RetwisPiece::RegAddUsers() {
     SHARD_PIE(RETWIS_ADD_USERS, RETWIS_ADD_USERS_0,
               RETWIS_TB, TPCC_VAR_H_KEY)
     BEGIN_PIE(RETWIS_ADD_USERS, RETWIS_ADD_USERS_0, DF_REAL) {
+      verify(cmd.input.size() >= 1);
       mdb::MultiBlob buf(1);
       Value result(0);
       buf[0] = cmd.input[RETWIS_VAR_ADD_USERS_1].get_blob();
@@ -45,6 +62,7 @@ void RetwisPiece::RegAddUsers() {
     SHARD_PIE(RETWIS_ADD_USERS, RETWIS_ADD_USERS_1,
               RETWIS_TB, TPCC_VAR_H_KEY)
     BEGIN_PIE(RETWIS_ADD_USERS, RETWIS_ADD_USERS_1, DF_NO) {
+      verify(cmd.input.size() >= 1);
       mdb::MultiBlob buf(1);
       Value result(0);
       buf[0] = cmd.input[RETWIS_VAR_ADD_USERS_2].get_blob();
@@ -61,6 +79,7 @@ void RetwisPiece::RegAddUsers() {
     SHARD_PIE(RETWIS_ADD_USERS, RETWIS_ADD_USERS_2,
               RETWIS_TB, TPCC_VAR_H_KEY)
     BEGIN_PIE(RETWIS_ADD_USERS, RETWIS_ADD_USERS_2, DF_NO) {
+      verify(cmd.input.size() >= 1);
       mdb::MultiBlob buf(1);
       Value result(0);
       buf[0] = cmd.input[RETWIS_VAR_ADD_USERS_3].get_blob();

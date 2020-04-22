@@ -7,10 +7,36 @@ namespace rococo {
 static uint32_t TXN_TYPE = RETWIS_POST_TWEET;
 
 void RetwisTxn::PostTweetInit(TxnRequest &req) {
+    sss_->GetPartition(RETWIS_TB, req.input_[RETWIS_VAR_POST_TWEET_1],
+                       sharding_[RETWIS_POST_TWEET_0]);
+    sss_->GetPartition(RETWIS_TB, req.input_[RETWIS_VAR_POST_TWEET_2],
+                       sharding_[RETWIS_POST_TWEET_1]);
+    sss_->GetPartition(RETWIS_TB, req.input_[RETWIS_VAR_POST_TWEET_3],
+                       sharding_[RETWIS_POST_TWEET_2]);
+    sss_->GetPartition(RETWIS_TB, req.input_[RETWIS_VAR_POST_TWEET_4],
+                       sharding_[RETWIS_POST_TWEET_3]);
+    sss_->GetPartition(RETWIS_TB, req.input_[RETWIS_VAR_POST_TWEET_5],
+                       sharding_[RETWIS_POST_TWEET_4]);
   PostTweetRetry();
 }
 
 void RetwisTxn::PostTweetRetry() {
+    GetWorkspace(RETWIS_POST_TWEET_0).keys_ = {
+            RETWIS_VAR_POST_TWEET_1
+    };
+    GetWorkspace(RETWIS_POST_TWEET_1).keys_ = {
+            RETWIS_VAR_POST_TWEET_2
+    };
+    GetWorkspace(RETWIS_POST_TWEET_2).keys_ = {
+            RETWIS_VAR_POST_TWEET_3
+    };
+    GetWorkspace(RETWIS_POST_TWEET_3).keys_ = {
+            RETWIS_VAR_POST_TWEET_4
+    };
+    GetWorkspace(RETWIS_POST_TWEET_4).keys_ = {
+            RETWIS_VAR_POST_TWEET_5
+    };
+    output_size_ = {{0,5}};
   status_[RETWIS_POST_TWEET_0] = DISPATCHABLE;
   status_[RETWIS_POST_TWEET_1] = DISPATCHABLE;
   status_[RETWIS_POST_TWEET_2] = DISPATCHABLE;
@@ -28,6 +54,7 @@ void RetwisPiece::RegPostTweet(){
     SHARD_PIE(RETWIS_POST_TWEET, RETWIS_POST_TWEET_0,
               RETWIS_TB, TPCC_VAR_H_KEY)
     BEGIN_PIE(RETWIS_POST_TWEET, RETWIS_POST_TWEET_0, DF_REAL) {
+      verify(cmd.input.size() >= 1);
       mdb::MultiBlob buf(1);
       Value result(0);
       buf[0] = cmd.input[RETWIS_VAR_POST_TWEET_1].get_blob();
@@ -46,6 +73,7 @@ void RetwisPiece::RegPostTweet(){
     SHARD_PIE(RETWIS_POST_TWEET, RETWIS_POST_TWEET_1,
               RETWIS_TB, TPCC_VAR_H_KEY)
     BEGIN_PIE(RETWIS_POST_TWEET, RETWIS_POST_TWEET_1, DF_REAL) {
+      verify(cmd.input.size() >= 1);
       mdb::MultiBlob buf(1);
       Value result(0);
       buf[0] = cmd.input[RETWIS_VAR_POST_TWEET_2].get_blob();
@@ -64,6 +92,7 @@ void RetwisPiece::RegPostTweet(){
     SHARD_PIE(RETWIS_POST_TWEET, RETWIS_POST_TWEET_2,
               RETWIS_TB, TPCC_VAR_H_KEY)
     BEGIN_PIE(RETWIS_POST_TWEET, RETWIS_POST_TWEET_2, DF_REAL) {
+      verify(cmd.input.size() >= 1);
       mdb::MultiBlob buf(1);
       Value result(0);
       buf[0] = cmd.input[RETWIS_VAR_POST_TWEET_3].get_blob();
@@ -82,6 +111,7 @@ void RetwisPiece::RegPostTweet(){
     SHARD_PIE(RETWIS_POST_TWEET, RETWIS_POST_TWEET_3,
               RETWIS_TB, TPCC_VAR_H_KEY)
     BEGIN_PIE(RETWIS_POST_TWEET, RETWIS_POST_TWEET_3, DF_NO) {
+      verify(cmd.input.size() >= 1);
       mdb::MultiBlob buf(1);
       Value result(0);
       buf[0] = cmd.input[RETWIS_VAR_POST_TWEET_4].get_blob();
@@ -98,6 +128,7 @@ void RetwisPiece::RegPostTweet(){
     SHARD_PIE(RETWIS_POST_TWEET, RETWIS_POST_TWEET_4,
               RETWIS_TB, TPCC_VAR_H_KEY)
     BEGIN_PIE(RETWIS_POST_TWEET, RETWIS_POST_TWEET_4, DF_NO) {
+      verify(cmd.input.size() >= 1);
       mdb::MultiBlob buf(1);
       Value result(0);
       buf[0] = cmd.input[RETWIS_VAR_POST_TWEET_5].get_blob();

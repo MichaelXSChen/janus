@@ -20,7 +20,7 @@ private:
 
 public:
     RetwisTxn();
-    virtual parid_t GetPiecePartitionId(innid_t inn_id);
+  
 
     virtual void Init(TxnRequest &req);
 
