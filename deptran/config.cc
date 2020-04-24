@@ -511,16 +511,19 @@ void Config::LoadBenchYML(YAML::Node config) {
     auto weight = it->second.as<double>();
     txn_weights_[txn_name] = weight;
   }
+  if (bench_str == "retwis") {
   txn_weight_.push_back(txn_weights_["add_users"]);
   txn_weight_.push_back(txn_weights_["follow"]);
   txn_weight_.push_back(txn_weights_["post_teet"]);
   txn_weight_.push_back(txn_weights_["get_timeline"]);
-
-//  txn_weight_.push_back(txn_weights_["payment"]);
-//  txn_weight_.push_back(txn_weights_["order_status"]);
-//  txn_weight_.push_back(txn_weights_["delivery"]);
-//  txn_weight_.push_back(txn_weights_["stock_level"]);
-
+  }
+  else if (bench_str == "tpcc"){
+  txn_weight_.push_back(txn_weights_["new_order"]);
+  txn_weight_.push_back(txn_weights_["payment"]);
+  txn_weight_.push_back(txn_weights_["order_status"]);
+  txn_weight_.push_back(txn_weights_["delivery"]);
+  txn_weight_.push_back(txn_weights_["stock_level"]);
+  }
   sharding_ = Frame(MODE_NONE).CreateSharding();
   auto populations = config["population"];
   auto &tb_infos = sharding_->tb_infos_;
