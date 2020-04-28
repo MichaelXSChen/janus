@@ -379,7 +379,7 @@ void Config::LoadSiteYML(YAML::Node config) {
       info.type_ = CLIENT;
       info.locale_id = locale_id;
       info.partition_id_ = partition_id;
-      Log_info("client %s's local_id is %u, partition_id = %d", site_name.c_str(), locale_id, partition_id);
+      Log_info("client %s's locale_id is %u, partition_id = %d", site_name.c_str(), locale_id, partition_id);
       info.port = GetClientPort(site_name);
       par_clients_.push_back(info);
       locale_id++;

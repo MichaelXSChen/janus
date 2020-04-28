@@ -78,6 +78,12 @@ void BrqCoord::PreAccept() {
      */
     type = cmds[0].root_type_;
     touched+=std::to_string(par_id);
+
+    for (auto &cmd : cmds){
+      uint32_t piece_type = cmd.type_;
+      Log_info("txn_id = %lu, txn_type = %lu, piece_type = %u, touched %u", dtxn->id(), type, piece_type, par_id);
+    }
+
     /*
      * ends here
      */
