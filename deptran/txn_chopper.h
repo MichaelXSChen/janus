@@ -70,6 +70,7 @@ class TxnRequest {
   function<void(TxnReply &)> callback_ = [] (TxnReply&)->void {verify(0);};
   function<void()> fail_callback_ = [] () {verify(0);};
   void get_log(i64 tid, std::string &log);
+  bool local_txn = true;
 };
 
 Marshal& operator << (Marshal& m, const TxnWorkspace &ws);

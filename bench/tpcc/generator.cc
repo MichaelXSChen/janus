@@ -41,6 +41,7 @@ TpccTxnGenerator::TpccTxnGenerator(Config* config)
 
 void TpccTxnGenerator::GetNewOrderTxnReq(TxnRequest *req,
                                          uint32_t cid) const {
+  req->local_txn = true;
   req->txn_type_ = TPCC_NEW_ORDER;
   //int home_w_id = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1);
   int home_w_id = cid % tpcc_para_.n_w_id_;
@@ -83,6 +84,7 @@ void TpccTxnGenerator::GetNewOrderTxnReq(TxnRequest *req,
 
     if (tpcc_para_.n_w_id_ > 1 && // warehouse more than one, can do remote
         RandomGenerator::percentage_true(1)) { //XXX 1% REMOTE_RATIO
+      req->local_txn = false;
       int remote_w_id = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 2);
       remote_w_id = remote_w_id >= home_w_id ? remote_w_id + 1 : remote_w_id;
       req->input_[TPCC_VAR_S_W_ID(i)] = Value((i32) remote_w_id);
@@ -104,6 +106,7 @@ void TpccTxnGenerator::GetNewOrderTxnReq(TxnRequest *req,
 void TpccTxnGenerator::get_tpcc_payment_txn_req(
     TxnRequest *req, uint32_t cid) const {
   req->txn_type_ = TPCC_PAYMENT;
+  req->local_txn = true;
   //int home_w_id = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1);
   int home_w_id = cid % tpcc_para_.n_w_id_;
   Value c_w_id, c_d_id;
@@ -119,6 +122,7 @@ void TpccTxnGenerator::get_tpcc_payment_txn_req(
   }
   if (tpcc_para_.n_w_id_ > 1 && // warehouse more than one, can do remote
       RandomGenerator::percentage_true(15)) { //XXX 15% pay through remote warehouse, 85 home REMOTE_RATIO
+    req->local_txn = false;
     int c_w_id_int = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 2);
     c_w_id_int = c_w_id_int >= home_w_id ? c_w_id_int + 1 : c_w_id_int;
     c_w_id = Value((i32) c_w_id_int);
@@ -141,6 +145,7 @@ void TpccTxnGenerator::get_tpcc_payment_txn_req(
 
 void TpccTxnGenerator::get_tpcc_stock_level_txn_req(
     TxnRequest *req, uint32_t cid) const {
+  req->local_txn = true;
   req->txn_type_ = TPCC_STOCK_LEVEL;
   req->input_[TPCC_VAR_W_ID] = Value((i32) (cid % tpcc_para_.n_w_id_));
   req->input_[TPCC_VAR_D_ID] = Value((i32) (cid / tpcc_para_.n_w_id_) % tpcc_para_.n_d_id_);
@@ -149,6 +154,7 @@ void TpccTxnGenerator::get_tpcc_stock_level_txn_req(
 
 void TpccTxnGenerator::get_tpcc_delivery_txn_req(
     TxnRequest *req, uint32_t cid) const {
+  req->local_txn = true;
   req->txn_type_ = TPCC_DELIVERY;
   req->input_[TPCC_VAR_W_ID] = Value((i32) (cid % tpcc_para_.n_w_id_));
   req->input_[TPCC_VAR_O_CARRIER_ID] = Value((i32) RandomGenerator::rand(1, 10));
@@ -157,6 +163,7 @@ void TpccTxnGenerator::get_tpcc_delivery_txn_req(
 
 void TpccTxnGenerator::get_tpcc_order_status_txn_req(
     TxnRequest *req, uint32_t cid) const {
+  req->local_txn = true;
   req->txn_type_ = TPCC_ORDER_STATUS;
   if (RandomGenerator::percentage_true(60)) {//XXX 60% by c_last
     req->input_[TPCC_VAR_C_LAST] =
