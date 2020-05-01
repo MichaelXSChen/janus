@@ -245,9 +245,9 @@ void TpccPiece::RegNewOrder() {
   for (int i = (0); i < (1000); i++) {
     // 1000 is a magical number?
     SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(i),
-              TPCC_TB_STOCK, TPCC_VAR_S_W_ID(i))
+              TPCC_TB_STOCK, TPCC_VAR_W_ID)
     INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(i),
-              TPCC_VAR_D_ID, TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i))
+              TPCC_VAR_D_ID, TPCC_VAR_I_ID(i), TPCC_VAR_W_ID)
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(0), 1000, DF_NO)
@@ -255,8 +255,8 @@ void TpccPiece::RegNewOrder() {
     Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_RS(I));
     mdb::MultiBlob mb(2);
     mb[0] = cmd.input[TPCC_VAR_I_ID(I)].get_blob();
-    mb[1] = cmd.input[TPCC_VAR_S_W_ID(I)].get_blob();
-    int32_t w_id = cmd.input[TPCC_VAR_S_W_ID(I)].get_i32();
+    mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
+    int32_t w_id = cmd.input[TPCC_VAR_W_ID].get_i32();
     int32_t i_id = cmd.input[TPCC_VAR_I_ID(I)].get_i32();
     Log_debug("new order read stock. item_id: %x, s_w_id: %x",
               i_id,

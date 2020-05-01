@@ -25,6 +25,9 @@
 #include "bench/micro/piece.h"
 #include "bench/micro/chopper.h"
 
+//retwis bench
+ #include "bench/retwis/piece.h"
+ #include "bench/retwis/chopper.h"
 namespace rococo {
 Sharding::Sharding() { }
 

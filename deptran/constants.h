@@ -95,7 +95,7 @@ namespace rococo {
 #define TPCC_DIST_PART (3)
 #define TPCC_REAL_DIST_PART (4)
 #define MICRO_BENCH (5)
-
+#define RETWIS (6)
 
 
 

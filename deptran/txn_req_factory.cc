@@ -27,6 +27,9 @@
 #include "bench/micro/piece.h"
 #include "bench/micro/chopper.h"
 
+//retwis bench
+#include "bench/retwis/piece.h"
+#include "bench/retwis/chopper.h"
 namespace rococo {
 
 TxnGenerator::TxnGenerator(Config* config)
@@ -63,6 +66,12 @@ TxnGenerator::TxnGenerator(Config* config)
                 RandomGenerator::rand(0, rw_benchmark_para_.n_table_) :
                 -1;
       break;
+    case RETWIS:
+        retwis_para_.n_table_ = table_num_rows[std::string(RETWIS_TB)];
+        fix_id_ = (Config::GetConfig()->dist_ == "fixed") ?
+                 RandomGenerator::rand(0, retwis_para_.n_table_) :
+                 -1;
+       break;
     default:
       Log_fatal("benchmark not implemented");
       verify(0);
@@ -109,6 +118,8 @@ void TxnGenerator::get_micro_bench_txn_req(
 
 void TxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
   switch (benchmark_) {
+    case RW_BENCHMARK:
+    case RETWIS:
     case TPCA:
     case TPCC:
     case TPCC_DIST_PART:
@@ -148,6 +159,12 @@ void TxnGenerator::get_txn_types(
     case MICRO_BENCH:
       txn_types[MICRO_BENCH_R] = std::string(MICRO_BENCH_R_NAME);
       txn_types[MICRO_BENCH_W] = std::string(MICRO_BENCH_W_NAME);
+      break;
+    case RETWIS:
+      txn_types[RETWIS_ADD_USERS] = std::string(RETWIS_ADD_USERS_NAME);
+      txn_types[RETWIS_FOLLOW] = std::string(RETWIS_FOLLOW_NAME);
+      txn_types[RETWIS_POST_TWEET] = std::string(RETWIS_POST_TWEET_NAME);
+      txn_types[RETWIS_GET_TIMELINE] = std::string(RETWIS_GET_TIMELINE_NAME);
       break;
     default:
       Log_fatal("benchmark not implemented");
