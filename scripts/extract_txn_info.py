@@ -28,14 +28,14 @@ with open(fn, 'r') as f:
         if record and l == END_DELIM:
             record = False
             io = StringIO.StringIO(buf)
-            y = yaml.load(io)
+            y = yaml.load(io, Loader=yaml.FullLoader)
             txn_name = y['txn_name']
             data[txn_name] = y
         elif not record and l == BEGIN_DELIM:
             record = True
             buf = ""
         elif record:
-            buf += l + "\n"
+            buf += line
 
 if len(data.keys()) > 0:
     with open(output_fn, 'w') as f:

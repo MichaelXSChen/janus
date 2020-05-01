@@ -496,7 +496,7 @@ def run_experiments(args):
                         experiment_name)
             traceback.print_exc()
     
-    # aggregate_results(experiment_name)
+    aggregate_results(experiment_name)
     # generate_graphs(args)
                    
 
