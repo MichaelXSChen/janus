@@ -414,6 +414,7 @@ def scrape_data(name):
     if res!=0:
         logger.error("Error scraping data!!")
 
+
 def generate_graphs(args):
     if args.generate_graph:	
         restore_dir = os.getcwd()
