@@ -21,7 +21,7 @@ class TpccTxnGenerator : public TxnGenerator {
 
  public:
   using TxnGenerator::TxnGenerator;
-  TpccTxnGenerator(rococo::Config *config);
+  TpccTxnGenerator(rococo::Config *config, parid_t partition_id);
 
   // tpcc
   virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;

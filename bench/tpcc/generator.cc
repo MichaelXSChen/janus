@@ -5,10 +5,11 @@
 
 namespace rococo {
 
-TpccTxnGenerator::TpccTxnGenerator(Config* config)
+TpccTxnGenerator::TpccTxnGenerator(Config* config, parid_t partition_id)
     : TxnGenerator(config) {
   std::map<std::string, uint64_t> table_num_rows;
   sharding_->get_number_rows(table_num_rows);
+  this->partition_id_ = partition_id;
 
   std::vector<unsigned int> partitions;
   sharding_->GetTablePartitions(TPCC_TB_WAREHOUSE, partitions);

@@ -29,6 +29,7 @@ class Config {
   int edge_client_in_region_rate_;
   bool edge_deployment_enabled_ = false;
 
+  std::set<std::string> dc_names_;
   static Config *config_s;
   void init_hostsmap(const char *hostspath);
   std::string site2host_addr(std::string &name);

@@ -489,6 +489,7 @@ void Config::LoadDatacenterYML(YAML::Node config) {
     auto hostname = it->first.as<string>();
     auto dcname = it->second.as<string>();
     Log_debug("dc [%s] has server [%s]", dcname.c_str(), hostname.c_str());
+    dc_names_.insert(dcname);
     host_dc_map_[hostname] = dcname;
     for (auto &group: replica_groups_) {
       for (auto &server: group.replicas) {

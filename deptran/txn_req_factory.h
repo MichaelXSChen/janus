@@ -48,6 +48,8 @@ class TxnGenerator {
   Sharding* sharding_;
 
  public:
+  parid_t partition_id_;
+
   TxnGenerator(Config* config);
 
   virtual void GetTxnReq(TxnRequest* req,

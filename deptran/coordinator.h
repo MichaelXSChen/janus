@@ -37,6 +37,7 @@ class Coordinator : public CoordinatorBase {
   bool batch_optimal_ = false;
   bool retry_wait_;
 
+
   std::atomic<uint64_t> next_pie_id_;
   std::atomic<uint64_t> next_txn_id_;
 

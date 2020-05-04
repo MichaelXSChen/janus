@@ -101,7 +101,7 @@ Coordinator* ClientWorker::FindOrCreateCoordinator() {
 Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
 
   cooid_t coo_id = cli_id_;
-  coo_id = (coo_id << 16) + offset_id; //xs: don't know why, interesting
+  coo_id = (coo_id << 16) + offset_id * config_->GetNumPartition() + my_site_.partition_id_; //xs: don't know why, interesting
 //  verify(my_site_ != nullptr);
 
   Log_info("%s called, cli_id_ = %u, offset_id = %hu, coo_id = %u", __FUNCTION__, cli_id_, offset_id, coo_id);
@@ -112,8 +112,10 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
                                  id,
                                  txn_reg_);
   coo->loc_id_ = my_site_.partition_id_;
+  coo->par_id_ = my_site_.partition_id_;
   coo->commo_ = commo_;
   coo->client_siteinfo_ = &my_site_;
+
   coo->forward_status_ = forward_requests_to_leader_ ? FORWARD_TO_LEADER : NONE;
   Log_info("coordinator %u created at site %d: par_id = %u, forward %d, locale_id = %u", coo->coo_id_, this->my_site_.id, this->my_site_.partition_id_, coo->forward_status_, coo->loc_id_);
   created_coordinators_.push_back(coo);
@@ -252,7 +254,7 @@ ClientWorker::ClientWorker(
     ccsi(ccsi),
     n_concurrent_(config->get_concurrent_txn()) {
   frame_ = Frame::GetFrame(config->cc_mode_);
-  txn_generator_ = frame_->CreateTxnGenerator();
+  txn_generator_ = frame_->CreateTxnGenerator(my_site_.partition_id_);
   config->get_all_site_addr(servers_);
   num_txn.store(0);
   success.store(0);

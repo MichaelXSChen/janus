@@ -394,12 +394,12 @@ Scheduler* Frame::CreateScheduler() {
   return sch;
 }
 
-TxnGenerator * Frame::CreateTxnGenerator() {
+TxnGenerator * Frame::CreateTxnGenerator(uint32_t partition_id) {
   auto benchmark = Config::config_s->benchmark_;
   TxnGenerator * gen = nullptr;
   switch (benchmark) {
     case TPCC:
-      gen = new TpccTxnGenerator(Config::GetConfig());
+      gen = new TpccTxnGenerator(Config::GetConfig(), partition_id);
       break;
     case TPCC_DIST_PART:
     case TPCC_REAL_DIST_PART:

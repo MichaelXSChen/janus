@@ -58,7 +58,7 @@ class Frame {
                            bool ro,
                            Scheduler *sch);
 
-  TxnGenerator * CreateTxnGenerator();
+  TxnGenerator * CreateTxnGenerator(uint32_t partition_id);
   virtual vector<rrr::Service*> CreateRpcServices(uint32_t site_id,
                                                   Scheduler *dtxn_sched,
                                                   rrr::PollMgr* poll_mgr,
