@@ -63,19 +63,24 @@ void TpccTxnGenerator::GetNewOrderTxnReq(TxnRequest *req,
   bool all_local = true;
   for (int i = 0; i < ol_cnt; i++) {
     //req->input_[4 + 3 * i] = Value((i32)RandomGenerator::nu_rand(8191, 0, tpcc_para_.n_i_id_ - 1)); XXX nurand is the standard
-    rrr::i32 tmp_i_id = (i32) RandomGenerator::rand(0, tpcc_para_.n_i_id_ - 1 - i);
-
-    int pre_n_less = 0, n_less = 0;
-    while (true) {
-      n_less = 0;
-      for (int j = 0; j < i; j++)
-        if (i_id_buf[j] <= tmp_i_id)
-          n_less++;
-      if (n_less == pre_n_less)
+    rrr::i32 tmp_i_id;
+    while(true){
+      tmp_i_id = (i32) RandomGenerator::rand(0, tpcc_para_.n_i_id_ - 1 - i);
+      if((int)tmp_i_id % tpcc_para_.n_w_id_ == home_w_id){
         break;
-      tmp_i_id += (n_less - pre_n_less);
-      pre_n_less = n_less;
+      }
     }
+    //int pre_n_less = 0, n_less = 0;
+    //while (true) {
+    //  n_less = 0;
+    //  for (int j = 0; j < i; j++)
+    //    if (i_id_buf[j] <= tmp_i_id)
+    //      n_less++;
+    //  if (n_less == pre_n_less)
+    //    break;
+    //  tmp_i_id += (n_less - pre_n_less);
+    //  pre_n_less = n_less;
+    //}
 
     i_id_buf[i] = tmp_i_id;
     req->input_[TPCC_VAR_I_ID(i)] = Value(tmp_i_id);
