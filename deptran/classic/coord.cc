@@ -67,6 +67,8 @@ void ClassicCoord::do_one(TxnRequest &req) {
 
     std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 //    Log_info("%s called", __FUNCTION__);
+    this->local_txn_ = req.local_txn;
+
     TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
     verify(txn_reg_ != nullptr);
     cmd->root_id_ = this->next_txn_id();

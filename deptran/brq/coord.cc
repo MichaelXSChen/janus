@@ -81,14 +81,14 @@ void BrqCoord::PreAccept() {
 
     for (auto &cmd : cmds){
       uint32_t piece_type = cmd.type_;
-      Log_info("txn_id = %lu, txn_type = %lu, piece_type = %u, touched %u", dtxn->id(), type, piece_type, par_id);
+      Log_info("txn_id = %lu, txn_type = %lu, piece_type = %u, local %d, touched %u", dtxn->id(), type, piece_type, local_txn_, par_id);
     }
 
     /*
      * ends here
      */
   }
-  Log_info("coord [name = %s], txn_id = %lu, txn_type = %lu, dc = %s, touches par id = %s", this->client_siteinfo_->name.c_str(), dtxn->id(), type , this->client_siteinfo_->dcname.c_str(), touched.c_str());
+  Log_info("coord [name = %s], txn_id = %lu, txn_type = %lu, dc = %s, local_txn = %d, touches par id = %s", this->client_siteinfo_->name.c_str(), dtxn->id(), type , this->client_siteinfo_->dcname.c_str(), local_txn_, touched.c_str());
 }
 
 void BrqCoord::PreAcceptAck(phase_t phase,

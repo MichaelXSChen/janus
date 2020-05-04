@@ -73,6 +73,8 @@ class Coordinator : public CoordinatorBase {
   std::function<void()> exe_callback_ = [] () {verify(0);};
   // above should be reset
 
+  bool local_txn_;
+
 #ifdef TXN_STAT
   typedef struct txn_stat_t {
     uint64_t                             n_serv_tch;
