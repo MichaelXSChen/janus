@@ -28,7 +28,7 @@ with open(fn, 'r') as f:
         if record and l == END_DELIM:
             record = False
             io = StringIO.StringIO(buf)
-            y = yaml.load(io, Loader=yaml.FullLoader)
+            y = yaml.load(io)
             txn_name = y['txn_name']
             data[txn_name] = y
         elif not record and l == BEGIN_DELIM:
