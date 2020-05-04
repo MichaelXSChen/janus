@@ -26,6 +26,9 @@ class Config {
 
  public:
 
+  int edge_client_in_region_rate_;
+  bool edge_deployment_enabled_ = false;
+
   static Config *config_s;
   void init_hostsmap(const char *hostspath);
   std::string site2host_addr(std::string &name);
@@ -175,7 +178,7 @@ class Config {
   void LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,
                                 YAML::Node column);
   void LoadOVParams(YAML::Node ov);
-
+  void LoadEdgeConfig(YAML::Node edge);
 
   void InitMode(std::string&cc_name, string&ab_name);
   void InitBench(std::string &);

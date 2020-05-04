@@ -71,7 +71,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
     if (n_concurrent_ == 0) {
       Log_debug("all coordinators finished... signal done");
       finish_cond.signal();
-    } else {c
+    } else {
       Log_debug("waiting for %d more coordinators to finish", n_concurrent_);
     }
     finish_mutex.unlock();

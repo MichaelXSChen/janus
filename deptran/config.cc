@@ -311,7 +311,33 @@ void Config::LoadYML(std::string &filename) {
   if (config["ovparams"]){
     LoadOVParams(config["ovparams"]);
   }
+
+  if (config["edgeconfig"]){
+    LoadEdgeConfig(config["edgeconfig"]);
+  }
 }
+
+void Config::LoadEdgeConfig(YAML::Node edge){
+  Log_info("%s called", __FUNCTION__);
+  if (edge["edge_deployment"]){
+    if (edge["edge_deployment"].as<string>() == "true" || edge["edge_deployment"].as<string>() == "True"){
+      this->edge_deployment_enabled_ = true;
+    }else{
+      Log_info("edge_deployment disabled, config = %s", edge["edge_deployment"].as<string>().c_str()) ;
+      return;
+    }
+  }else{
+    return;
+  }
+  if (edge["client_in_region_rate"]){
+    edge_client_in_region_rate_ = edge["client_in_region_rate"].as<int>();
+  }else{
+    edge_client_in_region_rate_ = 100;
+  }
+  Log_info("Edge deployment enabled, client_in_region_rate = %d", edge_client_in_region_rate_);
+}
+
+
 
 void Config::LoadOVParams(YAML::Node ov){
   Log_debug("%s called", __FUNCTION__);
