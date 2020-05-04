@@ -33,6 +33,7 @@ Coordinator* BrqFrame::CreateCoord(cooid_t coo_id,
                                  id);
   coord->txn_reg_ = txn_reg;
   coord->frame_ = this;
+  Log_info("created BRQ coord, local_id = %u", coord->loc_id_);
   return coord;
 }
 

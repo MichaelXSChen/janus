@@ -71,7 +71,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
     if (n_concurrent_ == 0) {
       Log_debug("all coordinators finished... signal done");
       finish_cond.signal();
-    } else {
+    } else {c
       Log_debug("waiting for %d more coordinators to finish", n_concurrent_);
     }
     finish_mutex.unlock();
@@ -104,17 +104,18 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
   coo_id = (coo_id << 16) + offset_id; //xs: don't know why, interesting
 //  verify(my_site_ != nullptr);
 
+  Log_info("%s called, cli_id_ = %u, offset_id = %hu, coo_id = %u", __FUNCTION__, cli_id_, offset_id, coo_id);
   auto coo = frame_->CreateCoord(coo_id,
                                  config_,
                                  benchmark,
                                  ccsi,
                                  id,
                                  txn_reg_);
-  coo->loc_id_ = my_site_.locale_id;
+  coo->loc_id_ = my_site_.partition_id_;
   coo->commo_ = commo_;
   coo->client_siteinfo_ = &my_site_;
   coo->forward_status_ = forward_requests_to_leader_ ? FORWARD_TO_LEADER : NONE;
-  Log_info("coordinator %u created at site %d: par_id = %u, forward %d", coo->coo_id_, this->my_site_.id, this->my_site_.partition_id_, coo->forward_status_);
+  Log_info("coordinator %u created at site %d: par_id = %u, forward %d, locale_id = %u", coo->coo_id_, this->my_site_.id, this->my_site_.partition_id_, coo->forward_status_, coo->loc_id_);
   created_coordinators_.push_back(coo);
   return coo;
 }
@@ -224,6 +225,7 @@ void ClientWorker::DispatchRequest(Coordinator *coo) {
       TxnRequest req;
       {
         std::lock_guard<std::mutex> lock(this->request_gen_mutex);
+        Log_info("calling dispatch , coo_id_ = %u, n_partition = %u, cid = %u", coo->coo_id_, config_->GetNumPartition(), coo->coo_id_%config_->GetNumPartition());
         txn_generator_->GetTxnReq(&req, coo->coo_id_);
       }
       req.callback_ = std::bind(&rococo::ClientWorker::RequestDone,
