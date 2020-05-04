@@ -144,7 +144,8 @@ void TpccTxnGenerator::get_tpcc_payment_txn_req(
   req->input_[TPCC_VAR_C_W_ID] = c_w_id;
   req->input_[TPCC_VAR_C_D_ID] = c_d_id;
   req->input_[TPCC_VAR_H_AMOUNT] = h_amount;
-  req->input_[TPCC_VAR_H_KEY] = Value((i32) RandomGenerator::rand()); // h_key
+  rrr::i32 tmp_h_key = home_w_id;
+  req->input_[TPCC_VAR_H_KEY] = Value(tmp_h_key); // h_key
 //  req->input_[TPCC_VAR_W_NAME] = Value();
 //  req->input_[TPCC_VAR_D_NAME] = Value();
 }
