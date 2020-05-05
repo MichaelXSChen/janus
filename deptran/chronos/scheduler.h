@@ -89,7 +89,11 @@ class SchedulerChronos : public BrqSched {
                 RccGraph* graph,
                 const function<void()> &callback) override;
 
+  void StoreLocalAck(txnid_t txn_id, int res, ChronosStoreLocalRes &chr_res);
+
   ChronosCommo* commo();
+
+  std::set<txnid_t> local_pending_txns_ {};
 
   std::atomic<uint64_t> logical_clock {0};
 

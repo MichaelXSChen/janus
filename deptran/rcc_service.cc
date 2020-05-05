@@ -365,6 +365,23 @@ void ClassicServiceImpl::ChronosDispatch(const vector<SimpleCommand> &cmd,
 
 }
 
+
+void ClassicServiceImpl::ChronosStoreLocal(const vector<SimpleCommand> &cmd,
+                                         const ChronosStoreLocalReq &req,
+                                         int32_t *p_res,
+                                         ChronosStoreLocalRes *chr_res,
+                                         DeferredReply *p_defer) {
+
+//  Log_info("%s called", __PRETTY_FUNCTION__);
+
+  std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
+  auto *sched = (SchedulerChronos *) dtxn_sched_;
+
+  p_defer->reply();
+
+//  Log_info("%s returned", __PRETTY_FUNCTION__);
+
+}
 void ClassicServiceImpl::ChronosPreAccept(const uint64_t &txn_id,
                                           const std::vector<SimpleCommand> &cmds,
                                           const ChronosPreAcceptReq &chr_req,

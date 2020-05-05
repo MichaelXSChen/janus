@@ -32,6 +32,13 @@ class ChronosCommo : public BrqCommo {
                                         TxnOutput& output,
                                         ChronosDispatchRes &chr_res)>&)  ;
 
+
+  void SendStoreLocal(const vector<SimpleCommand>& cmd,
+                    const ChronosStoreLocalReq& req,
+                    const function<void(int res,
+                                        ChronosStoreLocalRes &chr_res)>&)  ;
+
+
   void BroadcastPreAccept(parid_t par_id,
                           txnid_t txn_id,
                           ballot_t ballot,

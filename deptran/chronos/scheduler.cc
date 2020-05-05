@@ -23,14 +23,32 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
 
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   txnid_t txn_id = cmd[0].root_id_; //should have the same root_id
-  auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id)); //type is shared_pointer
+
+  verify(local_pending_txns_.count(txn_id) == 0);
+  local_pending_txns_.insert(txn_id);
+  auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
+
+  auto callback = std::bind(&SchedulerChronos::StoreLocalAck,
+                            this,
+                            txn_id,
+                            std::placeholders::_1,
+                            std::placeholders::_2);
+
+  ChronosStoreLocalReq req;
+
+  commo()->SendStoreLocal(cmd, req, callback);
+
+
+
+
+
   verify(dtxn->id() == txn_id);
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
   dtxn->received_dispatch_ts_left_ = chr_req.ts_min;
   dtxn->received_dispatch_ts_right_ = chr_req.ts_max;
 
 
-  Log_debug("[Scheduler %d] On Dispatch, txn_id = %d, ts_range = [%d, %d]", this->frame_->site_info_->id, txn_id, chr_req.ts_min, chr_req.ts_max);
+  Log_info("[Scheduler %hu] On Dispatch, txn_id = %lu, is_local = %d, ts_range = [%d, %d]", this->frame_->site_info_->id, txn_id, chr_req.is_local, chr_req.ts_min, chr_req.ts_max);
 
   for (auto& c : cmd) {
     dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
@@ -54,6 +72,12 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
   return 0;
 }
 
+
+
+void SchedulerChronos::StoreLocalAck(txnid_t txn_id, int res, ChronosStoreLocalRes &chr_res){
+  Log_info("%s called, txnid= %lu", __FUNCTION__ , txn_id);
+
+}
 
 
 void SchedulerChronos::OnPreAccept(const txnid_t txn_id,

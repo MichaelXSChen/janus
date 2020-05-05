@@ -189,6 +189,12 @@ class ClassicServiceImpl : public ClassicService {
                        TxnOutput *p_output,
                        DeferredReply *p_defer) override;
 
+  void ChronosStoreLocal(const vector<SimpleCommand> &cmd,
+                       const ChronosStoreLocalReq &req,
+                       int32_t *p_res,
+                       ChronosStoreLocalRes *chr_res,
+                       DeferredReply *p_defer) override;
+
   void OVStore(const cmdid_t &txn_id,
                const std::vector<SimpleCommand> &cmd,
                const OVStoreReq &ov_req,

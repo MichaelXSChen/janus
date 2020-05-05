@@ -257,6 +257,7 @@ void CoordinatorChronos::Dispatch() {
                               std::placeholders::_2,
                               std::placeholders::_3);
     ChronosDispatchReq req;
+    req.is_local = (int) is_local;
     ts_left_ = logical_clock++;
     ts_right_ = ts_left_ + ts_delta_;
     req.ts_min = ts_left_;
@@ -291,7 +292,7 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
     verify(dispatch_acks_[pair.first] == false);
     dispatch_acks_[pair.first] = true;
     txn().Merge(pair.first, pair.second); //For those txn that need the read value for other command.
-    Log_info("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+    Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
              n_dispatch_ack_, n_dispatch_, txn().id_, pair.first);
   }
 

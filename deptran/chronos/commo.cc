@@ -44,6 +44,37 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
   Future::safe_release(proxy->async_ChronosDispatch(cmd, chr_req, fuattr));
 }
 
+void ChronosCommo::SendStoreLocal(const vector<SimpleCommand> &cmd,
+                                  const ChronosStoreLocalReq &req,
+                                  const function<void(int, ChronosStoreLocalRes &)>& callback) {
+
+  rrr::FutureAttr fuattr;
+  auto tid = cmd[0].root_id_;
+  auto par_id = cmd[0].partition_id_;
+  std::function<void(Future *)> cb =
+      [callback, tid, par_id](Future *fu) {
+        int res;
+        TxnOutput output;
+        ChronosStoreLocalRes chr_res;
+        fu->get_reply() >> res >> chr_res;
+        callback(res, chr_res);
+      };
+  fuattr.callback = cb;
+  auto proxy_info = NearestProxyForPartition(cmd[0].PartitionId());
+  //xs: seems to dispatch only the nearst replica fo the shard
+
+
+  auto proxy = proxy_info.second;
+  //XS: proxy is the rpc client side handler.
+//  if (is_local){
+//    Log_info("dispatch local transaction to partition %u, proxy (site) = %hu", cmd[0].PartitionId(), proxy_info.first);
+//  }else{
+//    Log_info("dispatch non-local transaction to partition %u, proxy (site) = %hu", cmd[0].PartitionId(), proxy_info.first);
+//  }
+
+  Future::safe_release(proxy->async_ChronosStoreLocal(cmd, req, fuattr));
+}
+
 void ChronosCommo::SendHandoutRo(SimpleCommand &cmd,
                                  const function<void(int res,
                                                      SimpleCommand &cmd,

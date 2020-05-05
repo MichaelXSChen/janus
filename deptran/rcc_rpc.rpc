@@ -115,6 +115,12 @@ abstract service Classic {
                         ChronosDispatchRes chr_res,
                         TxnOutput output);
 
+  defer ChronosStoreLocal(vector<SimpleCommand> cmd,
+                        ChronosStoreLocalReq req |
+                        i32 res,
+                        ChronosStoreLocalRes chr_res);
+
+
   defer ChronosPreAccept(cmdid_t txn_id,
                          vector<SimpleCommand> cmd,
                          ChronosPreAcceptReq req |
@@ -243,9 +249,21 @@ abstract service ClientControl {
 struct ChronosDispatchReq{
     i64 ts_min;
     i64 ts_max;
+    i32 is_local;
 }
 
 struct ChronosDispatchRes{
+    i64 ts_left;
+    i64 ts_right;
+}
+
+struct ChronosStoreLocalReq{
+    i64 ts_min;
+    i64 ts_max;
+    i32 is_local;
+}
+
+struct ChronosStoreLocalRes{
     i64 ts_left;
     i64 ts_right;
 }
