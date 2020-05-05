@@ -10,6 +10,48 @@ namespace rococo {
 
 class RccGraph;
 class ChronosCommo;
+
+
+class chr_ts_t{
+ public:
+  chr_ts_t(int64_t ts, int64_t counter, int16_t site_id): timestamp_(ts), stretch_counter_(counter), site_id_(site_id){}
+  chr_ts_t(): timestamp_(0), stretch_counter_(0), site_id_(0){}
+  int64_t timestamp_;
+  int64_t stretch_counter_;
+  int16_t site_id_;
+  inline bool operator < (const chr_ts_t rhs) const{
+    if (this->timestamp_ < rhs.timestamp_){
+      return true;
+    }
+    else if (this->timestamp_ < rhs.timestamp_){
+      return false;
+    }
+    else {
+     if (this->stretch_counter_ < rhs.stretch_counter_){
+       return true;
+     }
+     else if (this->stretch_counter_ > rhs.stretch_counter_){
+       return false;
+     }
+     else{
+       return this->site_id_ < rhs.site_id_;
+     }
+    }
+  }
+
+  inline bool operator == (const chr_ts_t rhs) const{
+    return (this->timestamp_ == rhs.timestamp_ && this->stretch_counter_ == rhs.stretch_counter_ && this->site_id_ == rhs.site_id_);
+  }
+
+  inline bool operator > (const chr_ts_t rhs) const{
+    return (!this->operator<(rhs) && !this->operator==(rhs));
+  }
+
+};
+
+
+
+
 class SchedulerChronos : public BrqSched {
  public:
   using BrqSched::BrqSched;
