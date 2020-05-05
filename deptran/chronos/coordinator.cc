@@ -228,13 +228,18 @@ void CoordinatorChronos::Dispatch() {
   verify(txn->root_id_ == txn->id_);
   int cnt = 0;
   map<parid_t, vector<SimpleCommand*>> cmds_by_par = txn->GetReadyCmds();
-  Log_info("transaction (id %d) has %d ready pieces", txn->id_, cmds_by_par.size());
+  Log_debug("transaction (id %d) has %d ready pieces", txn->id_, cmds_by_par.size());
 
-  int index = 0;
+  bool is_local = local_txn_;
+  if (is_local){
+    verify(cmds_by_par.size() == 1);
+  }
+
+  //int index = 0;
   for (auto &pair: cmds_by_par) {
 
     const parid_t &par_id = pair.first;
-    Log_info("piece: (id %d, pieces %d) has touch par_id = %d", txn->id_, index++, par_id);
+    //Log_info("piece: (id %d, pieces %d) has touch par_id = %d", txn->id_, index++, par_id);
     auto &cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
@@ -257,9 +262,9 @@ void CoordinatorChronos::Dispatch() {
     req.ts_min = ts_left_;
     req.ts_max = ts_right_;
 
-    commo()->SendDispatch(cc, req, callback);
+    commo()->SendDispatch(cc, req, is_local, callback);
   }
-  Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
+  //Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
 }
 
 //xs: callback for handling Dispatch ACK
@@ -302,7 +307,8 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
 
     Log_info("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     verify(!txn().do_early_return());
-    GotoNextPhase();
+  //xs: stop the code from moving forward
+  // GotoNextPhase();
   }
 }
 

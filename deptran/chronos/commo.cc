@@ -12,6 +12,7 @@ namespace rococo {
 
 void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
                                 const ChronosDispatchReq& chr_req,
+                                bool is_local,
                                 const function<void(int res,
                                                     TxnOutput &cmd,
                                                     ChronosDispatchRes &chr_res)> &callback) {
@@ -34,7 +35,11 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
 
   auto proxy = proxy_info.second;
   //XS: proxy is the rpc client side handler.
-  Log_info("dispatch to %ld, proxy (site) = %d", cmd[0].PartitionId(), proxy_info.first);
+  if (is_local){
+    Log_info("dispatch local transaction to partition %u, proxy (site) = %hu", cmd[0].PartitionId(), proxy_info.first);
+  }else{
+    Log_info("dispatch non-local transaction to partition %u, proxy (site) = %hu", cmd[0].PartitionId(), proxy_info.first);
+  }
 
   Future::safe_release(proxy->async_ChronosDispatch(cmd, chr_req, fuattr));
 }
