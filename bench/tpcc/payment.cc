@@ -85,7 +85,7 @@ void TpccPiece::RegPayment() {
   // piece 0, Ri & W warehouse
   INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT,
-            TPCC_VAR_C_ID, TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID,
+            TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID,
             TPCC_VAR_H_KEY)
   OUTPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0,
              TPCC_VAR_W_NAME, TPCC_VAR_W_STREET_1, TPCC_VAR_W_STREET_2,
