@@ -119,7 +119,7 @@ void SchedulerChronos::StoreLocalAck(txnid_t txn_id,
   verify(local_replicas_ts_.count(src_site) != 0);
   if (local_replicas_ts_[src_site] < src_ts){
     local_replicas_ts_[src_site] = src_ts;
-    Log_info("watermark for site %hu changed to %lu:%lu:hu", src_site, src_ts.timestamp_, src_ts.stretch_counter_, src_ts.site_id_);
+    Log_info("watermark for site %hu changed to %lu:%lu:%hu", src_site, src_ts.timestamp_, src_ts.stretch_counter_, src_ts.site_id_);
   }
 
   Log_info("%s called, txnid= %lu, count = %d, total = %d", __FUNCTION__ , txn_id, dtxn->n_local_store_acks, total_count);
@@ -150,6 +150,7 @@ void SchedulerChronos::CheckExecutableTxns(){
     if (!dtxn->local_stored_){
       break;
     }
+    Log_info("Going to execute txn with id = %lu", txn_id);
     dtxn->execute_callback_();
     itr = pending_local_txns_.erase(itr);
   }

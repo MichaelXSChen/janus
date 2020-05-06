@@ -33,7 +33,7 @@ void TxChronos::DispatchExecute(const SimpleCommand &cmd,
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
 
-  Log_info("%s called, defer= %s, txn_id = %d, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
+  Log_info("%s called, defer= %s, txn_id = %hu, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
   int xxx, *yyy;
   if (pair.defer == DF_REAL) {
     yyy = &xxx;
@@ -74,7 +74,7 @@ void TxChronos::PreAcceptExecute(const SimpleCommand &cmd, int *res, map<int32_t
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
 
-  Log_info("%s called, defer= %s, txn_id = %d, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
+  Log_debug("%s called, defer= %s, txn_id = %d, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
   int xxx, *yyy;
   if (pair.defer == DF_REAL) {
     yyy = &xxx;
@@ -155,7 +155,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       int64_t  t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("[txn %d] ReadColumn, Dispatch phase1: table = %s, col_id = %d,  hint_flag = %s, root_tyep = %d,  t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
+      Log_debug("[txn %d] ReadColumn, Dispatch phase1: table = %s, col_id = %d,  hint_flag = %s, root_tyep = %d,  t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
                 this->id(),
                row->get_table()->Name().c_str(),
                col_id,
@@ -196,7 +196,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
 
       int64_t t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
-      Log_info(
+      Log_debug(
           "[txn %d] ReadColumn, pre-accept phase1: table = %s, col_id = %d,  hint_flag = %s, tyep = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
           this->id(),
           row->get_table()->Name().c_str(),
@@ -226,7 +226,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
       int64_t t_left = t_pw > t_cw ? t_pw : t_cw;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info(
+      Log_debug(
           "[txn %d] ReadColumn, pre-accept phase2: table = %s, col_id = %d,  hint_flag = %s, tyep = %d, t_pw = %d, t_cw = %d, t_low = %d, t_left = %d, t_right = %d",
           this->id(),
           row->get_table()->Name().c_str(),
@@ -248,7 +248,7 @@ bool TxChronos::ReadColumn(mdb::Row *row,
     }
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
       //For fast path_, seems no need to read.
-      Log_info("[txn %d] ReadColumn, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
+      Log_debug("[txn %d] ReadColumn, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
                 id(),
           row->get_table()->Name().c_str(),
                col_id,
@@ -287,7 +287,7 @@ bool TxChronos::WriteColumn(Row *row,
       int64_t t_left = t_pr > t_cr ? t_pr : t_cr;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("[txn %d] Write Column, Prepare phase1: table = %s, col_id = %d,  hint_flag = %s, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
+      Log_debug("[txn %d] Write Column, Prepare phase1: table = %s, col_id = %d,  hint_flag = %s, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
                 id(),
           row->get_table()->Name().c_str(),
                col_id,
@@ -312,7 +312,7 @@ bool TxChronos::WriteColumn(Row *row,
       int64_t t_left = t_pr > t_cr ? t_pr : t_cr;
       t_left = t_left > t_low ? t_left : t_low;
 
-      Log_info("[txn %d] Write Column, Prepare phase2: table = %s, col_id = %d,  hint_flag = %s, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
+      Log_debug("[txn %d] Write Column, Prepare phase2: table = %s, col_id = %d,  hint_flag = %s, t_pr = %d, t_cr = %d, t_low = %d, t_left = %d, t_right = %d",
               id(),
           row->get_table()->Name().c_str(),
                col_id,
@@ -330,7 +330,7 @@ bool TxChronos::WriteColumn(Row *row,
       r->wver_[col_id] = commit_ts_;
     };
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
-      Log_info("[txn %d] Write Column, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
+      Log_debug("[txn %d] Write Column, commit phase: table = %s, col_id = %d,  hint_flag = %s, commit_ts = %d,",
               id(),
           row->get_table()->Name().c_str(),
                col_id,

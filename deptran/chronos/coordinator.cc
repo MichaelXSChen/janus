@@ -268,8 +268,6 @@ void CoordinatorChronos::Dispatch() {
   //Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
 }
 
-//xs: callback for handling Dispatch ACK
-//xs: What is the meaning of this function.
 void CoordinatorChronos::DispatchAck(phase_t phase,
                                      int res,
                                      TxnOutput &output,
@@ -309,16 +307,15 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
     Log_info("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     verify(!txn().do_early_return());
   //xs: stop the code from moving forward
-  // GotoNextPhase();
+   committed_ = true;
+    GotoNextPhase();
   }
 }
 
 void CoordinatorChronos::GotoNextPhase() {
 
-  int n_phase = 5;
+  int n_phase = 2;
   int current_phase = phase_++ % n_phase; // for debug
-  Log_info("--------------------------------------------------");
-  Log_info("%s: phase = %d", __FUNCTION__, current_phase);
 
   switch (current_phase) {
     case Phase::CHR_INIT:
@@ -327,45 +324,12 @@ void CoordinatorChronos::GotoNextPhase() {
        * Try to make my clock as up-to-date as possible.
        */
       Dispatch();
-      verify(phase_ % n_phase == Phase::CHR_DISPATCH);
-      break;
-    case Phase::CHR_DISPATCH: //1
-      /*
-       * Contact all participant replicas
-       * Can enter fast if majority replica replies OK.
-       */
-//      phase_++;
-      verify(phase_ % n_phase == Phase::CHR_FAST);
-      PreAccept();
-      break;
-
-    case Phase::CHR_FAST: //2
-
-      if (fast_path_) {
-        phase_++;
-        Log_info("here, phase_ = %d", phase_ % n_phase);
-        verify(phase_ % n_phase == Phase::CHR_COMMIT); //4
-        Commit();
-      } else {
-        /*
-         * Fallback to ocean vista.
-         */
-        verify(phase_ % n_phase == Phase::CHR_FALLBACK); //3
-        Accept();
-      }
-      // TODO
-      break;
-
-    case Phase::CHR_FALLBACK: //3
-
       verify(phase_ % n_phase == Phase::CHR_COMMIT);
-      Commit();
       break;
 
     case Phase::CHR_COMMIT: //4
 
       verify(phase_ % n_phase == Phase::CHR_INIT); //overflow
-      verify(committed_ != aborted_);
       if (committed_) {
         End();
       } else if (aborted_) {
@@ -377,7 +341,6 @@ void CoordinatorChronos::GotoNextPhase() {
 
     default:verify(0);
   }
-  Log_info("GotoNextPhase Returned %d --------------------------------------------------", current_phase);
 
 }
 
