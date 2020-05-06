@@ -37,8 +37,16 @@ int SchedulerChronos::OnSubmit(const vector<SimpleCommand>& cmd,
 
   verify(local_txns_by_me.count(txn_id) == 0);
   chr_ts_t ts = GenerateChrTs(true);
-  verify(pending_local_txns_.count(ts) == 0);
-  pending_local_txns_[ts] = txn_id;
+
+  Log_info("%s called for txn_id = %lu", __FUNCTION__, txn_id);
+
+  if (pending_local_txns_.count(ts) != 0){
+    Log_info("ts %lu:%lu:%hu with original id = %lu, new id = %lu", ts.timestamp_, ts.stretch_counter_, ts.site_id_, pending_local_txns_[ts], txn_id);
+    verify(0);
+  }else{
+    Log_info("ts %lu:%lu:%hu set for id = %lu", ts.timestamp_, ts.stretch_counter_, ts.site_id_, txn_id);
+    pending_local_txns_[ts] = txn_id;
+  }
 
   auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
   dtxn->ts_ = ts;
@@ -143,11 +151,20 @@ void SchedulerChronos::CheckExecutableTxns(){
 
   for (auto itr = pending_local_txns_.begin(); itr != pending_local_txns_.end(); ){
     if (itr->first > min_ts){
+      Log_info("Not going to execute, queue head ts = %lu:%lu:%hu < min ts = %lu:%lu:%hu",
+          itr->first.timestamp_,
+          itr->first.stretch_counter_,
+          itr->first.site_id_,
+          min_ts.timestamp_,
+          min_ts.stretch_counter_,
+          min_ts.site_id_);
+
       break;
     }
     txnid_t txn_id = itr->second;
     auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
     if (!dtxn->local_stored_){
+      Log_info("Not going to execute, queue head txn id = %lu not stored", itr->second);
       break;
     }
     Log_info("Going to execute txn with id = %lu", txn_id);
@@ -170,11 +187,13 @@ chr_ts_t SchedulerChronos::GenerateChrTs(bool for_local) {
   ret.site_id_ = site_id_;
   ret.stretch_counter_ = 0;
 
+  Log_info("ret = %lu:%lu:%hu, last = %lu:%lu:%hu", ret.timestamp_, ret.stretch_counter_, ret.site_id_, last_clock_.timestamp_, last_clock_.stretch_counter_, last_clock_.site_id_);
   if (ret <= last_clock_){
-    verify("not monotonic");
-  }else{
-    last_clock_ = ret;
+    ret = last_clock_; 
+    ret.stretch_counter_ ++; 
+    
   }
+    last_clock_ = ret;
   return ret;
 }
 
@@ -186,7 +205,10 @@ void SchedulerChronos::OnStoreLocal(const vector<SimpleCommand> &cmd,
                  const function<void()> &reply_callback){
 
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  Log_info("%s called, txnid = %lu", __FUNCTION__ , cmd[0].root_id_);
+  Log_info("%s called, txnid = %lu, ts = %lu:%lu:%hu", __FUNCTION__ , cmd[0].root_id_,
+      chr_req.txn_timestamp,
+      chr_req.txn_strech_counter,
+      chr_req.txn_site_id);
   *res = SUCCESS;
 
   chr_ts_t ts;
@@ -194,8 +216,19 @@ void SchedulerChronos::OnStoreLocal(const vector<SimpleCommand> &cmd,
   ts.site_id_ = chr_req.txn_site_id;
   ts.stretch_counter_ = chr_req.txn_strech_counter;
 
-  verify(this->pending_local_txns_.count(ts) == 0);
+  if (local_replicas_ts_[ts.site_id_] < ts){
+    local_replicas_ts_[ts.site_id_] = ts;
+    CheckExecutableTxns();
+  }
+
   auto txn_id = cmd[0].root_id_;
+
+  if (this->pending_local_txns_.count(ts) != 0){
+    Log_info("received tx with same ts %lu:%lu:%hu, id in map = %lu, received id = %lu", ts.timestamp_, ts.stretch_counter_, ts.site_id_,pending_local_txns_[ts], txn_id);
+        verify(0);
+  }
+
+
   this->pending_local_txns_[ts] = txn_id;
   auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
   dtxn->ts_ = ts;

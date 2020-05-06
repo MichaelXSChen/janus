@@ -12,33 +12,37 @@ site:
     - ["c4", "c8"]
 # site_name - process_name map
 process:
-  s0: processD
-  s1: processA
-  s2: processB
-  s3: processC
-  s4: processD
-  s5: processA
-  s6: processB
-  s7: processC
-  s8: processD
-  s9: processA
-  s10: processB
-  s11: processC
-  c1: processA
-  c2: processB
-  c3: processC
-  c4: processD
-  c5: processA # two ciient site in one process will cause assert failed, only testing python scritp
-  c6: processB
-  c7: processC
-  c8: processD
+  s0: S1
+  s1: S1
+  s2: S1
+  s3: S2
+  s4: S2
+  s5: S2
+  s6: S3
+  s7: S3
+  s8: S3
+  s9: S4
+  s10: S4
+  s11: S4
+  c1: C1
+  c2: C2
+  c3: C3
+  c4: C4
+  c5: C1
+  c6: C2
+  c7: C3
+  c8: C4
   
 
 host:
-  processA: 10.22.1.7
-  processB: 10.22.1.17
-  processC: 10.22.1.18
-  processD: 10.22.1.7
+  S1: 10.22.1.7
+  S2: 10.22.1.17
+  S3: 10.22.1.18
+  S4: 10.22.1.7
+  C1: 10.22.1.7
+  C2: 10.22.1.17
+  C3: 10.22.1.18
+  C4: 10.22.1.7
 
 # reused as region
 datacenter:

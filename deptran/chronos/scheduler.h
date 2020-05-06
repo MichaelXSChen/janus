@@ -23,7 +23,7 @@ class chr_ts_t{
     if (this->timestamp_ < rhs.timestamp_){
       return true;
     }
-    else if (this->timestamp_ < rhs.timestamp_){
+    else if (this->timestamp_ > rhs.timestamp_){
       return false;
     }
     else {

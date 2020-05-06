@@ -193,14 +193,7 @@ void CoordinatorChronos::CommitAck(phase_t phase,
   n_commit_oks_[par_id]++;
   if (n_commit_oks_[par_id] > 1)
     return;
-
-//  txn().Merge(output);
-  // if collect enough results.
-  // if there are still more results to collect.
   GotoNextPhase();
-//  bool all_acked = txn().OutputReady();
-//  if (all_acked)
-//  GotoNextPhase();
   return;
 }
 
@@ -265,7 +258,6 @@ void CoordinatorChronos::Dispatch() {
 
     commo()->SendDispatch(cc, req, is_local, callback);
   }
-  //Log_info("transaction (id %d)'s n_dispatch = %d", txn->id_, n_dispatch_);
 }
 
 void CoordinatorChronos::DispatchAck(phase_t phase,
@@ -304,10 +296,9 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
   } else if (AllDispatchAcked()) {
     //xs: this is for OCC + Paxos based method.
 
-    Log_info("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     verify(!txn().do_early_return());
-  //xs: stop the code from moving forward
-   committed_ = true;
+    Log_info("receive output for txn id = %lu", txn().id_);
+    committed_ = true;
     GotoNextPhase();
   }
 }
@@ -351,14 +342,11 @@ void CoordinatorChronos::Reset() {
   n_fast_accept_graphs_.clear();
   n_fast_accept_oks_.clear();
   n_accept_oks_.clear();
-//  n_fast_accept_rejects_.clear();
   fast_accept_graph_check_caches_.clear();
   n_commit_oks_.clear();
   //xstodo: think about how to forward the clock
   logical_clock = ++ts_right_;
   pre_accept_acks_.clear();
-
-
 }
 
 

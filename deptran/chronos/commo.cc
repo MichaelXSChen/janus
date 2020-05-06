@@ -69,10 +69,13 @@ void ChronosCommo::SendStoreLocal(const vector<SimpleCommand> &cmd,
 
   for (auto& pair: site_proxy_pairs){
      if (pair.first != site_info_->id) {
-       Log_info("sending StoreLocl to site %hu, my site id = %hu, my partition id = %u",
+       Log_info("sending StoreLocl to site %hu, my site id = %hu, my partition id = %u, ts = %lu:%lu:hu",
            pair.first,
            site_info_->id,
-           site_info_->partition_id_);
+           site_info_->partition_id_,
+           req.txn_timestamp,
+           req.txn_strech_counter,
+           req.txn_site_id);
        Future::safe_release(pair.second->async_ChronosStoreLocal(cmd, req, fuattr));
      }
   }

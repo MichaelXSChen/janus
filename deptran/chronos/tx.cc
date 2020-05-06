@@ -33,7 +33,7 @@ void TxChronos::DispatchExecute(const SimpleCommand &cmd,
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
 
-  Log_info("%s called, defer= %s, txn_id = %hu, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
+  Log_debug("%s called, defer= %s, txn_id = %hu, root_type = %d, type = %d" , __FUNCTION__, defer_str[pair.defer], cmd.root_id_, cmd.root_type_, cmd.type_);
   int xxx, *yyy;
   if (pair.defer == DF_REAL) {
     yyy = &xxx;
