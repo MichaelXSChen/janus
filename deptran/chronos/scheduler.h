@@ -43,6 +43,10 @@ class chr_ts_t{
     return (this->timestamp_ == rhs.timestamp_ && this->stretch_counter_ == rhs.stretch_counter_ && this->site_id_ == rhs.site_id_);
   }
 
+  inline bool operator <= (const chr_ts_t rhs) const{
+    return (this->operator<(rhs) || this->operator==(rhs));
+  }
+
   inline bool operator > (const chr_ts_t rhs) const{
     return (!this->operator<(rhs) && !this->operator==(rhs));
   }
@@ -54,8 +58,10 @@ class chr_ts_t{
 
 class SchedulerChronos : public BrqSched {
  public:
-  using BrqSched::BrqSched;
 
+  SchedulerChronos(Frame* frame);
+
+  void CheckExecutableTxns();
 
   int OnSubmit(const vector<SimpleCommand> &cmd,
                  const ChronosDispatchReq &chr_req,
@@ -90,19 +96,38 @@ class SchedulerChronos : public BrqSched {
                 RccGraph* graph,
                 const function<void()> &callback) override;
 
+
+
   void StoreLocalAck(txnid_t txn_id,
-                     const function<void()> &execute_callback,
                      int total_ack,
                      int received_res,
                      ChronosStoreLocalRes &chr_res);
 
+
+  void OnStoreLocal(const vector<SimpleCommand> &cmd,
+               const ChronosStoreLocalReq &chr_req,
+               rrr::i32 *res,
+               ChronosStoreLocalRes *chr_res,
+               const function<void()> &callback);
+
+
   ChronosCommo* commo();
 
-  std::set<txnid_t> local_pending_txns_ {};
+  chr_ts_t GenerateChrTs(bool for_local);
 
-  std::map<txnid_t, int> local_txn_store_oks {};
 
-  std::atomic<uint64_t> logical_clock {0};
+  std::map<chr_ts_t, txnid_t> pending_local_txns_ {};
+  std::set<txnid_t> local_txns_by_me {};
+
+  std::map<siteid_t,  chr_ts_t> local_replicas_ts_;
+
+
+  chr_ts_t my_clock_;
+
+
+  chr_ts_t last_clock_; //This is for ensuring the monotonically of the generated clock.
+
+  int time_drift_ms_;
 
 };
 } // namespace janus

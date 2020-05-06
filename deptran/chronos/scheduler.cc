@@ -13,23 +13,35 @@
 using namespace rococo;
 class Frame;
 
+SchedulerChronos::SchedulerChronos(Frame *frame): BrqSched(){
+  this->frame_ = frame;
+  auto config = Config::GetConfig();
+  for (auto &site: config->SitesByPartitionId(frame->site_info_->partition_id_)){
+    if (site.id != frame->site_info_->id){
+      local_replicas_ts_[site.id] = chr_ts_t();
+      Log_info("created timestamp for local replica for partition %u,  site_id = %hu", frame->site_info_->partition_id_, site.id);
+    }
+  }
+}
+
+
 int SchedulerChronos::OnSubmit(const vector<SimpleCommand>& cmd,
                                  const ChronosDispatchReq &chr_req,
                                  int32_t* res,
                                  ChronosDispatchRes *chr_res,
                                  TxnOutput* output,
                                  const function<void()> &reply_callback) {
-  //Pre-execute the tranasction.
-  //Provide the local timestamp as a basic.
 
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   txnid_t txn_id = cmd[0].root_id_; //should have the same root_id
 
-  verify(local_pending_txns_.count(txn_id) == 0);
-  local_pending_txns_.insert(txn_id);
+  verify(local_txns_by_me.count(txn_id) == 0);
+  chr_ts_t ts = GenerateChrTs(true);
+  verify(pending_local_txns_.count(ts) == 0);
+  pending_local_txns_[ts] = txn_id;
+
   auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
-
-
+  dtxn->ts_ = ts;
   auto execute_callback = [=](){
     *res = SUCCESS;
     for (auto& c : cmd) {
@@ -59,22 +71,20 @@ int SchedulerChronos::OnSubmit(const vector<SimpleCommand>& cmd,
     reply_callback();
   };
 
-
-
+  dtxn->execute_callback_ = execute_callback;
 
   auto ack_callback = std::bind(&SchedulerChronos::StoreLocalAck,
                             this,
                             txn_id,
-                            execute_callback,
                             std::placeholders::_1,
                             std::placeholders::_2,
                             std::placeholders::_3);
 
   ChronosStoreLocalReq req;
+  req.txn_site_id = ts.site_id_;
+  req.txn_timestamp = ts.timestamp_;
+  req.txn_strech_counter = ts.stretch_counter_;
 
-  verify(local_txn_store_oks.count(txn_id) == 0);
-
-  local_txn_store_oks[txn_id] = 0;
 
   verify(dtxn->id() == txn_id);
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
@@ -86,23 +96,116 @@ int SchedulerChronos::OnSubmit(const vector<SimpleCommand>& cmd,
 }
 
 void SchedulerChronos::StoreLocalAck(txnid_t txn_id,
-                                     const function<void()> &execute_callback,
                                      int total_count,
                                      int received_res,
                                      ChronosStoreLocalRes &chr_res) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  Log_info("%s called, txnid= %lu, count = %d, total = %d", __FUNCTION__ , txn_id, local_txn_store_oks[txn_id], total_count);
+  auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
   if (received_res == SUCCESS){
-    local_txn_store_oks[txn_id]++;
+    dtxn->n_local_store_acks++;
   }
   else{
     verify(0);
   }
 
-  Log_info("%s called, txnid= %lu, count = %d, total = %d", __FUNCTION__ , txn_id, local_txn_store_oks[txn_id], total_count);
-  if (local_txn_store_oks[txn_id] == total_count){
-    execute_callback();
+
+  siteid_t src_site = chr_res.my_site_id;
+  chr_ts_t src_ts;
+  src_ts.site_id_ = chr_res.my_site_id;
+  src_ts.stretch_counter_ = chr_res.my_strech_counter;
+  src_ts.timestamp_ = chr_res.my_timestamp;
+
+
+  verify(local_replicas_ts_.count(src_site) != 0);
+  if (local_replicas_ts_[src_site] < src_ts){
+    local_replicas_ts_[src_site] = src_ts;
+    Log_info("watermark for site %hu changed to %lu:%lu:hu", src_site, src_ts.timestamp_, src_ts.stretch_counter_, src_ts.site_id_);
   }
+
+  Log_info("%s called, txnid= %lu, count = %d, total = %d", __FUNCTION__ , txn_id, dtxn->n_local_store_acks, total_count);
+  if (dtxn->n_local_store_acks == total_count){
+    auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
+    dtxn->local_stored_ = true;
+  }
+
+  CheckExecutableTxns();
+
+}
+
+void SchedulerChronos::CheckExecutableTxns(){
+  //xs todo: this seems not necessary
+  chr_ts_t min_ts = GenerateChrTs(true);
+  for (auto &pair: local_replicas_ts_){
+    if (pair.second  < min_ts){
+      min_ts = pair.second;
+    }
+  }
+
+  for (auto itr = pending_local_txns_.begin(); itr != pending_local_txns_.end(); ){
+    if (itr->first > min_ts){
+      break;
+    }
+    txnid_t txn_id = itr->second;
+    auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
+    if (!dtxn->local_stored_){
+      break;
+    }
+    dtxn->execute_callback_();
+    itr = pending_local_txns_.erase(itr);
+  }
+
+}
+
+//Log_info stretchable timestamp implemented here
+chr_ts_t SchedulerChronos::GenerateChrTs(bool for_local) {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  chr_ts_t ret;
+
+
+  auto now = std::chrono::system_clock::now();
+
+  int64_t ts = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() + this->time_drift_ms_;
+  ret.timestamp_ = ts;
+  ret.site_id_ = site_id_;
+  ret.stretch_counter_ = 0;
+
+  if (ret <= last_clock_){
+    verify("not monotonic");
+  }else{
+    last_clock_ = ret;
+  }
+  return ret;
+}
+
+
+void SchedulerChronos::OnStoreLocal(const vector<SimpleCommand> &cmd,
+                 const ChronosStoreLocalReq &chr_req,
+                 rrr::i32 *res,
+                 ChronosStoreLocalRes *chr_res,
+                 const function<void()> &reply_callback){
+
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  Log_info("%s called, txnid = %lu", __FUNCTION__ , cmd[0].root_id_);
+  *res = SUCCESS;
+
+  chr_ts_t ts;
+  ts.timestamp_ = chr_req.txn_timestamp;
+  ts.site_id_ = chr_req.txn_site_id;
+  ts.stretch_counter_ = chr_req.txn_strech_counter;
+
+  verify(this->pending_local_txns_.count(ts) == 0);
+  auto txn_id = cmd[0].root_id_;
+  this->pending_local_txns_[ts] = txn_id;
+  auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
+  dtxn->ts_ = ts;
+
+  auto my_ts = GenerateChrTs(true);
+
+  chr_res->my_site_id = my_ts.site_id_;
+  chr_res->my_timestamp = my_ts.timestamp_;
+  chr_res->my_strech_counter = my_ts.stretch_counter_;
+
+  reply_callback();
 }
 
 
@@ -261,8 +364,6 @@ int SchedulerChronos::OnInquire(epoch_t epoch,
   // TODO check epoch, cannot be a too old one.
   auto dtxn = (TxChronos *)(GetOrCreateDTxn(cmd_id));
   RccDTxn &info = *dtxn;
-//  TxRococo &info = *dtxn;
-  //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(Scheduler::partition_id_));
 
   auto cb_wrapper = [callback, graph]() {

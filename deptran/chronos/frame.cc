@@ -65,8 +65,7 @@ Scheduler *ChronosFrame::CreateScheduler() {
     Log_info("[site null] created chronos scheduler");
   }
 
-  Scheduler *sched = new SchedulerChronos();
-  sched->frame_ = this;
+  Scheduler *sched = new SchedulerChronos(this);
   return sched;
 }
 

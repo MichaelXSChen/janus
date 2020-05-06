@@ -19,11 +19,6 @@ class ChronosCommo : public BrqCommo {
 
 
 
-
-
-
-
-
   //xs's code
   void SendDispatch(vector<SimpleCommand>& cmd,
                     const ChronosDispatchReq& req,

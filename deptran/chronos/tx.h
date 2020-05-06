@@ -6,6 +6,7 @@
 #include "deptran/rcc/dtxn.h"
 #include "../command.h"
 #include "memdb/row_mv.h"
+#include "deptran/chronos/scheduler.h"
 namespace rococo {
 
 #define PHASE_CHRONOS_DISPATCH (1)
@@ -50,6 +51,18 @@ class TxChronos : public RccDTxn {
   bool StorePreparedVers();
   bool RemovePreparedVers();
   bool GetDispatchTsHint(int64_t &ts_left, int64_t &ts_right);
+
+
+
+  chr_ts_t ts_;
+  std::function<void()> execute_callback_ = [this](){
+    Log_fatal("call back not assigned, id = %lu", this->tid_);
+    verify(0);
+  };
+
+  int n_local_store_acks = 0;
+  bool local_stored_ = false;
+
 
   std::set<ChronosRow *> locked_rows_ = {};
 

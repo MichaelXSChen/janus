@@ -252,20 +252,22 @@ struct ChronosDispatchReq{
     i32 is_local;
 }
 
+
 struct ChronosDispatchRes{
     i64 ts_left;
     i64 ts_right;
 }
 
 struct ChronosStoreLocalReq{
-    i64 ts_min;
-    i64 ts_max;
-    i32 is_local;
+   i64 txn_timestamp;
+   i64 txn_strech_counter;
+   i16 txn_site_id;
 }
 
 struct ChronosStoreLocalRes{
-    i64 ts_left;
-    i64 ts_right;
+   i64 my_timestamp;
+   i64 my_strech_counter;
+   i16 my_site_id;
 }
 
 struct ChronosPreAcceptReq {
