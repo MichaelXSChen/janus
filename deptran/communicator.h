@@ -26,7 +26,7 @@ class Communicator {
   rrr::PollMgr *rpc_poll_ = nullptr;
   locid_t loc_id_ = -1;
   std::string dcname_;
-
+  Config::SiteInfo* site_info_ = nullptr;
 
   map<siteid_t, rrr::Client *> rpc_clients_ = {};
   map<siteid_t, ClassicProxy *> rpc_proxies_ = {};
@@ -45,7 +45,7 @@ class Communicator {
   SiteProxyPair NearestProxyForPartition(parid_t) const;
   SiteProxyPair NearestRandomProxy();
   SiteProxyPair NearestProxyForAnyPartition(const std::vector<parid_t>& par_ids) const;
-
+  std::vector<SiteProxyPair> ProxiesInPartition(parid_t par_id);
 
   std::pair<int, ClassicProxy*> ConnectToSite(rococo::Config::SiteInfo &site, std::chrono::milliseconds timeout_ms);
   ClientSiteProxyPair ConnectToClientSite(Config::SiteInfo &site, std::chrono::milliseconds timeout);

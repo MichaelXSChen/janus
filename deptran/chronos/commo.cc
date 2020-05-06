@@ -46,33 +46,37 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
 
 void ChronosCommo::SendStoreLocal(const vector<SimpleCommand> &cmd,
                                   const ChronosStoreLocalReq &req,
-                                  const function<void(int, ChronosStoreLocalRes &)>& callback) {
+                                  const function<void(int, int, ChronosStoreLocalRes &)>& callback) {
 
   rrr::FutureAttr fuattr;
   auto tid = cmd[0].root_id_;
   auto par_id = cmd[0].partition_id_;
+
+  verify(this->site_info_ != nullptr);
+  verify(cmd[0].PartitionId() == this->site_info_->partition_id_);
+  auto site_proxy_pairs = ProxiesInPartition(cmd[0].PartitionId());
+  int partition_n_replicas = site_proxy_pairs.size();
+
   std::function<void(Future *)> cb =
-      [callback, tid, par_id](Future *fu) {
+      [callback, tid, par_id, partition_n_replicas](Future *fu) {
         int res;
         TxnOutput output;
         ChronosStoreLocalRes chr_res;
         fu->get_reply() >> res >> chr_res;
-        callback(res, chr_res);
+        callback(partition_n_replicas-1, res, chr_res);
       };
   fuattr.callback = cb;
-  auto proxy_info = NearestProxyForPartition(cmd[0].PartitionId());
-  //xs: seems to dispatch only the nearst replica fo the shard
 
+  for (auto& pair: site_proxy_pairs){
+     if (pair.first != site_info_->id) {
+       Log_info("sending StoreLocl to site %hu, my site id = %hu, my partition id = %u",
+           pair.first,
+           site_info_->id,
+           site_info_->partition_id_);
+       Future::safe_release(pair.second->async_ChronosStoreLocal(cmd, req, fuattr));
+     }
+  }
 
-  auto proxy = proxy_info.second;
-  //XS: proxy is the rpc client side handler.
-//  if (is_local){
-//    Log_info("dispatch local transaction to partition %u, proxy (site) = %hu", cmd[0].PartitionId(), proxy_info.first);
-//  }else{
-//    Log_info("dispatch non-local transaction to partition %u, proxy (site) = %hu", cmd[0].PartitionId(), proxy_info.first);
-//  }
-
-  Future::safe_release(proxy->async_ChronosStoreLocal(cmd, req, fuattr));
 }
 
 void ChronosCommo::SendHandoutRo(SimpleCommand &cmd,

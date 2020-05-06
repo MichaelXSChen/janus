@@ -114,6 +114,7 @@ Communicator *ChronosFrame::CreateCommo(PollMgr *poll) {
   Communicator* commo_ = new ChronosCommo(poll);
   if (site_info_ != NULL){
     commo_ ->dcname_ = site_info_->dcname;
+    commo_ ->site_info_ = site_info_;
     Log_info("[site %d] Creating chronos communicator, at dc [%s]", site_info_->id, commo_->dcname_.c_str());
   }
   else{

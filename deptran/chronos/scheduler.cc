@@ -13,11 +13,12 @@
 using namespace rococo;
 class Frame;
 
-int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
+int SchedulerChronos::OnSubmit(const vector<SimpleCommand>& cmd,
                                  const ChronosDispatchReq &chr_req,
                                  int32_t* res,
                                  ChronosDispatchRes *chr_res,
-                                 TxnOutput* output) {
+                                 TxnOutput* output,
+                                 const function<void()> &reply_callback) {
   //Pre-execute the tranasction.
   //Provide the local timestamp as a basic.
 
@@ -28,55 +29,80 @@ int SchedulerChronos::OnDispatch(const vector<SimpleCommand>& cmd,
   local_pending_txns_.insert(txn_id);
   auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
 
-  auto callback = std::bind(&SchedulerChronos::StoreLocalAck,
+
+  auto execute_callback = [=](){
+    *res = SUCCESS;
+    for (auto& c : cmd) {
+      dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
+                            res, &(*output)[c.inn_id()]);
+    }
+    dtxn->received_dispatch_ts_left_ = chr_req.ts_min;
+    dtxn->received_dispatch_ts_right_ = chr_req.ts_max;
+
+
+    Log_info("[Scheduler %hu] On Dispatch, txn_id = %lu, is_local = %d, ts_range = [%d, %d]", this->frame_->site_info_->id, txn_id, chr_req.is_local, chr_req.ts_min, chr_req.ts_max);
+
+
+    dtxn->UpdateStatus(TXN_STD); //started
+
+
+
+    int64_t reply_ts_left = 0;
+    int64_t reply_ts_right = std::numeric_limits<long long>::max();
+    dtxn->GetDispatchTsHint(reply_ts_left, reply_ts_right);
+
+    chr_res->ts_left = reply_ts_left;
+    chr_res->ts_right = reply_ts_right;
+
+
+    Log_debug("[Scheduler %d] DispatchReturn, txn_id = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, chr_res->ts_left, chr_res->ts_right);
+    reply_callback();
+  };
+
+
+
+
+  auto ack_callback = std::bind(&SchedulerChronos::StoreLocalAck,
                             this,
                             txn_id,
+                            execute_callback,
                             std::placeholders::_1,
-                            std::placeholders::_2);
+                            std::placeholders::_2,
+                            std::placeholders::_3);
 
   ChronosStoreLocalReq req;
 
-  commo()->SendStoreLocal(cmd, req, callback);
+  verify(local_txn_store_oks.count(txn_id) == 0);
 
-
-
-
+  local_txn_store_oks[txn_id] = 0;
 
   verify(dtxn->id() == txn_id);
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
-  dtxn->received_dispatch_ts_left_ = chr_req.ts_min;
-  dtxn->received_dispatch_ts_right_ = chr_req.ts_max;
-
-
-  Log_info("[Scheduler %hu] On Dispatch, txn_id = %lu, is_local = %d, ts_range = [%d, %d]", this->frame_->site_info_->id, txn_id, chr_req.is_local, chr_req.ts_min, chr_req.ts_max);
-
-  for (auto& c : cmd) {
-    dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
-                          res, &(*output)[c.inn_id()]);
-  }
-
-
-  dtxn->UpdateStatus(TXN_STD); //started
   verify(cmd[0].root_id_ == txn_id);
 
+  commo()->SendStoreLocal(cmd, req, ack_callback);
 
-  int64_t reply_ts_left = 0;
-  int64_t reply_ts_right = std::numeric_limits<long long>::max();
-  dtxn->GetDispatchTsHint(reply_ts_left, reply_ts_right);
-
-  chr_res->ts_left = reply_ts_left;
-  chr_res->ts_right = reply_ts_right;
-
-
-  Log_debug("[Scheduler %d] DispatchReturn, txn_id = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, chr_res->ts_left, chr_res->ts_right);
   return 0;
 }
 
+void SchedulerChronos::StoreLocalAck(txnid_t txn_id,
+                                     const function<void()> &execute_callback,
+                                     int total_count,
+                                     int received_res,
+                                     ChronosStoreLocalRes &chr_res) {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  Log_info("%s called, txnid= %lu, count = %d, total = %d", __FUNCTION__ , txn_id, local_txn_store_oks[txn_id], total_count);
+  if (received_res == SUCCESS){
+    local_txn_store_oks[txn_id]++;
+  }
+  else{
+    verify(0);
+  }
 
-
-void SchedulerChronos::StoreLocalAck(txnid_t txn_id, int res, ChronosStoreLocalRes &chr_res){
-  Log_info("%s called, txnid= %lu", __FUNCTION__ , txn_id);
-
+  Log_info("%s called, txnid= %lu, count = %d, total = %d", __FUNCTION__ , txn_id, local_txn_store_oks[txn_id], total_count);
+  if (local_txn_store_oks[txn_id] == total_count){
+    execute_callback();
+  }
 }
 
 

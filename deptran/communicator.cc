@@ -241,4 +241,11 @@ Communicator::NearestRandomProxy() {
     return dc_proxies[rand_proxy];
   }
 };
+
+std::vector<std::pair<siteid_t, ClassicProxy*>>
+Communicator::ProxiesInPartition(uint32_t par_id) {
+  return rpc_par_proxies_[par_id];
+}
+
+
 } // namespace rococo

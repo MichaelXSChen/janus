@@ -57,11 +57,12 @@ class SchedulerChronos : public BrqSched {
   using BrqSched::BrqSched;
 
 
-  int OnDispatch(const vector<SimpleCommand> &cmd,
+  int OnSubmit(const vector<SimpleCommand> &cmd,
                  const ChronosDispatchReq &chr_req,
                  rrr::i32 *res,
                  ChronosDispatchRes *chr_res,
-                 TxnOutput* output);
+                 TxnOutput* output,
+                 const function<void()> &callback);
 
 
   void OnPreAccept(txnid_t txnid,
@@ -89,11 +90,17 @@ class SchedulerChronos : public BrqSched {
                 RccGraph* graph,
                 const function<void()> &callback) override;
 
-  void StoreLocalAck(txnid_t txn_id, int res, ChronosStoreLocalRes &chr_res);
+  void StoreLocalAck(txnid_t txn_id,
+                     const function<void()> &execute_callback,
+                     int total_ack,
+                     int received_res,
+                     ChronosStoreLocalRes &chr_res);
 
   ChronosCommo* commo();
 
   std::set<txnid_t> local_pending_txns_ {};
+
+  std::map<txnid_t, int> local_txn_store_oks {};
 
   std::atomic<uint64_t> logical_clock {0};
 

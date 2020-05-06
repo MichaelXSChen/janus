@@ -35,7 +35,7 @@ class ChronosCommo : public BrqCommo {
 
   void SendStoreLocal(const vector<SimpleCommand>& cmd,
                     const ChronosStoreLocalReq& req,
-                    const function<void(int res,
+                    const function<void(int count, int res,
                                         ChronosStoreLocalRes &chr_res)>&)  ;
 
 
