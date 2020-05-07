@@ -20,7 +20,7 @@ class ChronosCommo : public BrqCommo {
 
 
   //xs's code
-  void SendDispatch(vector<SimpleCommand>& cmd,
+  void SubmitReq(vector<SimpleCommand>& cmd,
                     const ChronosDispatchReq& req,
                     bool is_local,
                     const function<void(int res,

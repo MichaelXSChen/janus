@@ -121,8 +121,13 @@ class SchedulerChronos : public BrqSched {
 
   std::map<siteid_t,  chr_ts_t> local_replicas_ts_;
 
+  std::map<siteid_t,  chr_ts_t> local_replicas_clear_ts_;
 
-  chr_ts_t my_clock_;
+//  chr_ts_t my_clock_;
+
+  chr_ts_t my_clear_ts_;
+
+
 
 
   chr_ts_t last_clock_; //This is for ensuring the monotonically of the generated clock.

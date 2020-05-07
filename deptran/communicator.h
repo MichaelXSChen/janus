@@ -47,6 +47,10 @@ class Communicator {
   SiteProxyPair NearestProxyForAnyPartition(const std::vector<parid_t>& par_ids) const;
   std::vector<SiteProxyPair> ProxiesInPartition(parid_t par_id);
 
+
+  int last_edge_index = 0;
+  SiteProxyPair EdgeServerForPartition(parid_t);
+
   std::pair<int, ClassicProxy*> ConnectToSite(rococo::Config::SiteInfo &site, std::chrono::milliseconds timeout_ms);
   ClientSiteProxyPair ConnectToClientSite(Config::SiteInfo &site, std::chrono::milliseconds timeout);
   void ConnectClientLeaders();

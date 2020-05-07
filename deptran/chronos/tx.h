@@ -85,6 +85,7 @@ class TxChronos : public RccDTxn {
   int64_t commit_ts_;
 
   cmdtype_t root_type = 0;
+
 };
 
 } // namespace janus

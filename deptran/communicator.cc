@@ -204,6 +204,17 @@ Communicator::NearestProxyForPartition(parid_t par_id) const {
 
 
 std::pair<siteid_t, ClassicProxy*>
+Communicator::EdgeServerForPartition(parid_t par_id) {
+  // TODO Fix me.
+  auto it = rpc_par_proxies_.find(par_id);
+  verify(it != rpc_par_proxies_.end());
+  auto& partition_proxies = it->second;
+
+  int index = last_edge_index++ % partition_proxies.size();
+  return partition_proxies[index];
+};
+
+std::pair<siteid_t, ClassicProxy*>
 Communicator::NearestProxyForAnyPartition(const std::vector<parid_t> &par_ids) const {
   // TODO Fix me.
   //xs todo, currently, the code assumes full partition.

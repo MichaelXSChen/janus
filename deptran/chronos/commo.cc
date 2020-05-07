@@ -10,7 +10,7 @@
 
 namespace rococo {
 
-void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
+void ChronosCommo::SubmitReq(vector<TxPieceData> &cmd,
                                 const ChronosDispatchReq& chr_req,
                                 bool is_local,
                                 const function<void(int res,
@@ -29,7 +29,7 @@ void ChronosCommo::SendDispatch(vector<TxPieceData> &cmd,
         callback(res, output, chr_res);
       };
   fuattr.callback = cb;
-  auto proxy_info = NearestProxyForPartition(cmd[0].PartitionId());
+  auto proxy_info = EdgeServerForPartition(cmd[0].PartitionId());
   //xs: seems to dispatch only the nearst replica fo the shard
 
 
@@ -69,7 +69,7 @@ void ChronosCommo::SendStoreLocal(const vector<SimpleCommand> &cmd,
 
   for (auto& pair: site_proxy_pairs){
      if (pair.first != site_info_->id) {
-       Log_info("sending StoreLocl to site %hu, my site id = %hu, my partition id = %u, ts = %lu:%lu:hu",
+       Log_info("sending StoreLocl to site %hu, my site id = %hu, my partition id = %u, ts = %lu:%lu:%hu",
            pair.first,
            site_info_->id,
            site_info_->partition_id_,

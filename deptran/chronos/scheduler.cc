@@ -19,6 +19,7 @@ SchedulerChronos::SchedulerChronos(Frame *frame): BrqSched(){
   for (auto &site: config->SitesByPartitionId(frame->site_info_->partition_id_)){
     if (site.id != frame->site_info_->id){
       local_replicas_ts_[site.id] = chr_ts_t();
+      local_replicas_clear_ts_[site.id] = chr_ts_t();
       Log_info("created timestamp for local replica for partition %u,  site_id = %hu", frame->site_info_->partition_id_, site.id);
     }
   }
@@ -36,6 +37,7 @@ int SchedulerChronos::OnSubmit(const vector<SimpleCommand>& cmd,
   txnid_t txn_id = cmd[0].root_id_; //should have the same root_id
 
   verify(local_txns_by_me.count(txn_id) == 0);
+  local_txns_by_me.insert(txn_id);
   chr_ts_t ts = GenerateChrTs(true);
 
   Log_info("%s called for txn_id = %lu", __FUNCTION__, txn_id);
@@ -56,26 +58,25 @@ int SchedulerChronos::OnSubmit(const vector<SimpleCommand>& cmd,
       dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
                             res, &(*output)[c.inn_id()]);
     }
-    dtxn->received_dispatch_ts_left_ = chr_req.ts_min;
-    dtxn->received_dispatch_ts_right_ = chr_req.ts_max;
-
-
-    Log_info("[Scheduler %hu] On Dispatch, txn_id = %lu, is_local = %d, ts_range = [%d, %d]", this->frame_->site_info_->id, txn_id, chr_req.is_local, chr_req.ts_min, chr_req.ts_max);
-
-
-    dtxn->UpdateStatus(TXN_STD); //started
+//    dtxn->received_dispatch_ts_left_ = chr_req.ts_min;
+//    dtxn->received_dispatch_ts_right_ = chr_req.ts_max;
 
 
 
-    int64_t reply_ts_left = 0;
-    int64_t reply_ts_right = std::numeric_limits<long long>::max();
-    dtxn->GetDispatchTsHint(reply_ts_left, reply_ts_right);
 
-    chr_res->ts_left = reply_ts_left;
-    chr_res->ts_right = reply_ts_right;
+//    dtxn->UpdateStatus(TXN_STD); //started
+//
+//
+//
+//    int64_t reply_ts_left = 0;
+//    int64_t reply_ts_right = std::numeric_limits<long long>::max();
+//    dtxn->GetDispatchTsHint(reply_ts_left, reply_ts_right);
+//
+//    chr_res->ts_left = reply_ts_left;
+//    chr_res->ts_right = reply_ts_right;
 
-
-    Log_debug("[Scheduler %d] DispatchReturn, txn_id = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, chr_res->ts_left, chr_res->ts_right);
+    Log_info("finished execute transaction (I am leader) for id = %lu, will reply to client", txn_id);
+//    Log_debug("[Scheduler %d] DispatchReturn, txn_id = %d, ts_left = %d, ts_right = %d", this->frame_->site_info_->id, txn_id, chr_res->ts_left, chr_res->ts_right);
     reply_callback();
   };
 
@@ -92,6 +93,10 @@ int SchedulerChronos::OnSubmit(const vector<SimpleCommand>& cmd,
   req.txn_site_id = ts.site_id_;
   req.txn_timestamp = ts.timestamp_;
   req.txn_strech_counter = ts.stretch_counter_;
+
+  req.clear_timestamp = my_clear_ts_.timestamp_;
+  req.clear_strech_counter = my_clear_ts_.stretch_counter_;
+  req.clear_site_id = my_clear_ts_.site_id_;
 
 
   verify(dtxn->id() == txn_id);
@@ -127,8 +132,20 @@ void SchedulerChronos::StoreLocalAck(txnid_t txn_id,
   verify(local_replicas_ts_.count(src_site) != 0);
   if (local_replicas_ts_[src_site] < src_ts){
     local_replicas_ts_[src_site] = src_ts;
-    Log_info("watermark for site %hu changed to %lu:%lu:%hu", src_site, src_ts.timestamp_, src_ts.stretch_counter_, src_ts.site_id_);
+    Log_info("time clock for site %hu changed to %lu:%lu:%hu", src_site, src_ts.timestamp_, src_ts.stretch_counter_, src_ts.site_id_);
   }
+
+  chr_ts_t clear_ts;
+  clear_ts.timestamp_ = chr_res.clear_timestamp;
+  clear_ts.stretch_counter_ = chr_res.clear_strech_counter;
+  clear_ts.site_id_ = chr_res.clear_site_id;
+
+  verify(local_replicas_clear_ts_.count(src_site) != 0);
+  if (local_replicas_clear_ts_[src_site] < clear_ts) {
+     local_replicas_clear_ts_[src_site] = clear_ts;
+    Log_info("clear timestamp for site %hu changed to %lu:%lu:%hu", src_site, clear_ts.timestamp_, clear_ts.stretch_counter_, clear_ts.site_id_);
+  }
+
 
   Log_info("%s called, txnid= %lu, count = %d, total = %d", __FUNCTION__ , txn_id, dtxn->n_local_store_acks, total_count);
   if (dtxn->n_local_store_acks == total_count){
@@ -150,8 +167,14 @@ void SchedulerChronos::CheckExecutableTxns(){
   }
 
   for (auto itr = pending_local_txns_.begin(); itr != pending_local_txns_.end(); ){
+    Log_info("checking txn %lu with ts %lu:%lu:%hu",
+        itr->second,
+        itr->first.timestamp_,
+        itr->first.stretch_counter_,
+        itr->first.site_id_);
+
     if (itr->first > min_ts){
-      Log_info("Not going to execute, queue head ts = %lu:%lu:%hu < min ts = %lu:%lu:%hu",
+      Log_info("Not going to execute, queue head ts = %lu:%lu:%hu > min ts = %lu:%lu:%hu",
           itr->first.timestamp_,
           itr->first.stretch_counter_,
           itr->first.site_id_,
@@ -163,13 +186,43 @@ void SchedulerChronos::CheckExecutableTxns(){
     }
     txnid_t txn_id = itr->second;
     auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
-    if (!dtxn->local_stored_){
-      Log_info("Not going to execute, queue head txn id = %lu not stored", itr->second);
-      break;
+    if (this->local_txns_by_me.count(txn_id) != 0){
+      //I am the leader for this transaction.
+      if (!dtxn->local_stored_) {
+        //Not received stored yet
+        Log_info("Not going to execute, queue head is my txn id = %lu not stored", itr->second);
+        break;
+      }
+      else{
+        //Received all store ACK.
+        my_clear_ts_ = itr->first;
+        Log_info("Going to execute txn (I am the leader) with id = %lu", txn_id);
+        dtxn->execute_callback_();
+        itr = pending_local_txns_.erase(itr);
+      }
     }
-    Log_info("Going to execute txn with id = %lu", txn_id);
-    dtxn->execute_callback_();
-    itr = pending_local_txns_.erase(itr);
+    else {
+       //I am not the leader for this transaction.
+       //TODO: this seems need the water mark from OV.
+       //How can I know this transaction can be executed.
+       siteid_t src_site = itr->first.site_id_;
+       verify(local_replicas_clear_ts_.count(src_site) != 0);
+       if (!(local_replicas_clear_ts_[src_site] < itr->first)){
+         Log_info("Going to execute txn (I am not leader) with id = %lu", txn_id);
+         dtxn->execute_callback_();
+         itr = pending_local_txns_.erase(itr);
+       }
+       else {
+         Log_info("Not going to execute transction %lu, not from me, its leader's clear ts is %lu:%lu:%hu",
+             txn_id,
+             local_replicas_clear_ts_[src_site].timestamp_,
+             local_replicas_clear_ts_[src_site].stretch_counter_,
+             local_replicas_clear_ts_[src_site].site_id_);
+         break;
+       }
+    }
+
+
   }
 
 }
@@ -187,7 +240,7 @@ chr_ts_t SchedulerChronos::GenerateChrTs(bool for_local) {
   ret.site_id_ = site_id_;
   ret.stretch_counter_ = 0;
 
-  Log_info("ret = %lu:%lu:%hu, last = %lu:%lu:%hu", ret.timestamp_, ret.stretch_counter_, ret.site_id_, last_clock_.timestamp_, last_clock_.stretch_counter_, last_clock_.site_id_);
+  Log_debug("ret = %lu:%lu:%hu, last = %lu:%lu:%hu", ret.timestamp_, ret.stretch_counter_, ret.site_id_, last_clock_.timestamp_, last_clock_.stretch_counter_, last_clock_.site_id_);
   if (ret <= last_clock_){
     ret = last_clock_; 
     ret.stretch_counter_ ++; 
@@ -211,13 +264,32 @@ void SchedulerChronos::OnStoreLocal(const vector<SimpleCommand> &cmd,
       chr_req.txn_site_id);
   *res = SUCCESS;
 
+
+
   chr_ts_t ts;
   ts.timestamp_ = chr_req.txn_timestamp;
   ts.site_id_ = chr_req.txn_site_id;
   ts.stretch_counter_ = chr_req.txn_strech_counter;
 
+  chr_ts_t clear_ts;
+  clear_ts.timestamp_ = chr_req.clear_timestamp;
+  clear_ts.stretch_counter_ = chr_req.clear_strech_counter;
+  clear_ts.site_id_ = chr_req.clear_site_id;
+
+  bool need_check = false;
+  verify(local_replicas_clear_ts_.count(ts.site_id_) != 0);
+  verify(local_replicas_ts_.count(ts.site_id_) != 0);
   if (local_replicas_ts_[ts.site_id_] < ts){
     local_replicas_ts_[ts.site_id_] = ts;
+    need_check = true;
+  }
+
+  if (local_replicas_clear_ts_[ts.site_id_] < clear_ts){
+    local_replicas_clear_ts_[ts.site_id_] = clear_ts;
+    need_check = true;
+  }
+
+  if (need_check){
     CheckExecutableTxns();
   }
 
@@ -232,12 +304,26 @@ void SchedulerChronos::OnStoreLocal(const vector<SimpleCommand> &cmd,
   this->pending_local_txns_[ts] = txn_id;
   auto dtxn = (TxChronos* )(GetOrCreateDTxn(txn_id));
   dtxn->ts_ = ts;
+  auto execute_callback = [=](){
+    std::lock_guard<std::recursive_mutex> guard(mtx_);
+    Log_info("executing local transaction %lu, I am not the leader", txn_id);
+    TxnOutput output;
+    for (auto& c : cmd) {
+      dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
+                            res, &output[c.inn_id()]);
+    }
+  };
+  dtxn->execute_callback_ = execute_callback;
 
   auto my_ts = GenerateChrTs(true);
 
   chr_res->my_site_id = my_ts.site_id_;
   chr_res->my_timestamp = my_ts.timestamp_;
   chr_res->my_strech_counter = my_ts.stretch_counter_;
+
+  chr_res->clear_timestamp = my_clear_ts_.timestamp_;
+  chr_res->clear_strech_counter = my_clear_ts_.stretch_counter_;
+  chr_res->clear_site_id = my_clear_ts_.site_id_;
 
   reply_callback();
 }

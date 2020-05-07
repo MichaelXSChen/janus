@@ -262,12 +262,20 @@ struct ChronosStoreLocalReq{
    i64 txn_timestamp;
    i64 txn_strech_counter;
    i16 txn_site_id;
+
+   i64 clear_timestamp;
+   i64 clear_strech_counter;
+   i16 clear_site_id;
 }
 
 struct ChronosStoreLocalRes{
    i64 my_timestamp;
    i64 my_strech_counter;
    i16 my_site_id;
+
+   i64 clear_timestamp;
+   i64 clear_strech_counter;
+   i16 clear_site_id;
 }
 
 struct ChronosPreAcceptReq {

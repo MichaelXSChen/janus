@@ -212,7 +212,7 @@ bool CoordinatorChronos::AcceptQuorumReached() {
 
 
 
-void CoordinatorChronos::Dispatch() {
+void CoordinatorChronos::SubmitReq() {
 
 
   verify(ro_state_ == BEGIN);
@@ -243,7 +243,7 @@ void CoordinatorChronos::Dispatch() {
       cc.push_back(*c);
     }
 
-    auto callback = std::bind(&CoordinatorChronos::DispatchAck,
+    auto callback = std::bind(&CoordinatorChronos::SubmitAck,
                               this,
                               phase_,
                               std::placeholders::_1,
@@ -256,11 +256,11 @@ void CoordinatorChronos::Dispatch() {
     req.ts_min = ts_left_;
     req.ts_max = ts_right_;
 
-    commo()->SendDispatch(cc, req, is_local, callback);
+    commo()->SubmitReq(cc, req, is_local, callback);
   }
 }
 
-void CoordinatorChronos::DispatchAck(phase_t phase,
+void CoordinatorChronos::SubmitAck(phase_t phase,
                                      int res,
                                      TxnOutput &output,
                                      ChronosDispatchRes &chr_res) {
@@ -292,7 +292,7 @@ void CoordinatorChronos::DispatchAck(phase_t phase,
              " n_started_: %d, n_pieces: %d",
              txn().id_,
              txn().n_pieces_dispatched_, txn().GetNPieceAll());
-    Dispatch();
+    SubmitReq();
   } else if (AllDispatchAcked()) {
     //xs: this is for OCC + Paxos based method.
 
@@ -314,7 +314,7 @@ void CoordinatorChronos::GotoNextPhase() {
        * Collect the local-DC timestamp.
        * Try to make my clock as up-to-date as possible.
        */
-      Dispatch();
+      SubmitReq();
       verify(phase_ % n_phase == Phase::CHR_COMMIT);
       break;
 

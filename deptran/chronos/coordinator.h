@@ -72,8 +72,8 @@ class CoordinatorChronos : public BrqCoord {
 //  int32_t GetQuorumSize(parid_t par_id);
 
 
-  void Dispatch();
-  void DispatchAck(phase_t phase,
+  void SubmitReq();
+  void SubmitAck(phase_t phase,
                    int res,
                    TxnOutput& cmd,
                    ChronosDispatchRes &chr_res);
