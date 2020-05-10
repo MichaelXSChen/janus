@@ -92,7 +92,7 @@ void TpccPiece::RegPayment() {
              TPCC_VAR_W_CITY, TPCC_VAR_W_STATE, TPCC_VAR_W_ZIP);
   SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, DF_NO) {
-    verify(cmd.input.size() >= 7);
+    verify(cmd.input.size() >= 6);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
     i32 oi = 0;
     mdb::Row *row_warehouse = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
